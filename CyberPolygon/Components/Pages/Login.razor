@@ -1,0 +1,133 @@
+﻿@page "/login"
+@using System.ComponentModel.DataAnnotations
+@using CyberPolygon.Components.Account.Pages
+@using CyberPolygon.Data
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager Navigation
+@using Microsoft.AspNetCore.Components.Web
+@rendermode InteractiveServer
+
+
+@* 1. ВНЕШНИЙ КОНТЕЙНЕР ДЛЯ ЦЕНТРИРОВАНИЯ *@
+<div style="display: flex; justify-content: center; align-items: center; min-height: 100vh; background-image: url(image/bk.png);">
+ 
+    <RadzenRow Gap="0"
+               class="rz-my-12 rz-mx-auto rz-border-radius-6 rz-shadow-10"
+               Style="width: 100%; max-width: 1200px; min-height: 600px; overflow: hidden;">
+       
+        @*Левая часть*@
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenCard class="rz-shadow-0 rz-border-radius-0 rz-text-align-left rz-p-0"
+                        Style="height: 100%;
+                min-height: 600px;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start;
+                background: #595959 no-repeat center/cover;
+                opacity: 0.8;">
+                <div style="display: flex;
+                    justify-content: center;
+                    align-items: flex-start;
+                    width: 100%;">
+                    <img src="image/logo.png"
+                         alt="Logo"
+                         style="max-width: 720px;
+                    width: 100%;
+                    height: auto;
+                    display: block;" />
+                </div>
+                <RadzenText TextStyle="TextStyle.DisplayH3"
+                            TagName="TagName.H2"
+                            Style="color: #9ABEFF; margin-bottom: 0.5rem; font-size: 2.8rem; padding-left:3rem">
+                    Добро пожаловать!
+                </RadzenText>
+
+                <RadzenText TextStyle="TextStyle.H6"
+                            Style="color: #9ABEFF; margin-bottom: 1rem; padding-left:3rem">
+                    В КиберПолигон
+                </RadzenText>
+
+                <RadzenText TextStyle="TextStyle.Body2"
+                            Style="color: #9ABEFF; padding-left:3rem">
+                    Введите свои учетные данные для входа
+                </RadzenText>
+
+            </RadzenCard>
+        </RadzenColumn>
+
+        @* 4. ПРАВАЯ ПАНЕЛЬ (форма логина) *@
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenCard class="rz-shadow-0 rz-border-radius-0 rz-p-12"
+                        Style="height: 100%;
+                min-height: 600px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                background: grey;
+                opacity=0.8">
+                <RadzenText TextStyle="TextStyle.H5"
+                            TagName="TagName.H2"
+                            Style="margin-bottom: 2rem; color: #9ABEFF; font-weight: 500; text-align: center; font-size:36px;">
+                    <RadzenIcon Icon="lock" Style="font-size: 36px;" /> ФОРМА ВХОДА
+                </RadzenText>
+
+                <div style="text-align: center;">
+
+                    @* Форма логина центрирована *@
+                    <RadzenTemplateForm Data=@("SimpleLogin")>
+                        <RadzenLogin 
+                            AllowRegister="false" 
+                            AllowResetPassword="false" 
+                            UserText="Логин"
+                            PasswordText="Пароль"
+                            ShowLoginButton="false"
+                                     Style="color:#9ABEFF; font-size: 20px; font-weight:400" />
+                            <RadzenButton ButtonType="Radzen.ButtonType.Submit"
+                                          ButtonStyle="Radzen.ButtonStyle.Primary"
+                                          Text="ВОЙТИ"
+                                          Size="Radzen.ButtonSize.Large"
+                                          Style="width: 30%;
+                                                 text-align:center;
+                                                 background-color: #9ABEFF;
+                                                 border: none;
+                                                 border-radius: 8px;
+                                                 padding: 10px;
+                                                 font-size: 1.1rem;
+                                                 font-weight: 500;
+                                                 text-transform: uppercase;" />
+                    </RadzenTemplateForm>
+                </div>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+</div>
+
+
+
+
+
+@code {
+    private LoginModel loginModel = new();
+    private string? errorMessage;
+
+    private async Task HandleLogin()
+    {
+        var result = await SignInManager.PasswordSignInAsync(loginModel.Email, loginModel.Password, false, false);
+        if (result.Succeeded)
+        {
+            Navigation.NavigateTo("/", true); // 'true' для полной перезагрузки страницы после логина
+        }
+        else
+        {
+            errorMessage = "Неверный логин или пароль";
+        }
+    }
+
+    public class LoginModel
+    {
+        [Required] public string Email { get; set; } = "";
+        [Required] public string Password { get; set; } = "";
+    }
+}

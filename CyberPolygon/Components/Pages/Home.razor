@@ -1,7 +1,31 @@
 ﻿@page "/"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize] // Закрывает доступ для анонимов
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Dashboard</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="content-wrapper">
+    <h1>Панель управления</h1>
 
-Welcome to your new app.
+    <div class="info-block">
+        <h3>Общая информация</h3>
+        <p>Данные мониторинга доступны всем авторизованным пользователям.</p>
+    </div>
+
+    @* Гранулярный доступ по ролям *@
+    <AuthorizeView Roles="Admin">
+        <Authorized>
+            <div class="admin-panel mt-4" style="border: 1px solid red; padding: 20px;">
+                <h4>Режим редактирования (Admin)</h4>
+                <div class="form-group">
+                    <label>Изменить параметр системы:</label>
+                    <input type="text" class="form-control" placeholder="Новое значение..." />
+                    <button class="btn btn-danger mt-2">Сохранить</button>
+                </div>
+            </div>
+        </Authorized>
+        <NotAuthorized>
+            <p><i>Функции редактирования ограничены администратором.</i></p>
+        </NotAuthorized>
+    </AuthorizeView>
+</div>

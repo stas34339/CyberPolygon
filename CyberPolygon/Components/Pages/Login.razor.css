@@ -1,0 +1,59 @@
+﻿.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f4f7f6;
+}
+
+.login-card {
+    display: flex;
+    width: 800px;
+    height: 450px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.left-panel {
+    flex: 1;
+    background-color: #3d5a5a;
+    color: white;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.right-panel {
+    flex: 1.2;
+    background: white;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.btn-submit {
+    background-color: #3d5a5a;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 20px;
+}
+.rz-login .rz-login-submit {
+    background: linear-gradient(135deg, #3d5a5a, #4a6a6a) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 12px 24px !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    width: 100% !important;
+}
+
+    .rz-login .rz-login-submit:hover {
+        background: linear-gradient(135deg, #2c4242, #3d5a5a) !important;
+    }
