@@ -19,7 +19,8 @@ main {
 }
 
 .sidebar {
-    background-color: #575454;
+    background-color: #1e1e1e;
+    width:300px;
 }
 
 .top-row {
@@ -62,7 +63,7 @@ main {
     }
 
     .sidebar {
-        width: 250px;
+        width: 300px;
         height: 100vh;
         position: sticky;
         top: 0;
