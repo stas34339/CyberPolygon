@@ -1,23 +1,42 @@
-﻿@inherits LayoutComponentBase
+﻿@using CyberPolygon.Components.Account.Pages
+@inject AuthenticationStateProvider AuthStateProvider
+@inject CookieThemeService CookieThemeService
+@inherits LayoutComponentBase
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
+
+<RadzenComponents />
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <body>
+    <div class="page">
+        @if (isAuthenticated)
+        {
+        
+            <div class="sidebar">
+                <NavMenu />
+            </div>
+
+            <main>
+                <article class="content px-4">
+                    @Body
+                </article>
+            </main>
+        }
+        else
+        {
+            <Login />
+        }
     </div>
+    </body>
+</html>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
 
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
-</div>
+@code {
+    private bool isAuthenticated;
 
-<div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
-</div>
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        isAuthenticated = authState.User.Identity?.IsAuthenticated ?? false;
+    }
+}

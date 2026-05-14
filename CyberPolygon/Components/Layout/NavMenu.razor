@@ -1,92 +1,59 @@
-﻿@implements IDisposable
-
+﻿@using System.ComponentModel;
+@using Radzen
+@using Radzen.Blazor
+@rendermode InteractiveServer
 @inject NavigationManager NavigationManager
-
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">CyberPolygon</a>
+        <a class="navbar-brand" href="">КиберПолигон</a>
     </div>
 </div>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+<RadzenStack AlignItems="AlignItems.Center" class="rz-p-12, main" >
+    <RadzenPanelMenu Click="OnParentClicked"  Multiple="false" class="list">
+        <RadzenPanelMenuItem Text="Главная" Icon="home" class="list-item">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All"></NavLink>
+        </RadzenPanelMenuItem>
+        <RadzenPanelMenuItem Text="Сценарии" Icon="payment" class="list-item" Style="background-color:#424040;">
+            <RadzenPanelMenuItem Text="CheckBox" Path="checkbox" Icon="check_circle" class="item" Style="background-color:#424040;"></RadzenPanelMenuItem>
+            <RadzenPanelMenuItem Text="TextBox" Path="textbox" Icon="input" class="item"></RadzenPanelMenuItem>
+            <RadzenPanelMenuItem Text="TextArea" Path="textarea" Icon="description" class="item"></RadzenPanelMenuItem>
+            <RadzenPanelMenuItem Text="Password" Path="password" Icon="payment" class="item"></RadzenPanelMenuItem>
+            <RadzenPanelMenuItem Text="Numeric" Path="numeric" Icon="aspect_ratio" class="item"></RadzenPanelMenuItem>
+            <RadzenPanelMenuItem Text="DatePicker" Path="datepicker" Icon="date_range" class="item"></RadzenPanelMenuItem>
+        </RadzenPanelMenuItem>
+        <RadzenPanelMenuItem Text="Инструкция" Icon="save">
+            <RadzenPanelMenuItem Text="DataGrid" Path="datagrid" Icon="grid_on"></RadzenPanelMenuItem>
+            <RadzenPanelMenuItem Text="DataList" Path="datalist" Icon="list"></RadzenPanelMenuItem>
+            <RadzenPanelMenuItem Text="DropDown" Path="dropdown" Icon="dns"></RadzenPanelMenuItem>
+            <RadzenPanelMenuItem Text="DropDownDataGrid" Path="dropdown-datagrid" Icon="receipt"></RadzenPanelMenuItem>
+            <RadzenPanelMenuItem Text="ListBox" Path="listbox" Icon="view_list"></RadzenPanelMenuItem>
+            <RadzenPanelMenuItem Text="TemplateForm" Path="templateform" Icon="line_style"></RadzenPanelMenuItem>
+        </RadzenPanelMenuItem>
+        <RadzenPanelMenuItem Text="Пользователь" Icon="account_box">
+            <RadzenPanelMenuItem Text="Tabs" Path="tabs" Icon="tab"></RadzenPanelMenuItem>
+            <RadzenPanelMenuItem Text="Panel" Path="panel" Icon="content_paste"></RadzenPanelMenuItem>
+            <RadzenPanelMenuItem Text="Fieldset" Path="fieldset" Icon="account_balance_wallet"></RadzenPanelMenuItem>
+            <RadzenPanelMenuItem Text="Card" Path="card" Icon="line_style"></RadzenPanelMenuItem>
+        </RadzenPanelMenuItem>
+        <RadzenPanelMenuItem Text="Выход">
+            
+        </RadzenPanelMenuItem>
+    </RadzenPanelMenu>
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="auth">
-                <span class="bi bi-lock-nav-menu" aria-hidden="true"></span> Auth Required
-            </NavLink>
-        </div>
-
-        <AuthorizeView>
-            <Authorized>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Manage">
-                        <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> @context.User.Identity?.Name
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <form action="Account/Logout" method="post">
-                        <AntiforgeryToken />
-                        <input type="hidden" name="ReturnUrl" value="@currentUrl" />
-                        <button type="submit" class="nav-link">
-                            <span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Logout
-                        </button>
-                    </form>
-                </div>
-            </Authorized>
-            <NotAuthorized>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Register">
-                        <span class="bi bi-person-nav-menu" aria-hidden="true"></span> Register
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Login">
-                        <span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> Login
-                    </NavLink>
-                </div>
-            </NotAuthorized>
-        </AuthorizeView>
-    </nav>
-</div>
-
+</RadzenStack>
+<EventConsole @ref=@console />
 @code {
-    private string? currentUrl;
+    bool multiple = true;
+    EventConsole console;
 
-    protected override void OnInitialized()
+    void OnParentClicked(MenuItemEventArgs args)
     {
-        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
-        NavigationManager.LocationChanged += OnLocationChanged;
+        
     }
 
-    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    void OnChildClicked(MenuItemEventArgs args)
     {
-        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
-        StateHasChanged();
-    }
-
-    public void Dispose()
-    {
-        NavigationManager.LocationChanged -= OnLocationChanged;
+        
     }
 }
-

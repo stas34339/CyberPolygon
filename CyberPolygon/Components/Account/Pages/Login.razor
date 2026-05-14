@@ -13,42 +13,73 @@
 
 <PageTitle>Log in</PageTitle>
 
-<h1>Log in</h1>
-<div class="row">
-    <div class="col-lg-6">
-        <section>
-            <StatusMessage Message="@errorMessage" />
-            <EditForm EditContext="editContext" method="post" OnSubmit="LoginUser" FormName="login">
+
+<RadzenRow Gap="0" class="rz-my-12 rz-mx-auto rz-border-radius-6 rz-shadow-10" Style="width: 100%; max-width: 1200px; height:100%; max-height:800px; overflow: hidden;">
+
+    @*Левая часть Авторизации*@
+
+    <RadzenColumn Size="12" SizeMD="6" Style="width:50%;">
+        <RadzenCard class="rz-shadow-0 rz-border-radius-0 rz-text-align-center rz-p-12"
+                    Style="height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: #575454 no-repeat center/cover;">
+            <div style="position: relative; top: -50px; right:180px;">
+                <img src="images/logo.png"
+                     alt="Logo"
+                     style="max-width: 320px; height: auto;" />
+            </div>
+            <RadzenText TextStyle="TextStyle.DisplayH3"
+                        TagName="TagName.H2"
+                        Style="color: white; font-size: 3.2rem; text-align:left;">
+                Добро пожаловать!
+            </RadzenText>
+
+            <RadzenText TextStyle="TextStyle.H6"
+                        Style="color: rgba(255,255,255,0.9); font-size: 2.2rem; text-align:left;">
+                В КиберПолигон
+            </RadzenText>
+
+            <RadzenText TextStyle="TextStyle.Body2"
+                        Style="color: rgba(255,255,255,0.8); font-size: 1.2rem; text-align:left;">
+                Введите свои учетные данные для входа
+            </RadzenText>
+
+        </RadzenCard>
+    </RadzenColumn>
+
+    @*Правая часть авторизации*@
+
+    <RadzenColumn Size="12" SizeMD="6" Style="width:50%;">
+        <RadzenCard class="rz-shadow-0 rz-border-radius-0 rz-p-12" Style="height:100%;">
+            <EditForm EditContext="editContext" method="post" OnSubmit="LoginUser" FormName="login" style="margin-top:70px">
                 <DataAnnotationsValidator />
-                <h2>Use a local account to log in.</h2>
+                <h2><RadzenIcon Icon="lock" />Форма входа</h2>
                 <hr />
                 <ValidationSummary class="text-danger" role="alert" />
                 <div class="form-floating mb-3">
                     <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="username webauthn" aria-required="true" placeholder="name@example.com" />
-                    <label for="Input.Email" class="form-label">Email</label>
+                    <label for="Input.Email" class="form-label">Логин</label>
                     <ValidationMessage For="() => Input.Email" class="text-danger" />
                 </div>
                 <div class="form-floating mb-3">
-                    <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" />
-                    <label for="Input.Password" class="form-label">Password</label>
+                    <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="пароль" />
+                    <label for="Input.Password" class="form-label">Пароль</label>
                     <ValidationMessage For="() => Input.Password" class="text-danger" />
                 </div>
                 <div class="checkbox mb-3">
                     <label class="form-label">
                         <InputCheckbox @bind-Value="Input.RememberMe" class="darker-border-checkbox form-check-input" />
-                        Remember me
+                        Запомнить пароль
                     </label>
                 </div>
                 <div>
-                    <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
+                    <button type="submit" class="w-100 btn btn-lg btn-primary" style="background: #1DB4D3; color:white;">Войти</button>
                 </div>
-                <hr />
-                <div class="d-flex flex-column">
-                    <span class="text-secondary mx-auto mt-2">OR</span>
-                    <PasskeySubmit Operation="PasskeyOperation.Request" Name="Input.Passkey" EmailName="Input.Email" class="btn btn-link mx-auto">Log in with a passkey</PasskeySubmit>
-                </div>
-                <hr />
-                <div>
+                @*Кнопки забытия пароля, регистарции пользователя, подтверздения почты. На будущее может пригодиться
+
+                 <div>
                     <p>
                         <a href="Account/ForgotPassword">Forgot your password?</a>
                     </p>
@@ -59,17 +90,11 @@
                         <a href="Account/ResendEmailConfirmation">Resend email confirmation</a>
                     </p>
                 </div>
+                *@
             </EditForm>
-        </section>
-    </div>
-    <div class="col-lg-4 col-lg-offset-2">
-        <section>
-            <h3>Use another service to log in.</h3>
-            <hr />
-            <ExternalLoginPicker />
-        </section>
-    </div>
-</div>
+        </RadzenCard>
+    </RadzenColumn>
+</RadzenRow>
 
 @code {
     private string? errorMessage;
