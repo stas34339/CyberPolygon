@@ -40,10 +40,14 @@ builder.Services.AddAuthentication(options =>
     .AddIdentityCookies();
 
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
+builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
+// 2. Регистрируем обычный Scoped контекст, который берется из этой фабрики (для ASP.NET Core Identity)
+builder.Services.AddScoped(p =>
+    p.GetRequiredService<IDbContextFactory<ApplicationDbContext>>().CreateDbContext()); 
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options => {

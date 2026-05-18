@@ -4,24 +4,24 @@
 <RadzenTemplateForm TItem="CyberScenario" Data="@Item" Submit="@OnSave">
     <div class="row">
         <div class="col-12 mb-3">
-            <RadzenLabel Text="Название" />
+            <RadzenLabel Text="Название" Style="color:aliceblue;" />
             <RadzenTextBox @bind-Value="@Item.Title" class="w-100" />
         </div>
         <div class="col-12 mb-3">
-            <RadzenLabel Text="Краткое описание" />
+            <RadzenLabel Text="Краткое описание" Style="color:aliceblue;" />
             <RadzenTextArea @bind-Value="@Item.Description" class="w-100" />
         </div>
         <div class="col-12 mb-3">
-            <RadzenLabel Text="Схема (загрузка файла)" />
+            <RadzenLabel Text="Схема (загрузка файла)" Style="color:aliceblue;" />
             <InputFile OnChange="HandleFileUpload" class="form-control bg-dark text-white" />
         </div>
         <RadzenTabs class="w-100 mt-3">
             <Tabs>
                 <RadzenTabsItem Text="Легенда">
-                    <RadzenHtmlEditor @bind-Value="@Item.Legend" style="height: 200px;" />
+                    <RadzenHtmlEditor @bind-Value="@Item.Legend" style="height: 200px; color:aliceblue;" />
                 </RadzenTabsItem>
                 <RadzenTabsItem Text="Задание">
-                    <RadzenHtmlEditor @bind-Value="@Item.Task" style="height: 200px;" />
+                    <RadzenHtmlEditor @bind-Value="@Item.Task" style="height: 200px; color:aliceblue;" />
                 </RadzenTabsItem>
             </Tabs>
         </RadzenTabs>
