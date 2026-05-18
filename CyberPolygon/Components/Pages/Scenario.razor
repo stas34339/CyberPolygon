@@ -30,8 +30,15 @@
         <div class="row">
             @foreach (var item in scenarios)
             {
+                @* --- ЗАМЕНИТЕ ЭТУ СТРОКУ --- *@
+                @* <div class="col-md-4 mb-4 d-flex align-items-stretch"> *@
+
+                @* --- НА ЭТУ --- *@
                 <div class="col-md-4 mb-4">
-                    <RadzenCard class="cyber-card">
+                    @* Просто стандартная колонка, без d-flex *@
+
+                    @* Класс h-100 на карточке мы оставляем! Он по-прежнему растягивает её по высоте соседних *@
+                    <RadzenCard class="cyber-card h-100">
                         <div class="card-glow"></div>
                         <h3 class="item-title">@item.Title</h3>
                         <p class="item-desc">@item.Description</p>
@@ -58,9 +65,27 @@
         </div>
     }
 </div>
-
+@if (isDeleteVisualDialogVisible)
+{
+    <div class="cyber-modal-overlay">
+        <div class="cyber-modal-box">
+            <div class="cyber-modal-header">
+                <h3>Предупреждение</h3>
+                <button class="cyber-modal-close-btn" @onclick="CloseDeleteDialog">×</button>
+            </div>
+            <div class="cyber-modal-body">
+                <p>Удалить сценарий из базы навсегда?</p>
+            </div>
+            <div class="cyber-modal-footer">
+                <button class="cyber-btn-ok" @onclick="ConfirmDelete">OK</button>
+                <button class="cyber-btn-cancel" @onclick="CloseDeleteDialog">CANCEL</button>
+            </div>
+        </div>
+    </div>
+}
 @code {
     List<CyberScenario>? scenarios;
+
 
     protected override async Task OnInitializedAsync() => await Refresh();
 
@@ -70,7 +95,7 @@
     {
         var res = await DialogService.OpenAsync<ScenarioEditor>("Управление сценарием",
                   new Dictionary<string, object> { { "Item", scenario } },
-                  new DialogOptions { Width = "700px" });
+                  new DialogOptions { Width = "900px", Height = "700px" });
         if (res == true) await Refresh();
     }
 
@@ -81,14 +106,34 @@
               new DialogOptions { Width = "900px", Height = "700px" });
     }
 
-    async Task DeleteItem(int id)
+    bool isDeleteVisualDialogVisible = false;
+    int scenarioIdToDelete = 0;
+
+    // 1. Метод, который срабатывает при клике на иконку урны в карточке
+    void DeleteItem(int id)
     {
-        var confirm = await DialogService.Confirm("Удалить сценарий из базы навсегда?");
-        if (confirm == true)
+        scenarioIdToDelete = id;
+        isDeleteVisualDialogVisible = true; // Просто показываем наше окно
+    }
+
+    // 2. Метод, если пользователь нажал OK
+    async Task ConfirmDelete()
+    {
+        isDeleteVisualDialogVisible = false; // Прячем окно
+
+        if (scenarioIdToDelete != 0)
         {
-            await ScenarioService.DeleteAsync(id);
+            await ScenarioService.DeleteAsync(scenarioIdToDelete);
             await Refresh();
             NotificationService.Notify(NotificationSeverity.Success, "Система", "Данные удалены");
         }
+        scenarioIdToDelete = 0;
+    }
+
+    // 3. Метод, если пользователь закрыл окно или нажал CANCEL
+    void CloseDeleteDialog()
+    {
+        isDeleteVisualDialogVisible = false;
+        scenarioIdToDelete = 0;
     }
 }
