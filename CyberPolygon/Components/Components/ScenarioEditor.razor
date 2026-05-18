@@ -1,0 +1,47 @@
+﻿@inject ScenarioService ScenarioService
+@inject DialogService DialogService
+
+<RadzenTemplateForm TItem="CyberScenario" Data="@Item" Submit="@OnSave">
+    <div class="row">
+        <div class="col-12 mb-3">
+            <RadzenLabel Text="Название" />
+            <RadzenTextBox @bind-Value="@Item.Title" class="w-100" />
+        </div>
+        <div class="col-12 mb-3">
+            <RadzenLabel Text="Краткое описание" />
+            <RadzenTextArea @bind-Value="@Item.Description" class="w-100" />
+        </div>
+        <div class="col-12 mb-3">
+            <RadzenLabel Text="Схема (загрузка файла)" />
+            <InputFile OnChange="HandleFileUpload" class="form-control bg-dark text-white" />
+        </div>
+        <RadzenTabs class="w-100 mt-3">
+            <Tabs>
+                <RadzenTabsItem Text="Легенда">
+                    <RadzenHtmlEditor @bind-Value="@Item.Legend" style="height: 200px;" />
+                </RadzenTabsItem>
+                <RadzenTabsItem Text="Задание">
+                    <RadzenHtmlEditor @bind-Value="@Item.Task" style="height: 200px;" />
+                </RadzenTabsItem>
+            </Tabs>
+        </RadzenTabs>
+    </div>
+    <div class="mt-4 text-right">
+        <RadzenButton Text="Сохранить в БД" ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Info" />
+    </div>
+</RadzenTemplateForm>
+
+@code {
+    [Parameter] public CyberScenario Item { get; set; } = new();
+
+    async Task HandleFileUpload(InputFileChangeEventArgs e)
+    {
+        Item.SchemaPath = await ScenarioService.UploadSchemaAsync(e.File);
+    }
+
+    async Task OnSave()
+    {
+        await ScenarioService.SaveAsync(Item);
+        DialogService.Close(true);
+    }
+}

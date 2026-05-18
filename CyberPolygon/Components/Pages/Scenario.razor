@@ -1,0 +1,97 @@
+﻿@page "/"
+@inject ScenarioService ScenarioService
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+@using CyberPolygon.Components.Components
+@rendermode InteractiveServer
+<RadzenComponents />
+@inject ScenarioService ScenarioService
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+
+<PageTitle>Сценарии | Киберполигон</PageTitle>
+
+<div class="scenarios-grid">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <h1 class="cyber-header">Боевые сценарии</h1>
+        <AuthorizeView Roles="Admin">
+            <RadzenButton Text="Новый сценарий" Icon="add" ButtonStyle="ButtonStyle.Info"
+                          Click="@(() => OpenEditDialog(new CyberScenario()))" />
+        </AuthorizeView>
+    </div>
+
+    @if (scenarios == null)
+    {
+        <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+    }
+    else if (!scenarios.Any())
+    {
+        <div class="empty-db">База данных пуста. Сценарии не обнаружены.</div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var item in scenarios)
+            {
+                <div class="col-md-4 mb-4">
+                    <RadzenCard class="cyber-card">
+                        <div class="card-glow"></div>
+                        <h3 class="item-title">@item.Title</h3>
+                        <p class="item-desc">@item.Description</p>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <RadzenButton Text="Подробнее"
+                                          ButtonStyle="ButtonStyle.Info"
+                                          Variant="Variant.Outlined"
+                                          class="cyan-border"
+                                          Click="@(() => OpenDetails(item))" />
+
+                            <AuthorizeView Roles="Admin">
+                                <div class="admin-tools">
+                                    <RadzenButton Icon="edit" Size="ButtonSize.Small"
+                                                  Click="@(() => OpenEditDialog(item))" />
+                                    <RadzenButton Icon="delete" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Danger"
+                                                  Click="@(() => DeleteItem(item.Id))" />
+                                </div>
+                            </AuthorizeView>
+                        </div>
+                    </RadzenCard>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    List<CyberScenario>? scenarios;
+
+    protected override async Task OnInitializedAsync() => await Refresh();
+
+    async Task Refresh() => scenarios = await ScenarioService.GetAllAsync();
+
+    async Task OpenEditDialog(CyberScenario scenario)
+    {
+        var res = await DialogService.OpenAsync<ScenarioEditor>("Управление сценарием",
+                  new Dictionary<string, object> { { "Item", scenario } },
+                  new DialogOptions { Width = "700px" });
+        if (res == true) await Refresh();
+    }
+
+    async Task OpenDetails(CyberScenario scenario)
+    {
+        await DialogService.OpenAsync<ScenarioDetails>(scenario.Title,
+              new Dictionary<string, object> { { "Item", scenario } },
+              new DialogOptions { Width = "900px", Height = "700px" });
+    }
+
+    async Task DeleteItem(int id)
+    {
+        var confirm = await DialogService.Confirm("Удалить сценарий из базы навсегда?");
+        if (confirm == true)
+        {
+            await ScenarioService.DeleteAsync(id);
+            await Refresh();
+            NotificationService.Notify(NotificationSeverity.Success, "Система", "Данные удалены");
+        }
+    }
+}

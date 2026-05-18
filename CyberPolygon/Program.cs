@@ -9,6 +9,8 @@ using Radzen;
 var builder = WebApplication.CreateBuilder(args);
 
 
+// Сервис для работы с бд
+builder.Services.AddScoped<ScenarioService>();
 //Подключение сервиса Radzen
 builder.Services.AddRazorPages();
 builder.Services.AddRadzenComponents();
@@ -44,11 +46,14 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 });
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-builder.Services.AddIdentityCore<ApplicationUser>(options =>
-    {
-        options.SignIn.RequireConfirmedAccount = true;
-        options.Stores.SchemaVersion = IdentitySchemaVersions.Version3;
+builder.Services.AddIdentityCore<ApplicationUser>(options => {
+        options.SignIn.RequireConfirmedAccount = false;
+        // Твои настройки паролей, если нужны
     })
+    .AddRoles<IdentityRole>() // ВКЛЮЧАЕМ РОЛИ
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddSignInManager()
+    .AddDefaultTokenProviders()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager()
     .AddDefaultTokenProviders();
