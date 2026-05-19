@@ -2,37 +2,152 @@
 @inject DialogService DialogService
 
 <RadzenTemplateForm TItem="CyberScenario" Data="@Item" Submit="@OnSave">
-    <div class="row">
+    <div class="row custom-editor-form" style="max-height: 600px; overflow-y: auto; padding-right: 10px;">
         <div class="col-12 mb-3">
-            <RadzenLabel Text="Название" Style="color:aliceblue;" />
-            <RadzenTextBox @bind-Value="@Item.Title" class="w-100" />
+            <label class="cyber-label">Название</label>
+            <RadzenTextBox @bind-Value="@Item.Title" class="w-100 dark-input" />
         </div>
         <div class="col-12 mb-3">
-            <RadzenLabel Text="Краткое описание" Style="color:aliceblue;" />
-            <RadzenTextArea @bind-Value="@Item.Description" class="w-100" />
+            <label class="cyber-label">Краткое описание</label>
+            <RadzenTextArea @bind-Value="@Item.Description" class="w-100 dark-input" Style="height:60px;" />
         </div>
-        <div class="col-12 mb-3">
-            <RadzenLabel Text="Схема (загрузка файла)" Style="color:aliceblue;" />
-            <InputFile OnChange="HandleFileUpload" class="form-control bg-dark text-white" />
+        <div class="col-md-6 mb-3">
+            <label class="cyber-label">Режим выполнения теста</label>
+            <RadzenDropDown @bind-Value="@Item.GameMode" TValue="ScenarioGameMode"
+                            Data="@(Enum.GetValues(typeof(ScenarioGameMode)))" class="w-100 dark-input">
+                <Template Context="mode">
+                    @if ((ScenarioGameMode)mode == ScenarioGameMode.AllAtOnce)
+                    {
+                        <span>Доступны все вопросы сразу</span>
+                    }
+                    else
+                    {
+
+                        <span>Последовательно (по очереди)</span>
+                    }
+                </Template>
+            </RadzenDropDown>
         </div>
-        <RadzenTabs class="w-100 mt-3">
+        <div class="col-md-6 mb-3">
+            <label class="cyber-label">Схема (загрузка файла)</label>
+            <InputFile OnChange="HandleFileUpload" class="form-control bg-dark text-white border-secondary" />
+        </div>
+
+        <RadzenTabs class="w-100 mt-3 custom-tabs">
             <Tabs>
                 <RadzenTabsItem Text="Легенда">
-                    <RadzenHtmlEditor @bind-Value="@Item.Legend" style="height: 200px; color:aliceblue;" />
+                    <RadzenHtmlEditor @bind-Value="@Item.Legend" style="height: 250px; background:#1e2227; color:aliceblue;" />
                 </RadzenTabsItem>
-                <RadzenTabsItem Text="Задание">
-                    <RadzenHtmlEditor @bind-Value="@Item.Task" style="height: 200px; color:aliceblue;" />
+                <RadzenTabsItem Text="Задания и Вопросы">
+                    <div class="questions-container p-2">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 style="color: #00eeff; margin:0;">Конструктор интерактивного теста</h5>
+                            <RadzenButton Text="Добавить вопрос" Icon="add" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Small"
+                                          Click="@AddQuestion" />
+                        </div>
+
+                        @if (!Item.Questions.Any())
+                        {
+                            <div class="text-center p-4 border border-secondary border-dashed rounded" style="color: #8b949e;">
+                                Вопросы еще не добавлены. Задание будет пустым.
+                            </div>
+                        }
+
+                        @foreach (var q in Item.Questions)
+                        {
+                            var index = Item.Questions.IndexOf(q);
+                            <div class="question-card mb-3 p-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-secondary">
+                                    <span style="color:#00eeff; font-weight:bold;">Вопрос №@(index + 1)</span>
+                                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall" Variant="Variant.Outlined"
+                                                  Click="@(() => RemoveQuestion(q))" />
+                                </div>
+                                <div class="row">
+                                    <div class="col-12 mb-2">
+                                        <label class="cyber-sub-label">Формулировка вопроса</label>
+                                        <RadzenTextBox @bind-Value="@q.Text" Placeholder="Например: Какой порт использует SSH?" class="w-100 dark-input" />
+                                    </div>
+                                    <div class="col-md-6 mb-2">
+                                        <label class="cyber-sub-label" style="color: #28a745;">Эталонный ответ (Пример ответа)</label>
+                                        <RadzenTextBox @bind-Value="@q.CorrectAnswer" Placeholder="Например: 22" class="w-100 dark-input success-border" />
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <label class="cyber-sub-label" style="color:#ffd700;">Награда (+ баллы)</label>
+                                        <RadzenNumeric @bind-Value="@q.AwardPoints" Min="1" class="w-100 dark-input" />
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <label class="cyber-sub-label" style="color:#ff4444;">Штраф (- баллы)</label>
+                                        <RadzenNumeric @bind-Value="@q.PenaltyPoints" Min="0" class="w-100 dark-input" />
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
                 </RadzenTabsItem>
             </Tabs>
         </RadzenTabs>
     </div>
-    <div class="mt-4 text-right">
-        <RadzenButton Text="Сохранить в БД" ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Info" />
+    <div class="mt-4 text-right d-flex justify-content-end">
+        <RadzenButton Text="Сохранить изменения" ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Info" class="px-4" />
     </div>
 </RadzenTemplateForm>
 
+<style>
+    .cyber-label {
+        color: #00eeff !important;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 5px;
+        display: block;
+    }
+
+    .cyber-sub-label {
+        color: #e1e4e8;
+        font-size: 0.8rem;
+        margin-bottom: 3px;
+        display: block;
+    }
+
+    .dark-input, .dark-input input {
+        background-color: #161b22 !important;
+        border: 1px solid #30363d !important;
+        color: #ffffff !important;
+    }
+
+    .success-border {
+        border: 1px solid #28a745 !important;
+    }
+
+    .question-card {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid #30363d;
+        border-radius: 6px;
+    }
+
+    .border-dashed {
+        border-style: dashed !important;
+    }
+    /* Исправление цветов вкладок */
+    .custom-tabs .rz-tabview-nav li:not(.rz-tabview-selected) a span {
+        color: #8b949e !important;
+    }
+
+    .custom-tabs .rz-tabview-nav li.rz-tabview-selected a span {
+        color: #00eeff !important;
+    }
+</style>
+
 @code {
     [Parameter] public CyberScenario Item { get; set; } = new();
+
+    protected override void OnInitialized()
+    {
+        Item.Questions ??= new List<ScenarioQuestion>();
+    }
+
+    void AddQuestion() => Item.Questions.Add(new ScenarioQuestion { AwardPoints = 10, PenaltyPoints = 5 });
+    void RemoveQuestion(ScenarioQuestion q) => Item.Questions.Remove(q);
 
     async Task HandleFileUpload(InputFileChangeEventArgs e)
     {

@@ -17,7 +17,10 @@ public class ScenarioService
     public async Task<List<CyberScenario>> GetAllAsync()
     {
         using var context = await _contextFactory.CreateDbContextAsync();
-        return await context.Scenarios.ToListAsync(); // Настоящий асинхронный метод
+        // Добавляем Include, чтобы подтягивать вопросы из БД!
+        return await context.Scenarios
+            .Include(s => s.Questions)
+            .ToListAsync();
     }
 
     // Сохранение данных
@@ -26,11 +29,49 @@ public class ScenarioService
         using var context = await _contextFactory.CreateDbContextAsync();
 
         if (scenario.Id == 0)
+        {
             context.Scenarios.Add(scenario);
+        }
         else
-            context.Scenarios.Update(scenario);
+        {
+            // Для корректного обновления графа связанных данных (включая удаление/добавление вопросов)
+            var existingScenario = await context.Scenarios
+                .Include(s => s.Questions)
+                .FirstOrDefaultAsync(s => s.Id == scenario.Id);
 
-        await context.SaveChangesAsync(); // Настоящий асинхронный метод
+            if (existingScenario != null)
+            {
+                context.Entry(existingScenario).CurrentValues.SetValues(scenario);
+                existingScenario.GameMode = scenario.GameMode;
+
+                // Удаляем вопросы, которых больше нет в измененном объекте
+                foreach (var existingQuestion in existingScenario.Questions.ToList())
+                {
+                    if (!scenario.Questions.Any(q => q.Id == existingQuestion.Id))
+                        context.Remove(existingQuestion);
+                }
+
+                // Добавляем или обновляем вопросы
+                foreach (var q in scenario.Questions)
+                {
+                    var existingQ = existingScenario.Questions.FirstOrDefault(eq => eq.Id == q.Id);
+                    if (existingQ == null)
+                    {
+                        existingScenario.Questions.Add(q);
+                    }
+                    else
+                    {
+                        context.Entry(existingQ).CurrentValues.SetValues(q);
+                    }
+                }
+            }
+            else
+            {
+                context.Scenarios.Update(scenario);
+            }
+        }
+
+        await context.SaveChangesAsync();
     }
 
     // Удаление данных
@@ -67,5 +108,76 @@ public class ScenarioService
         await stream.CopyToAsync(fs);
 
         return $"/uploads/schemas/{fileName}";
+    }
+
+    // 1. Получить прогресс конкретного пользователя
+    public async Task<UserScenarioProgress?> GetUserProgressAsync(string userId, int scenarioId)
+    {
+        using var context = await _contextFactory.CreateDbContextAsync();
+        return await context.UserProgresses
+            .FirstOrDefaultAsync(p => p.UserId == userId && p.CyberScenarioId == scenarioId);
+    }
+
+    // 2. Сохранить успешное прохождение
+    public async Task SaveUserProgressAsync(string userId, int scenarioId, int score)
+    {
+        using var context = await _contextFactory.CreateDbContextAsync();
+        var progress = await context.UserProgresses
+            .FirstOrDefaultAsync(p => p.UserId == userId && p.CyberScenarioId == scenarioId);
+
+        if (progress == null)
+        {
+            context.UserProgresses.Add(new UserScenarioProgress
+            {
+                UserId = userId,
+                CyberScenarioId = scenarioId,
+                Score = score,
+                IsCompleted = true,
+                CompletedAt = DateTime.UtcNow
+            });
+        }
+        else
+        {
+            progress.Score = score;
+            progress.IsCompleted = true;
+            progress.CompletedAt = DateTime.UtcNow;
+            context.UserProgresses.Update(progress);
+        }
+        await context.SaveChangesAsync();
+    }
+
+    // 3. АДМИН: Сбросить прогресс ВСЕХ пользователей для конкретного сценария
+    public async Task ResetAllProgressForScenarioAsync(int scenarioId)
+    {
+        using var context = await _contextFactory.CreateDbContextAsync();
+        var records = await context.UserProgresses.Where(p => p.CyberScenarioId == scenarioId).ToListAsync();
+        if (records.Any())
+        {
+            context.UserProgresses.RemoveRange(records);
+            await context.SaveChangesAsync();
+        }
+    }
+
+    public async Task<List<UserScenarioProgress>> GetAllProgressForScenarioAsync(int scenarioId)
+    {
+        using var context = await _contextFactory.CreateDbContextAsync();
+        return await context.UserProgresses
+            .Where(p => p.CyberScenarioId == scenarioId && p.IsCompleted)
+            .OrderByDescending(p => p.CompletedAt)
+            .ToListAsync();
+    }
+
+    // АДМИН: Точечный сброс прогресса одного пользователя
+    public async Task ResetUserProgressAsync(string userId, int scenarioId)
+    {
+        using var context = await _contextFactory.CreateDbContextAsync();
+        var record = await context.UserProgresses
+            .FirstOrDefaultAsync(p => p.UserId == userId && p.CyberScenarioId == scenarioId);
+
+        if (record != null)
+        {
+            context.UserProgresses.Remove(record);
+            await context.SaveChangesAsync();
+        }
     }
 }

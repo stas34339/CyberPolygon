@@ -10,6 +10,9 @@ namespace CyberPolygon.Data
     {
         // Строка должна быть ЗДЕСЬ (внутри класса)
         public DbSet<CyberScenario> Scenarios { get; set; }
+        public DbSet<ScenarioQuestion> ScenarioQuestions { get; set; }
+
+        public DbSet<UserScenarioProgress> UserProgresses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
