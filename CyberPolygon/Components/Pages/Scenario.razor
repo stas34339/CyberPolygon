@@ -1,4 +1,4 @@
-﻿@page "/"
+﻿@page "/scenario"
 @using CyberPolygon.Components.Components
 @rendermode InteractiveServer
 
@@ -23,7 +23,7 @@
     }
     else if (!scenarios.Any())
     {
-        <div class="empty-db">База данных пуста. Сценарии не обнаружены.</div>
+        <div class="empty-db" style="color:white">База данных пуста. Сценарии не обнаружены.</div>
     }
     else
     {

@@ -90,4 +90,44 @@ app.MapRazorComponents<App>()
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();
 
+
+// АВТОМАТИЧЕСКОЕ СОЗДАНИЕ ПОЛЬЗОВАТЕЛЯ ПРИ СТАРТЕ
+
+using (var scope = app.Services.CreateScope())
+{
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+    // Ищем по email, так надежнее
+    var existingUser = await userManager.FindByEmailAsync("user@cyberpolygon.ru");
+    if (existingUser == null)
+    {
+        var newUser = new ApplicationUser
+        {
+            UserName = "user1@cyberpolygon.RU", // Делаем UserName таким же как Email
+            Email = "user1@cyberpolygon.RU",
+            EmailConfirmed = true,
+            NormalizedUserName = "USER1@CYBERPOLYGON.RU", // Принудительно заполняем регистр
+            NormalizedEmail = "USER1@CYBERPOLYGON.RU"
+        };
+
+        // Создаем пользователя с простым паролем
+        var result = await userManager.CreateAsync(newUser, "user1@cyberpolygon.RU");
+
+        if (result.Succeeded)
+        {
+            Console.WriteLine("====== [УСПЕХ] Тестовый пользователь 'user@cyberpolygon.ru' с паролем 'user123' создан! ======");
+        }
+        else
+        {
+            Console.WriteLine("====== [ОШИБКА] Не удалось создать пользователя: ======");
+            foreach (var error in result.Errors)
+            {
+                Console.WriteLine($"- {error.Description}");
+            }
+        }
+    }
+}
+
+
+
 app.Run();
