@@ -152,27 +152,33 @@
                             }
                             else
                             {
-                                <RadzenDataGrid Data="@completedUsers" TItem="UserScenarioProgress" AllowPaging="true" PageSize="5" class="bg-dark">
+                                <RadzenDataGrid Data="@completedUsers" TItem="UserScenarioProgressDto" AllowPaging="true" PageSize="5" class="bg-dark">
                                     <Columns>
-                                        <RadzenDataGridColumn TItem="UserScenarioProgress" Property="UserId" Title="ID Пользователя">
+                                        @* Колонка Пользователя (Имя + Email мелким шрифтом) *@
+                                        <RadzenDataGridColumn TItem="UserScenarioProgressDto" Title="Пользователь">
                                             <Template Context="data">
-                                                <span class="text-secondary" style="font-size: 0.85rem;">@data.UserId</span>
+                                                <div class="d-flex flex-column">
+                                                    <span class="text-white font-weight-bold">@data.UserName</span>
+                                                    <span class="text-muted" style="font-size: 0.8rem;">@data.Email</span>
+                                                </div>
                                             </Template>
                                         </RadzenDataGridColumn>
-                                        <RadzenDataGridColumn TItem="UserScenarioProgress" Property="Score" Title="Баллы" Width="100px" TextAlign="TextAlign.Center">
+
+                                        <RadzenDataGridColumn TItem="UserScenarioProgressDto" Property="Score" Title="Баллы" Width="100px" TextAlign="TextAlign.Center">
                                             <Template Context="data">
-                                                <b class="text-success">@data.Score</b>
+                                                <b class="text-success-neon">@data.Score XP</b>
                                             </Template>
                                         </RadzenDataGridColumn>
-                                        <RadzenDataGridColumn TItem="UserScenarioProgress" Property="CompletedAt" Title="Дата" Width="160px">
+
+                                        <RadzenDataGridColumn TItem="UserScenarioProgressDto" Property="CompletedAt" Title="Дата прохождения" Width="160px">
                                             <Template Context="data">
-                                                @data.CompletedAt.ToLocalTime().ToString("dd.MM.yy HH:mm")
+                                                @data.CompletedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
                                             </Template>
                                         </RadzenDataGridColumn>
-                                        <RadzenDataGridColumn TItem="UserScenarioProgress" Title="Действия" Width="100px" TextAlign="TextAlign.Center">
+
+                                        <RadzenDataGridColumn TItem="UserScenarioProgressDto" Title="Действия" Width="100px" TextAlign="TextAlign.Center">
                                             <Template Context="data">
                                                 <RadzenButton Icon="restart_alt" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.ExtraSmall"
-                                                              MouseEnter="@(args => NotificationService.Notify(new NotificationMessage { Severity = NotificationSeverity.Warning, Summary = "Внимание", Detail = "Сброс для одного юзера", Duration = 2000 }))"
                                                               Click="@(async () => await ResetSingleUser(data.UserId))" />
                                             </Template>
                                         </RadzenDataGridColumn>
@@ -267,7 +273,7 @@
 
 @code {
     [Parameter] public CyberScenario Item { get; set; } = new();
-    private List<UserScenarioProgress> completedUsers = new();
+    private List<UserScenarioProgressDto> completedUsers = new();
     private bool isAdmin = false;
 
     public class UserQuestionState
@@ -292,10 +298,12 @@
         // 1. Получаем ID текущего пользователя
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
+
         if (user.Identity?.IsAuthenticated == true)
         {
             currentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
             isAdmin = user.IsInRole("Admin");
+
             if (isAdmin)
             {
                 await LoadAdminData();
@@ -353,7 +361,7 @@
         }
     }
 
-    // Метод для АДМИНА
+    // Метод для АДМИНА (Сброс всех)
     private async Task ResetProgress()
     {
         await ScenarioService.ResetAllProgressForScenarioAsync(Item.Id);
@@ -368,6 +376,11 @@
             q.FeedbackMessage = string.Empty;
         }
 
+        if (isAdmin)
+        {
+            await LoadAdminData();
+        }
+
         NotificationService.Notify(NotificationSeverity.Success, "Система", "Прогресс всех пользователей для данного сценария обнулен.");
     }
 
@@ -376,14 +389,14 @@
         completedUsers = await ScenarioService.GetAllProgressForScenarioAsync(Item.Id);
     }
 
-    // Метод для точечного сброса
+    // Метод для точечного сброса одного юзера
     private async Task ResetSingleUser(string targetUserId)
     {
         await ScenarioService.ResetUserProgressAsync(targetUserId, Item.Id);
-        
+
         // Обновляем таблицу
         await LoadAdminData();
-        
+
         // Если админ сбросил свой собственный прогресс, обновляем его экран
         if (targetUserId == currentUserId)
         {
@@ -396,7 +409,7 @@
                 q.FeedbackMessage = string.Empty;
             }
         }
-        
+
         NotificationService.Notify(NotificationSeverity.Info, "Система", "Прогресс пользователя успешно обнулен.");
     }
 }

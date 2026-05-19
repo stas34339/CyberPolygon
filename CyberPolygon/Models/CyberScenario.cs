@@ -57,3 +57,13 @@ public class UserScenarioProgress
     public bool IsCompleted { get; set; }
     public DateTime CompletedAt { get; set; }
 }
+public class UserScenarioProgressDto
+{
+    public int Id { get; set; }
+    public string UserId { get; set; } = string.Empty;
+    public string UserName { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public int Score { get; set; }
+    public bool IsCompleted { get; set; }
+    public DateTime CompletedAt { get; set; }
+}

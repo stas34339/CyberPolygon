@@ -158,11 +158,25 @@ public class ScenarioService
         }
     }
 
-    public async Task<List<UserScenarioProgress>> GetAllProgressForScenarioAsync(int scenarioId)
+    public async Task<List<UserScenarioProgressDto>> GetAllProgressForScenarioAsync(int scenarioId)
     {
         using var context = await _contextFactory.CreateDbContextAsync();
+
         return await context.UserProgresses
             .Where(p => p.CyberScenarioId == scenarioId && p.IsCompleted)
+            .Join(context.Users, // Соединяем с таблицей пользователей Identity
+                progress => progress.UserId, // Ключ из таблицы прогресса
+                user => user.Id,             // Ключ из таблицы пользователей
+                (progress, user) => new UserScenarioProgressDto // Проецируем в наш DTO
+                {
+                    Id = progress.Id,
+                    UserId = progress.UserId,
+                    UserName = user.UserName ?? "Без имени",
+                    Email = user.Email ?? string.Empty,
+                    Score = progress.Score,
+                    IsCompleted = progress.IsCompleted,
+                    CompletedAt = progress.CompletedAt
+                })
             .OrderByDescending(p => p.CompletedAt)
             .ToListAsync();
     }
