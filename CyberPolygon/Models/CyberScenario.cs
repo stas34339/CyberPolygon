@@ -56,6 +56,8 @@ public class UserScenarioProgress
     public int Score { get; set; }
     public bool IsCompleted { get; set; }
     public DateTime CompletedAt { get; set; }
+
+    public CyberScenario Scenario { get; set; }
 }
 public class UserScenarioProgressDto
 {

@@ -7,7 +7,7 @@
 @inject AuthenticationStateProvider AuthProvider
 @inject NavigationManager NavigationManager
 
-<PageTitle>Панель управления — КИБЕРПОЛИГОН</PageTitle>
+<PageTitle>Личный кабинет</PageTitle>
 
 <style>
     :root {
@@ -89,7 +89,7 @@
             <RadzenIcon Icon="dns" Style="color: var(--accent-blue);" />
             <RadzenStack Gap="0">
                 <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-m-0 text-cyan" Style="font-weight: bold;">
-                    ID ПОЛЬЗОВАТЕЛЯ: @UserDisplayName
+                    Имя пользователя: @UserDisplayName
                 </RadzenText>
                 <RadzenText TextStyle="TextStyle.Body2" class="rz-m-0 text-muted">
                     Система мониторинга: <span class="text-green">ONLINE</span> | База сценариев: <span class="text-cyan">ПОДКЛЮЧЕНО</span>
@@ -160,13 +160,19 @@
                 }
                 else
                 {
-                    <RadzenDataGrid Data="@completedScenariosList" TItem="dynamic" Density="Density.Default">
+                    <RadzenDataGrid Data="@completedScenariosList" TItem="UserScenarioProgress" Density="Density.Default">
                         <Columns>
-                            <RadzenDataGridColumn TItem="dynamic" Property="Name" Title="СЦЕНАРИЙ" />
-                            <RadzenDataGridColumn TItem="dynamic" Property="Date" Title="ДАТА ЗАВЕРШЕНИЯ" Width="200px" />
-                            <RadzenDataGridColumn TItem="dynamic" Property="Score" Title="РЕЗУЛЬТАТ" Width="150px">
+                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="СЦЕНАРИЙ">
                                 <Template Context="data">
-                                    <span class="text-green">100% SUCCESS</span>
+                                    @data.Scenario?.Title
+                                </Template>
+                            </RadzenDataGridColumn>
+
+                            <RadzenDataGridColumn TItem="UserScenarioProgress" Property="CompletedAt" Title="ДАТА ЗАВЕРШЕНИЯ" Width="200px" FormatString="{0:dd.MM.yyyy HH:mm}" />
+
+                            <RadzenDataGridColumn TItem="UserScenarioProgress" Property="Score" Title="РЕЗУЛЬТАТ" Width="150px">
+                                <Template Context="data">
+                                    <span class="text-green">@data.Score XP</span>
                                 </Template>
                             </RadzenDataGridColumn>
                         </Columns>
@@ -184,7 +190,9 @@
     private int totalScenarios = 0;
     private int completedCount = 0;
     private double successRate = 0;
-    private List<dynamic> completedScenariosList = new();
+
+    // Используем конкретный тип, а не dynamic, чтобы RadzenDataGrid работал стабильно
+    private List<UserScenarioProgress> completedScenariosList = new();
 
     [Inject] private IDbContextFactory<ApplicationDbContext> ContextFactory { get; set; }
 
@@ -200,24 +208,23 @@
                 user = await context.Set<ApplicationUser>().FirstOrDefaultAsync(u => u.Id == userId);
             }
 
-            // Подсчет сценариев
+            // 1. Считаем общее количество сценариев
             totalScenarios = await context.Set<CyberScenario>().CountAsync();
 
-            // Примерная логика подсчета прогресса (учитывая ваши предыдущие шаги)
-            try
-            {
-                // Считаем завершенные задачи (если таблица UserTaskProgress существует)
-                
+            // 2. Получаем историю прогресса конкретного пользователя
+            // Предполагаем, что у UserScenarioProgress есть навигационное свойство Scenario
+            completedScenariosList = await context.Set<UserScenarioProgress>()
+                .Include(p => p.Scenario)
+                .Where(p => p.UserId == userId && p.IsCompleted)
+                .OrderByDescending(p => p.CompletedAt)
+                .ToListAsync();
 
-                if (totalScenarios > 0)
-                {
-                    successRate = Math.Round(((double)completedCount / totalScenarios) * 100, 1);
-                }
-            }
-            catch
+            // 3. Вычисления
+            completedCount = completedScenariosList.Count;
+
+            if (totalScenarios > 0)
             {
-                // Если таблицы еще нет в БД, отобразим 0
-                completedCount = 0;
+                successRate = Math.Round(((double)completedCount / totalScenarios) * 100, 1);
             }
         }
     }
