@@ -3,6 +3,7 @@ using System;
 using CyberPolygon.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CyberPolygon.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260514124157_AddScenariosTable")]
+    partial class AddScenariosTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -59,7 +62,8 @@ namespace CyberPolygon.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("PhoneNumber")
-                        .HasColumnType("text");
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
 
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("boolean");
@@ -97,18 +101,6 @@ namespace CyberPolygon.Migrations
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<string>("DocumentationFileName")
-                        .HasColumnType("text");
-
-                    b.Property<string>("DocumentationPath")
-                        .HasColumnType("text");
-
-                    b.Property<int>("GameMode")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("IsVisible")
-                        .HasColumnType("boolean");
 
                     b.Property<string>("Legend")
                         .IsRequired()
@@ -209,10 +201,12 @@ namespace CyberPolygon.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
                     b.Property<string>("LoginProvider")
-                        .HasColumnType("text");
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
 
                     b.Property<string>("ProviderKey")
-                        .HasColumnType("text");
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
 
                     b.Property<string>("ProviderDisplayName")
                         .HasColumnType("text");
@@ -226,6 +220,23 @@ namespace CyberPolygon.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("AspNetUserLogins", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserPasskey<string>", b =>
+                {
+                    b.Property<byte[]>("CredentialId")
+                        .HasMaxLength(1024)
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("CredentialId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserPasskeys", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
@@ -249,10 +260,12 @@ namespace CyberPolygon.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("LoginProvider")
-                        .HasColumnType("text");
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
 
                     b.Property<string>("Name")
-                        .HasColumnType("text");
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
 
                     b.Property<string>("Value")
                         .HasColumnType("text");
@@ -260,95 +273,6 @@ namespace CyberPolygon.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("AspNetUserTokens", (string)null);
-                });
-
-            modelBuilder.Entity("ScenarioDocument", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CyberScenarioId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("FilePath")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CyberScenarioId");
-
-                    b.ToTable("ScenarioDocument");
-                });
-
-            modelBuilder.Entity("ScenarioQuestion", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AwardPoints")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("CorrectAnswer")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("CyberScenarioId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("PenaltyPoints")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Text")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CyberScenarioId");
-
-                    b.ToTable("ScenarioQuestions");
-                });
-
-            modelBuilder.Entity("UserScenarioProgress", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CompletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("CyberScenarioId")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("IsCompleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("Score")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CyberScenarioId");
-
-                    b.ToTable("UserProgresses");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -378,6 +302,57 @@ namespace CyberPolygon.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserPasskey<string>", b =>
+                {
+                    b.HasOne("CyberPolygon.Data.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("Microsoft.AspNetCore.Identity.IdentityPasskeyData", "Data", b1 =>
+                        {
+                            b1.Property<byte[]>("IdentityUserPasskeyCredentialId");
+
+                            b1.Property<byte[]>("AttestationObject")
+                                .IsRequired();
+
+                            b1.Property<byte[]>("ClientDataJson")
+                                .IsRequired();
+
+                            b1.Property<DateTimeOffset>("CreatedAt");
+
+                            b1.Property<bool>("IsBackedUp");
+
+                            b1.Property<bool>("IsBackupEligible");
+
+                            b1.Property<bool>("IsUserVerified");
+
+                            b1.Property<string>("Name");
+
+                            b1.Property<byte[]>("PublicKey")
+                                .IsRequired();
+
+                            b1.Property<long>("SignCount");
+
+                            b1.PrimitiveCollection<string>("Transports");
+
+                            b1.HasKey("IdentityUserPasskeyCredentialId");
+
+                            b1.ToTable("AspNetUserPasskeys");
+
+                            b1
+                                .ToJson("Data")
+                                .HasColumnType("jsonb");
+
+                            b1.WithOwner()
+                                .HasForeignKey("IdentityUserPasskeyCredentialId");
+                        });
+
+                    b.Navigation("Data")
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -400,44 +375,6 @@ namespace CyberPolygon.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("ScenarioDocument", b =>
-                {
-                    b.HasOne("CyberScenario", "CyberScenario")
-                        .WithMany("Documents")
-                        .HasForeignKey("CyberScenarioId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CyberScenario");
-                });
-
-            modelBuilder.Entity("ScenarioQuestion", b =>
-                {
-                    b.HasOne("CyberScenario", null)
-                        .WithMany("Questions")
-                        .HasForeignKey("CyberScenarioId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("UserScenarioProgress", b =>
-                {
-                    b.HasOne("CyberScenario", "Scenario")
-                        .WithMany()
-                        .HasForeignKey("CyberScenarioId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Scenario");
-                });
-
-            modelBuilder.Entity("CyberScenario", b =>
-                {
-                    b.Navigation("Documents");
-
-                    b.Navigation("Questions");
                 });
 #pragma warning restore 612, 618
         }

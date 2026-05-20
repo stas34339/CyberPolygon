@@ -1,0 +1,337 @@
+﻿@page "/profile"
+@using CyberPolygon.Data
+@using Microsoft.EntityFrameworkCore
+@using Radzen
+@using Radzen.Blazor
+@inject AuthenticationStateProvider AuthProvider
+@inject NavigationManager NavigationManager
+
+<PageTitle>Личный кабинет | Киберполигон</PageTitle>
+
+<style>
+    :root {
+        --bg-dark: #1e1e1e;
+        --bg-card: #252526;
+        --accent-blue: #00bfff;
+        --accent-green: #64ffda;
+        --accent-purple: #b388ff; /* Новый цвет для админ-панели */
+        --border-color: #333333;
+        --text-main: #e1e1e1;
+        --text-muted: #9da5b4;
+    }
+
+    .dashboard-wrapper {
+        background-color: var(--bg-dark);
+        min-height: 100vh;
+        color: var(--text-main);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .cyber-card {
+        background-color: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 4px !important;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        transition: all 0.2s ease-in-out;
+    }
+
+        .cyber-card:hover {
+            border-color: var(--accent-blue) !important;
+            box-shadow: 0 0 15px rgba(0, 191, 255, 0.1);
+        }
+
+    /* Специальный бордер для админ-карточек, чтобы визуально их отделить */
+    .admin-card {
+        border: 1px solid rgba(179, 136, 255, 0.2) !important;
+    }
+
+        .admin-card:hover {
+            border-color: var(--accent-purple) !important;
+            box-shadow: 0 0 15px rgba(179, 136, 255, 0.15);
+        }
+
+    .stat-value {
+        font-size: 3rem;
+        font-weight: 700;
+        color: var(--accent-blue);
+        line-height: 1;
+    }
+
+    .rz-datagrid {
+        --rz-grid-header-background-color: #2d2d30;
+        --rz-grid-header-color: var(--accent-blue);
+        --rz-grid-cell-color: var(--text-main);
+        border: none !important;
+    }
+
+    .rz-datagrid-data td {
+        background-color: var(--bg-card) !important;
+        border-bottom: 1px solid var(--border-color) !important;
+    }
+
+    .text-cyan {
+        color: var(--accent-blue) !important;
+    }
+
+    .text-green {
+        color: var(--accent-green) !important;
+    }
+
+    .text-purple {
+        color: var(--accent-purple) !important;
+    }
+
+    .text-muted {
+        color: var(--text-muted) !important;
+    }
+
+    .status-alert {
+        background: rgba(45, 45, 48, 0.8) !important;
+        border: 1px solid var(--border-color) !important;
+        border-left: 4px solid var(--accent-blue) !important;
+    }
+
+    /* --- СТИЛИЗАЦИЯ КНОПКИ ДЛЯ ВСЕХ ПРОЕКТОВ --- */
+    .cyber-btn-profile {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 22px;
+        font-family: 'Courier New', Courier, monospace;
+        text-transform: uppercase;
+        text-decoration: none !important;
+        font-weight: bold;
+        font-size: 0.9rem;
+        letter-spacing: 1px;
+        border: 1px solid var(--accent-blue);
+        background-color: rgba(0, 191, 255, 0.05);
+        color: var(--accent-blue);
+        border-radius: 4px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+        .cyber-btn-profile:hover {
+            background-color: var(--accent-blue);
+            color: #121212 !important;
+            box-shadow: 0 0 15px rgba(0, 191, 255, 0.4);
+        }
+</style>
+
+<div class="dashboard-wrapper rz-p-4 rz-p-md-6">
+
+    @* ВЕРХНЯЯ ПАНЕЛЬ СТАТУСА *@
+    <RadzenAlert AlertStyle="AlertStyle.Base" Variant="Variant.Flat" AllowClose="false" class="rz-mb-6 status-alert">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+            <RadzenIcon Icon="dns" Style="color: var(--accent-blue);" />
+            <RadzenStack Gap="0">
+                <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-m-0 text-cyan" Style="font-weight: bold;">
+                    Имя пользователя: @UserDisplayName
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" class="rz-m-0 text-muted">
+                    Система мониторинга: <span class="text-green">ONLINE</span> | База сценариев: <span class="text-cyan">ПОДКЛЮЧЕНО</span>
+                </RadzenText>
+            </RadzenStack>
+        </RadzenStack>
+    </RadzenAlert>
+
+    @* ЛИЧНЫЕ МЕТРИКИ ПОЛЬЗОВАТЕЛЯ *@
+    <RadzenText TextStyle="TextStyle.H6" class="rz-mb-3" Style="font-weight: 600; letter-spacing: 0.5px;">Личная статистика</RadzenText>
+    <RadzenRow Gap="1rem" class="rz-mb-6">
+        <RadzenColumn Size="12" SizeMD="4">
+            <RadzenCard class="cyber-card">
+                <RadzenStack Gap="0.5rem">
+                    <RadzenText TextStyle="TextStyle.Overline" class="text-muted">Всего сценариев в БД</RadzenText>
+                    <div class="stat-value">@totalScenarios</div>
+                    <RadzenText TextStyle="TextStyle.Caption" class="text-cyan">Доступно для запуска</RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+
+        <RadzenColumn Size="12" SizeMD="4">
+            <RadzenCard class="cyber-card">
+                <RadzenStack Gap="0.5rem">
+                    <RadzenText TextStyle="TextStyle.Overline" class="text-muted">Пройдено сценариев</RadzenText>
+                    <div class="stat-value" style="color: var(--accent-green)">@completedCount</div>
+                    <RadzenText TextStyle="TextStyle.Caption" class="text-green">Завершено успешно</RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+
+        <RadzenColumn Size="12" SizeMD="4">
+            <RadzenCard class="cyber-card">
+                <RadzenStack Gap="0.5rem">
+                    <RadzenText TextStyle="TextStyle.Overline" class="text-muted">Общая эффективность</RadzenText>
+                    <div class="stat-value" style="color: #f1c40f">@successRate%</div>
+                    <RadzenProgressBar Value="@successRate" ShowValue="false"
+                                       ProgressBarStyle="ProgressBarStyle.Warning"
+                                       Style="height: 6px; background: #333;" />
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+
+    @* ГЛОБАЛЬНЫЕ МЕТРИКИ ДЛЯ АДМИНИСТРАТОРА (ИНФРАСТРУКТУРА) *@
+    <AuthorizeView Roles="Admin">
+        <Authorized>
+            <RadzenText TextStyle="TextStyle.H6" class="rz-mb-3 text-purple" Style="font-weight: 600; letter-spacing: 0.5px;">
+                <RadzenIcon Icon="admin_panel_settings" Style="vertical-align: middle; margin-right: 5px;" /> Терминал управления платформой
+            </RadzenText>
+            <RadzenRow Gap="1rem" class="rz-mb-6">
+                @* Агенты в системе *@
+                <RadzenColumn Size="12" SizeMD="4">
+                    <RadzenCard class="cyber-card admin-card">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenText TextStyle="TextStyle.Overline" class="text-muted">Зарегистрировано оперативников</RadzenText>
+                            <div class="stat-value" style="color: var(--accent-purple)">@adminTotalUsers</div>
+                            <RadzenText TextStyle="TextStyle.Caption" class="text-purple">Активные учетные записи</RadzenText>
+                        </RadzenStack>
+                    </RadzenCard>
+                </RadzenColumn>
+
+                @* Черновики модулей *@
+                <RadzenColumn Size="12" SizeMD="4">
+                    <RadzenCard class="cyber-card admin-card">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenText TextStyle="TextStyle.Overline" class="text-muted">Сценарии в разработке</RadzenText>
+                            <div class="stat-value" style="color: #e74c3c">@adminDraftScenarios</div>
+                            <RadzenText TextStyle="TextStyle.Caption" style="color: #e74c3c">Статус: Черновик (скрыты)</RadzenText>
+                        </RadzenStack>
+                    </RadzenCard>
+                </RadzenColumn>
+
+                @* Успешные атаки глобально *@
+                <RadzenColumn Size="12" SizeMD="4">
+                    <RadzenCard class="cyber-card admin-card">
+                        <RadzenStack Gap="0.5rem">
+                            <RadzenText TextStyle="TextStyle.Overline" class="text-muted">Глобально решено симуляций</RadzenText>
+                            <div class="stat-value" style="color: #3498db">@adminGlobalCompletions</div>
+                            <RadzenText TextStyle="TextStyle.Caption" style="color: #3498db">Суммарный захват флагов</RadzenText>
+                        </RadzenStack>
+                    </RadzenCard>
+                </RadzenColumn>
+            </RadzenRow>
+        </Authorized>
+    </AuthorizeView>
+
+    @* ЖУРНАЛ ПРОХОЖДЕНИЯ *@
+    <RadzenRow>
+        <RadzenColumn Size="12">
+            <RadzenCard class="cyber-card" Style="padding: 0;">
+                <div class="rz-p-4" style="border-bottom: 1px solid var(--border-color);">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenIcon Icon="list_alt" class="text-cyan" />
+                        <RadzenText TextStyle="TextStyle.H6" class="rz-m-0">Архив завершенных сценариев</RadzenText>
+                    </RadzenStack>
+                </div>
+
+                @if (completedScenariosList == null || !completedScenariosList.Any())
+                {
+                    <div class="rz-p-10 d-flex flex-column align-items-center justify-content-center" style="text-align: center; color: var(--text-muted); min-height: 250px;">
+                        <RadzenIcon Icon="find_in_page" Style="font-size: 3rem; opacity: 0.2;" />
+                        <RadzenText TextStyle="TextStyle.Body1" class="rz-mt-2">Активных записей не обнаружено</RadzenText>
+
+                        @* ОБНОВЛЕННАЯ СТИЛЬНАЯ КНОПКА *@
+                        <a href="scenario" class="cyber-btn-profile rz-mt-5">
+                            <RadzenIcon Icon="list" Style="font-size: 1.1rem; margin-right: 8px; vertical-align: text-bottom;" /> ВСЕ СЦЕНАРИИ
+                        </a>
+                    </div>
+                }
+                else
+                {
+                    <RadzenDataGrid Data="@completedScenariosList" TItem="UserScenarioProgress" Density="Density.Default">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="СЦЕНАРИЙ">
+                                <Template Context="data">
+                                    @data.Scenario?.Title
+                                </Template>
+                            </RadzenDataGridColumn>
+
+                            <RadzenDataGridColumn TItem="UserScenarioProgress" Property="CompletedAt" Title="ДАТА ЗАВЕРШЕНИЯ" Width="200px" FormatString="{0:dd.MM.yyyy HH:mm}" />
+
+                            <RadzenDataGridColumn TItem="UserScenarioProgress" Property="Score" Title="РЕЗУЛЬТАТ" Width="150px">
+                                <Template Context="data">
+                                    <span class="text-green">@data.Score XP</span>
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                }
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+</div>
+
+@code {
+    private string UserDisplayName => user?.UserName ?? "Guest_User";
+    private ApplicationUser? user;
+
+    private int totalScenarios = 0;
+    private int completedCount = 0;
+    private double successRate = 0;
+
+    // Переменные для административной панели
+    private int adminTotalUsers = 0;
+    private int adminDraftScenarios = 0;
+    private int adminGlobalCompletions = 0;
+
+    private List<UserScenarioProgress> completedScenariosList = new();
+
+    [Inject] private IDbContextFactory<ApplicationDbContext> ContextFactory { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        var isAdmin = authState.User.IsInRole("Admin");
+
+        using (var context = await ContextFactory.CreateDbContextAsync())
+        {
+            if (userId != null)
+            {
+                user = await context.Set<ApplicationUser>().FirstOrDefaultAsync(u => u.Id == userId);
+            }
+
+            // 1. Подсчет сценариев для личной панели (как делали ранее)
+            if (isAdmin)
+            {
+                totalScenarios = await context.Set<CyberScenario>().CountAsync();
+            }
+            else
+            {
+                totalScenarios = await context.Set<CyberScenario>().CountAsync(s => s.IsVisible);
+            }
+
+            // 2. СБОР ДАННЫХ ДЛЯ ТЕРМИНАЛА АДМИНИСТРАТОРА
+            if (isAdmin)
+            {
+                // Считаем вообще всех зарегистрированных пользователей системы
+                adminTotalUsers = await context.Set<ApplicationUser>().CountAsync();
+
+                // Считаем скрытые сценарии, которые сейчас не видны обычным курсантам
+                adminDraftScenarios = await context.Set<CyberScenario>().CountAsync(s => !s.IsVisible);
+
+                // Считаем общее число записей прохождения со статусом "Завершено" по всей платформе
+                adminGlobalCompletions = await context.Set<UserScenarioProgress>().CountAsync(p => p.IsCompleted);
+            }
+
+            // 3. Получаем историю прогресса конкретного пользователя
+            completedScenariosList = await context.Set<UserScenarioProgress>()
+                .Include(p => p.Scenario)
+                .Where(p => p.UserId == userId && p.IsCompleted)
+                .OrderByDescending(p => p.CompletedAt)
+                .ToListAsync();
+
+            completedCount = completedScenariosList.Count;
+
+            if (totalScenarios > 0)
+            {
+                successRate = Math.Round(((double)completedCount / totalScenarios) * 100, 1);
+            }
+            else
+            {
+                successRate = 0;
+            }
+        }
+    }
+}

@@ -1,7 +1,295 @@
 ﻿@page "/"
+@using CyberPolygon.Data
+@using Microsoft.EntityFrameworkCore
+@using Radzen
+@using Radzen.Blazor
 
-<PageTitle>Home</PageTitle>
+@* СЮДА МЫ ДОБАВИМ ИНЖЕКТ ТВОЕГО СЕРВИСА ЧУТЬ ПОЗЖЕ *@
+@inject AuthenticationStateProvider AuthProvider
+@inject NavigationManager NavigationManager
 
-<h1>Hello, world!</h1>
+<PageTitle>КИБЕРПОЛИГОН - Главный терминал</PageTitle>
 
-Welcome to your new app.
+<div class="dashboard-wrapper rz-p-3 rz-p-md-5">
+
+    @* БЛОК 1: ПРИВЕТСТВИЕ И МИССИЯ (COMPACT HERO) *@
+    <div class="hero-section rz-p-4 rz-mb-5">
+        <RadzenStack Gap="1rem">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenIcon Icon="terminal" class="text-cyan" Style="font-size: 2rem;" />
+                <RadzenText TextStyle="TextStyle.H4" class="rz-m-0 text-cyan" Style="font-weight: 700; letter-spacing: 1px;">
+                    ПЛАТФОРМА «КИБЕРПОЛИГОН»
+                </RadzenText>
+            </RadzenStack>
+
+            <RadzenText TextStyle="TextStyle.Body2" Style="max-width: 1000px; line-height: 1.5; font-size: 0.95rem;">
+                Добро пожаловать в главный терминал управления, <strong class="text-green">@UserDisplayName</strong>.
+                Вы находитесь в изолированном цифровом пространстве для отработки навыков информационной безопасности.
+                Здесь теория превращается в практику: исследуйте уязвимости, анализируйте инциденты и повышайте квалификацию без риска для реальной инфраструктуры.
+            </RadzenText>
+
+            @* Исправленные кнопки (убрали багованую иконку, сделали ровный flex) *@
+            <div style="display: flex; gap: 1rem; align-items: center; margin-top: 5px;">
+                <a href="scenario/28/workspace" class="cyber-btn-main">
+                    <RadzenIcon Icon="play_arrow" class="rz-mr-1" /> ОЗНАКОМИТЕЛЬНЫЙ СЦЕНАРИЙ
+                </a>
+                <a href="scenario" class="cyber-btn-secondary">
+                    <RadzenIcon Icon="list" class="rz-mr-1" /> ВСЕ СЦЕНАРИИ
+                </a>
+            </div>
+        </RadzenStack>
+    </div>
+
+    @* БЛОК 2: ГЛОБАЛЬНАЯ СТАТИСТИКА (2 КАРТОЧКИ) *@
+    <RadzenRow class="rz-mb-5">
+        <RadzenColumn Size="12">
+            <RadzenCard class="cyber-card" Style="padding: 1.2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <RadzenStack Gap="0">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" class="text-muted rz-m-0" Style="letter-spacing: 1px;">ДОСТУПНО СЦЕНАРИЕВ ДЛЯ ЗАПУСКА</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" class="text-cyan rz-m-0" Style="opacity: 0.7;">Все модули синхронизированы с центральной базой данных</RadzenText>
+                </RadzenStack>
+                <RadzenText TextStyle="TextStyle.H4" class="text-cyan rz-m-0" Style="font-weight: bold; font-family: monospace;">
+                    @totalScenarios <span style="font-size: 1rem; color: var(--text-muted); font-weight: normal;">/ модулей</span>
+                </RadzenText>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+
+    @* БЛОК 3: ЗАДАЧИ ПРОЕКТА *@
+    <RadzenText TextStyle="TextStyle.H5" class="rz-mb-4" Style="font-weight: bold; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+        Основные задачи платформы
+    </RadzenText>
+
+    <RadzenRow Gap="1rem" class="rz-mb-6">
+        <RadzenColumn Size="12" SizeMD="4">
+            <RadzenCard class="cyber-card" Style="height: 100%;">
+                <RadzenStack Gap="1rem">
+                    <RadzenIcon Icon="psychology" class="task-icon" />
+                    <RadzenText TextStyle="TextStyle.H6" class="text-cyan">Практическое обучение</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" class="text-muted">
+                        Повышение квалификации специалистов через симуляцию реальных угроз. Закрепление теоретических знаний архитектуры сетей и уязвимостей на практике.
+                    </RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+
+        <RadzenColumn Size="12" SizeMD="4">
+            <RadzenCard class="cyber-card" Style="height: 100%;">
+                <RadzenStack Gap="1rem">
+                    <RadzenIcon Icon="gavel" class="task-icon" />
+                    <RadzenText TextStyle="TextStyle.H6" class="text-cyan">Симуляция атак (CTF)</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" class="text-muted">
+                        Воссоздание актуальных векторов компьютерных атак (от веб-уязвимостей до компрометации доменов) в контролируемой песочнице без риска для реальной инфраструктуры.
+                    </RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+
+        <RadzenColumn Size="12" SizeMD="4">
+            <RadzenCard class="cyber-card" Style="height: 100%;">
+                <RadzenStack Gap="1rem">
+                    <RadzenIcon Icon="analytics" class="task-icon" />
+                    <RadzenText TextStyle="TextStyle.H6" class="text-cyan">Анализ и расследование</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" class="text-muted">
+                        Отработка навыков мониторинга, обнаружения следов компрометации (Форензика) и анализа системных логов для оперативного реагирования на инциденты.
+                    </RadzenText>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+
+    @* БЛОК 4: КАК ЭТО РАБОТАЕТ *@
+    <RadzenRow>
+        <RadzenColumn Size="12">
+            <RadzenCard class="cyber-card">
+                <RadzenText TextStyle="TextStyle.H6" class="rz-mb-4 text-cyan" Style="font-weight: bold;">
+                    Порядок прохождения тренировки
+                </RadzenText>
+
+                <RadzenStack Gap="1.5rem">
+                    <div style="display: flex; align-items: start; gap: 1rem;">
+                        <span style="background: #2d2d30; color: var(--accent-blue); padding: 6px 14px; border-radius: 4px; font-weight: bold;">1</span>
+                        <div>
+                            <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-m-0" Style="font-weight: 600;">Выбор сценария</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" class="text-muted rz-mt-1">
+                                В разделе «Сценарии» выберите интересующее вас направление исследования в зависимости от вашего уровня подготовки.
+                            </RadzenText>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; align-items: start; gap: 1rem;">
+                        <span style="background: #2d2d30; color: var(--accent-blue); padding: 6px 14px; border-radius: 4px; font-weight: bold;">2</span>
+                        <div>
+                            <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-m-0" Style="font-weight: 600;">Изучение документации</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" class="text-muted rz-mt-1">
+                                Ознакомьтесь с целями и правилами. Перед стартом настоятельно рекомендуем изучить
+                                <a href="docs/manual" class="cyber-text-link">Общую инструкцию платформы</a> для понимания принципов работы песочницы.
+                            </RadzenText>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; align-items: start; gap: 1rem;">
+                        <span style="background: #2d2d30; color: var(--accent-blue); padding: 6px 14px; border-radius: 4px; font-weight: bold;">3</span>
+                        <div>
+                            <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-m-0" Style="font-weight: 600;">Фиксация прогресса</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" class="text-muted rz-mt-1">
+                                Выполняйте пошаговые задачи и захватывайте флаги (Flags). Система автоматически зафиксирует ваши успехи и начислит XP в личном профиле.
+                            </RadzenText>
+                        </div>
+                    </div>
+                </RadzenStack>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+</div>
+
+@code {
+    private string UserDisplayName => user?.UserName ?? "Агент";
+    private ApplicationUser? user;
+
+    // Переменная для вывода на экран
+    private int totalScenarios = 0;
+
+    [Inject] private IDbContextFactory<ApplicationDbContext> ContextFactory { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        using (var context = await ContextFactory.CreateDbContextAsync())
+        {
+            // 1. Получение данных пользователя
+            if (userId != null)
+            {
+                user = await context.Set<ApplicationUser>().FirstOrDefaultAsync(u => u.Id == userId);
+            }
+
+            // 2. ДИНАМИЧЕСКИЙ ПОДСЧЕТ СЦЕНАРИЕВ С УЧЕТОМ ОДОБРЕНИЯ АДМИНИСТРАТОРА
+            if (authState.User.IsInRole("Admin"))
+            {
+                // Администратор видит полную статистику по всем модулям базы
+                totalScenarios = await context.Set<CyberScenario>().CountAsync();
+            }
+            else
+            {
+                // Курсанты видят на счетчике только те сценарии, где IsVisible == true
+                totalScenarios = await context.Set<CyberScenario>().CountAsync(s => s.IsVisible);
+            }
+        }
+    }
+}
+
+<style>
+    :root {
+        --bg-dark: #1e1e1e;
+        --bg-card: #252526;
+        --accent-blue: #00d4ff;
+        --accent-green: #39ff14;
+        --border-color: #333333;
+        --text-main: #e1e1e1;
+        --text-muted: #9da5b4;
+    }
+
+    .dashboard-wrapper {
+        background-color: var(--bg-dark);
+        min-height: calc(100vh - 60px);
+        color: var(--text-main);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    .cyber-card {
+        background-color: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 4px !important;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        transition: border-color 0.3s ease;
+    }
+
+        .cyber-card:hover {
+            border-color: #444 !important;
+        }
+
+    .hero-section {
+        background: linear-gradient(135deg, #252526 0%, #1a1a1c 100%);
+        border: 1px solid var(--border-color);
+        border-left: 4px solid var(--accent-blue);
+        border-radius: 4px;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+    }
+
+    .text-cyan {
+        color: var(--accent-blue) !important;
+    }
+
+    .text-green {
+        color: var(--accent-green) !important;
+        text-shadow: 0 0 5px rgba(57, 255, 20, 0.3);
+    }
+
+    .text-muted {
+        color: var(--text-muted) !important;
+    }
+
+    .task-icon {
+        font-size: 2.5rem;
+        color: var(--accent-blue);
+        margin-bottom: 0.5rem;
+    }
+
+    /* --- КНОПКИ --- */
+    .cyber-btn-main, .cyber-btn-secondary {
+        display: inline-flex;
+        align-items: center;
+        padding: 12px 24px;
+        font-family: 'Courier New', Courier, monospace;
+        text-transform: uppercase;
+        text-decoration: none !important;
+        font-weight: bold;
+        border-radius: 4px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    /* Главная кнопка (Ознакомительный сценарий) - с заливкой */
+    .cyber-btn-main {
+        border: 1px solid var(--accent-blue);
+        background-color: rgba(0, 212, 255, 0.15);
+        color: var(--accent-blue);
+        box-shadow: 0 0 8px rgba(0, 212, 255, 0.2);
+    }
+
+        .cyber-btn-main:hover {
+            background-color: var(--accent-blue);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+            color: #000 !important;
+        }
+
+    /* Второстепенная кнопка (Все сценарии) - строгий контур */
+    .cyber-btn-secondary {
+        border: 1px solid var(--text-muted);
+        background-color: transparent;
+        color: var(--text-main);
+    }
+
+        .cyber-btn-secondary:hover {
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+            background-color: rgba(0, 212, 255, 0.05);
+        }
+
+    /* --- ТЕКСТОВЫЕ ССЫЛКИ --- */
+    .cyber-text-link {
+        color: var(--accent-blue);
+        text-decoration: none;
+        border-bottom: 1px dashed var(--accent-blue);
+        transition: all 0.2s ease;
+        font-weight: 600;
+    }
+
+        .cyber-text-link:hover {
+            color: #fff;
+            border-bottom-style: solid;
+            text-shadow: 0 0 8px var(--accent-blue);
+        }
+</style>

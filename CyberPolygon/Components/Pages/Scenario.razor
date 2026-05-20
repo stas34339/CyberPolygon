@@ -1,0 +1,175 @@
+﻿@page "/scenario"
+@using CyberPolygon.Components.Components
+@rendermode InteractiveServer
+
+@inject ScenarioService ScenarioService
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthStateProvider
+
+<RadzenComponents />
+<PageTitle>Сценарии | Киберполигон</PageTitle>
+
+<div class="scenarios-grid" style="padding: 20px;">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <h1 class="cyber-header">Боевые сценарии</h1>
+        <AuthorizeView Roles="Admin">
+            <RadzenButton Text="Новый сценарий" Icon="add" ButtonStyle="ButtonStyle.Info"
+                          Click="@(() => OpenEditDialog(new CyberScenario()))" />
+        </AuthorizeView>
+    </div>
+
+    @if (scenarios == null)
+    {
+        <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+    }
+    else if (!scenarios.Any())
+    {
+        <div class="empty-db" style="color:white">База данных пуста. Сценарии не обнаружены.</div>
+    }
+    else
+    {
+        <div class="row">
+            @foreach (var item in scenarios)
+            {
+                <div class="col-md-4 mb-4">
+                    <RadzenCard class="cyber-card h-100" Style="display: flex; flex-direction: column; justify-content: space-between;">
+                        <div class="card-glow"></div>
+                        <AuthorizeView Roles="Admin">
+                            <div style="position: absolute; top: 12px; right: 12px; z-index: 10;">
+                                @if (item.IsVisible)
+                                {
+                                    <span class="badge bg-success" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Открыт</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; color: #8b949e !important; border: 1px solid #30363d;">Черновик</span>
+                                }
+                            </div>
+                        </AuthorizeView>
+                        <div>
+                            <h3 class="item-title">@item.Title</h3>
+                            <p class="item-desc">@item.Description</p>
+                        </div>
+
+                        @* Блок кнопок внизу карточки *@
+                        <div class="mt-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <RadzenButton Text="Подробнее"
+                                              ButtonStyle="ButtonStyle.Info"
+                                              Variant="Variant.Outlined"
+                                              class="cyan-border"
+                                              Click="@(() => OpenDetails(item))" />
+
+                                <RadzenButton Text="Начать"
+                                              Icon="play_arrow"
+                                              ButtonStyle="ButtonStyle.Success"
+                                              Click="@(() => NavigationManager.NavigateTo($"/scenario/{item.Id}/workspace"))" />
+                            </div>
+
+                            <AuthorizeView Roles="Admin">
+                                <div class="admin-tools d-flex justify-content-end gap-2 border-top border-secondary pt-2 mt-2">
+                                    <RadzenButton Icon="edit" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Light"
+                                                  Click="@(() => OpenEditDialog(item))" />
+                                    <RadzenButton Icon="delete" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Danger"
+                                                  Click="@(() => DeleteItem(item.Id))" />
+                                </div>
+                            </AuthorizeView>
+                        </div>
+                    </RadzenCard>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@* Окно удаления (Visual Dialog) оставляем без изменений *@
+@if (isDeleteVisualDialogVisible)
+{
+    <div class="cyber-modal-overlay">
+        <div class="cyber-modal-box">
+            <div class="cyber-modal-header">
+                <h3>Предупреждение</h3>
+                <button class="cyber-modal-close-btn" @onclick="CloseDeleteDialog">×</button>
+            </div>
+            <div class="cyber-modal-body">
+                <p>Удалить сценарий из базы навсегда?</p>
+            </div>
+            <div class="cyber-modal-footer">
+                <button class="cyber-btn-ok" @onclick="ConfirmDelete">OK</button>
+                <button class="cyber-btn-cancel" @onclick="CloseDeleteDialog">CANCEL</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    List<CyberScenario>? scenarios;
+
+
+    protected override async Task OnInitializedAsync() => await Refresh();
+
+    async Task Refresh()
+    {
+        // Тянем все данные из сервиса
+        var allScenarios = await ScenarioService.GetAllAsync();
+
+        // Проверяем роль текущего сеанса
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.IsInRole("Admin"))
+        {
+            // Админу отдаем всё (включая черновики)
+            scenarios = allScenarios;
+        }
+        else
+        {
+            // Пользователям — только опубликованные
+            scenarios = allScenarios.Where(s => s.IsVisible).ToList();
+        }
+    }
+
+    async Task OpenEditDialog(CyberScenario scenario)
+    {
+        var res = await DialogService.OpenAsync<ScenarioEditor>("Управление сценарием",
+                  new Dictionary<string, object> { { "Item", scenario } },
+                  new DialogOptions { Width = "900px", Height = "700px" });
+        if (res == true) await Refresh();
+    }
+
+    async Task OpenDetails(CyberScenario scenario)
+    {
+        await DialogService.OpenAsync<ScenarioDetails>(scenario.Title,
+              new Dictionary<string, object> { { "Item", scenario } },
+              new DialogOptions { Width = "900px", Height = "600px" });
+    }
+
+    bool isDeleteVisualDialogVisible = false;
+    int scenarioIdToDelete = 0;
+
+    void DeleteItem(int id)
+    {
+        scenarioIdToDelete = id;
+        isDeleteVisualDialogVisible = true;
+    }
+
+    async Task ConfirmDelete()
+    {
+        isDeleteVisualDialogVisible = false;
+        if (scenarioIdToDelete != 0)
+        {
+            await ScenarioService.DeleteAsync(scenarioIdToDelete);
+            await Refresh();
+            NotificationService.Notify(NotificationSeverity.Success, "Система", "Данные удалены");
+        }
+        scenarioIdToDelete = 0;
+    }
+
+    void CloseDeleteDialog()
+    {
+        isDeleteVisualDialogVisible = false;
+        scenarioIdToDelete = 0;
+    }
+}

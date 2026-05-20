@@ -37,30 +37,22 @@
 ">
     <RadzenPanelMenu Click="OnParentClicked"  Multiple="false" style="font-size:18px;
                                                                       width:300px;">
-        <RadzenPanelMenuItem Text="Главная" Icon="home" style="padding: 10px;">
+        <RadzenPanelMenuItem Text="Главная" Path="" Icon="home" style="padding: 10px;">
             <NavLink class="nav-link" href="" Match="NavLinkMatch.All"></NavLink>
         </RadzenPanelMenuItem>
-        <RadzenPanelMenuItem Text="Сценарии" Icon="list" Style="margin-top:20px
+        <RadzenPanelMenuItem Text="Сценарии" Path="scenario" Icon="list" Style="margin-top:20px
                                                                    padding: 10px;">
-            <RadzenPanelMenuItem Text="CheckBox" Path="checkbox" Icon="check_circle"></RadzenPanelMenuItem>
-            <RadzenPanelMenuItem Text="TextBox" Path="textbox" Icon="input"></RadzenPanelMenuItem>
-            <RadzenPanelMenuItem Text="TextArea" Path="textarea" Icon="description"></RadzenPanelMenuItem>
-            <RadzenPanelMenuItem Text="Password" Path="password" Icon="payment"></RadzenPanelMenuItem>
-            <RadzenPanelMenuItem Text="Numeric" Path="numeric" Icon="aspect_ratio"></RadzenPanelMenuItem>
-            <RadzenPanelMenuItem Text="DatePicker" Path="datepicker" Icon="date_range"></RadzenPanelMenuItem>
         </RadzenPanelMenuItem>
         <RadzenPanelMenuItem Text="Инструкция" Icon="menu_book" Style="
                                                                    margin-top:20px
                                                                    padding: 10px;">
-            <RadzenPanelMenuItem Text="DataGrid" Path="datagrid" Icon="grid_on"></RadzenPanelMenuItem>
-            <RadzenPanelMenuItem Text="DataList" Path="datalist" Icon="list"></RadzenPanelMenuItem>
-            <RadzenPanelMenuItem Text="DropDown" Path="dropdown" Icon="dns"></RadzenPanelMenuItem>
-            <RadzenPanelMenuItem Text="DropDownDataGrid" Path="dropdown-datagrid" Icon="receipt"></RadzenPanelMenuItem>
-            <RadzenPanelMenuItem Text="ListBox" Path="listbox" Icon="view_list"></RadzenPanelMenuItem>
-            <RadzenPanelMenuItem Text="TemplateForm" Path="templateform" Icon="line_style"></RadzenPanelMenuItem>
+            <RadzenPanelMenuItem Text="Инструкция по проекту" Path="" Icon="counter_1"></RadzenPanelMenuItem>
+            <RadzenPanelMenuItem Text="Инструкция по Vmware" Path="" Icon="counter_2"></RadzenPanelMenuItem>
+            <RadzenPanelMenuItem Text="Инстукцию по ..." Path="" Icon="counter_3"></RadzenPanelMenuItem>
         </RadzenPanelMenuItem>
 
-        <RadzenPanelMenuItem Text="@UserDisplayName" 
+        <RadzenPanelMenuItem Text="@UserDisplayName"
+                             Path="profile"
                              Icon="account_box" 
                              Style="word-wrap: break-word; 
                                     word-break: break-word; 
@@ -68,9 +60,6 @@
                                     max-width: 300px;
                                     margin-top:20px
                                     padding: 10px;">
-
-            <RadzenPanelMenuItem Text="Профиль" Path="tabs" Icon="account_box"></RadzenPanelMenuItem>
-            <RadzenPanelMenuItem Text="Настройки" Path="panel" Icon="settings_b_roll"></RadzenPanelMenuItem>   
         </RadzenPanelMenuItem>
 
         <RadzenPanelMenuItem Text="Выход" Path="exit" Icon="door_open" Click="HandleLogoutClick">
@@ -112,7 +101,7 @@
 
 
 
-    bool multiple = true;
+    
     EventConsole console;
 
     void OnParentClicked(MenuItemEventArgs args)
