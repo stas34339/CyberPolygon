@@ -3,6 +3,7 @@ using System;
 using CyberPolygon.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CyberPolygon.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260520072423_AddDocumentationFileName")]
+    partial class AddDocumentationFileName
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -259,32 +262,6 @@ namespace CyberPolygon.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("ScenarioDocument", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CyberScenarioId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("FilePath")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CyberScenarioId");
-
-                    b.ToTable("ScenarioDocument");
-                });
-
             modelBuilder.Entity("ScenarioQuestion", b =>
                 {
                     b.Property<int>("Id")
@@ -399,17 +376,6 @@ namespace CyberPolygon.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ScenarioDocument", b =>
-                {
-                    b.HasOne("CyberScenario", "CyberScenario")
-                        .WithMany("Documents")
-                        .HasForeignKey("CyberScenarioId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CyberScenario");
-                });
-
             modelBuilder.Entity("ScenarioQuestion", b =>
                 {
                     b.HasOne("CyberScenario", null)
@@ -432,8 +398,6 @@ namespace CyberPolygon.Migrations
 
             modelBuilder.Entity("CyberScenario", b =>
                 {
-                    b.Navigation("Documents");
-
                     b.Navigation("Questions");
                 });
 #pragma warning restore 612, 618

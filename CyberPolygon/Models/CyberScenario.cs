@@ -10,6 +10,8 @@ public class CyberScenario
 {
     public int Id { get; set; }
 
+    public List<ScenarioDocument> Documents { get; set; } = new();
+
     public string Task { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Название обязательно")]
@@ -21,6 +23,9 @@ public class CyberScenario
     public string Legend { get; set; } = string.Empty;
 
     public string? SchemaPath { get; set; }
+
+    public string? DocumentationPath { get; set; }
+    public string? DocumentationFileName { get; set; }
 
     // Игровой режим прохождения сценария
     public ScenarioGameMode GameMode { get; set; } = ScenarioGameMode.AllAtOnce;

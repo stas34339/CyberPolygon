@@ -7,9 +7,6 @@
 <div class="scenario-details-wrapper">
     <div class="details-header-wrapper d-flex justify-content-between align-items-center">
         <h2 class="details-main-title">@Item.Title</h2>
-        <div class="score-badge">
-            Текущий счет: <span class="score-value @(totalScore >= 0 ? "text-success-neon" : "text-danger-neon")">@totalScore</span> XP
-        </div>
     </div>
 
     <RadzenTabs RenderMode="TabRenderMode.Client" class="custom-tabs">
@@ -39,102 +36,7 @@
                 </div>
             </RadzenTabsItem>
 
-            <RadzenTabsItem Text="Задание" Icon="terminal">
-                <div class="details-content-box">
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <h4 class="details-subtitle" style="color: #00eeff; margin:0;">Интерактивный терминал проверки</h4>
-                        <div class="d-flex gap-2 align-items-center">
-                            <span class="badge bg-secondary p-2 border border-info text-info">
-                                Режим: @(Item.GameMode == ScenarioGameMode.AllAtOnce ? "Свободный" : "Последовательный")
-                            </span>
-
-                            @* --- КНОПКА СБРОСА ДЛЯ АДМИНА --- *@
-                            <AuthorizeView Roles="Admin">
-                                <RadzenButton Text="Сбросить прогресс" Icon="restart_alt"
-                                              ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
-                                              Click="@ResetProgress" />
-                            </AuthorizeView>
-                        </div>
-                    </div>
-
-                    @if (isAlreadyCompleted)
-                    {
-                        <div class="scenario-complete-banner p-5 text-center border border-success rounded mt-4">
-                            <RadzenIcon Icon="workspace_premium" Style="font-size: 4rem; color: #28a745;" />
-                            <h3 class="text-success-neon mt-3">Сценарий уже пройден!</h3>
-                            <p class="text-white mb-0" style="font-size: 1.1rem;">Ваш зафиксированный счет: <b>@savedScore XP</b></p>
-                            <p class="text-muted mt-2">Дата прохождения: @completedDate.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</p>
-                        </div>
-                    }
-                    else if (Item.Questions == null || !Item.Questions.Any())
-                    {
-                        <div class="alert alert-warning bg-dark text-warning border-warning">
-                            Администратор еще не настроил проверочные вопросы для этого сценария.
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="interactive-test-zone">
-                            @foreach (var qState in questionStates)
-                            {
-                                var index = questionStates.IndexOf(qState);
-
-                                @if (Item.GameMode == ScenarioGameMode.AllAtOnce || index == 0 || questionStates[index - 1].IsCorrect)
-                                {
-                                    <div class="user-question-box mb-4 p-3 @(qState.IsCorrect ? "box-correct" : "")">
-                                        <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <span class="question-number">Вопрос №@(index + 1)</span>
-                                            <div class="points-info">
-                                                <span class="text-success">+@qState.Question.AwardPoints XP</span> |
-                                                <span class="text-danger">-@qState.Question.PenaltyPoints XP</span>
-                                            </div>
-                                        </div>
-
-                                        <p class="question-text text-white">@qState.Question.Text</p>
-
-                                        <div class="input-group-cyber d-flex gap-2">
-                                            <RadzenTextBox @bind-Value="@qState.UserAnswer"
-                                                           Disabled="@qState.IsCorrect"
-                                                           Placeholder="@(qState.IsCorrect ? "Ответ принят и заблокирован" : "Введите ваш ответ здесь...")"
-                                                           class="w-100 custom-terminal-input"
-                                                           @onkeypress="@(async (e) => await HandleKeyPress(e, qState))" />
-
-                                            @if (!qState.IsCorrect)
-                                            {
-                                                <RadzenButton Text="Проверить" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Small"
-                                                              Click="@(async () => await CheckAnswer(qState))" />
-                                            }
-                                            else
-                                            {
-                                                <div class="success-badge-icon">
-                                                    <RadzenIcon Icon="check_circle" Style="color: #28a745; font-size:2rem;" />
-                                                </div>
-                                            }
-                                        </div>
-
-                                        @if (!string.IsNullOrEmpty(qState.FeedbackMessage))
-                                        {
-                                            <div class="feedback-msg mt-2 @(qState.IsCorrect ? "text-success" : "text-danger")">
-                                                @qState.FeedbackMessage
-                                            </div>
-                                        }
-                                    </div>
-                                }
-                            }
-
-                            @if (questionStates.All(q => q.IsCorrect))
-                            {
-                                <div class="scenario-complete-banner p-4 text-center border border-success rounded mt-4">
-                                    <RadzenIcon Icon="workspace_premium" Style="font-size: 3rem; color: #ffd700;" />
-                                    <h3 class="text-success-neon mt-2">Миссия выполнена!</h3>
-                                    <p class="text-white mb-0">Вы продемонстрировали отличные навыки кибербезопасности. Итоговый счет: <b>@totalScore XP</b></p>
-                                    <p class="text-muted mt-2">Прогресс сохранен в вашем профиле.</p>
-                                </div>
-                            }
-                        </div>
-                    }
-                </div>
-            </RadzenTabsItem>
+            
             <AuthorizeView Roles="Admin">
                 <Authorized>
                     <RadzenTabsItem Text="Управление (Админ)" Icon="admin_panel_settings">

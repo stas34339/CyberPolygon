@@ -194,4 +194,15 @@ public class ScenarioService
             await context.SaveChangesAsync();
         }
     }
+
+    public async Task<CyberScenario?> GetByIdAsync(int id)
+    {
+        // Создаем контекст через фабрику, как и в других твоих методах
+        using var context = await _contextFactory.CreateDbContextAsync();
+
+        // Обращаемся к context.Scenarios
+        return await context.Scenarios
+            .Include(s => s.Questions) // Подтягиваем связанные вопросы
+            .FirstOrDefaultAsync(s => s.Id == id);
+    }
 }

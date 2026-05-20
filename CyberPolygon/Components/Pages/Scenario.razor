@@ -5,10 +5,12 @@
 @inject ScenarioService ScenarioService
 @inject DialogService DialogService
 @inject NotificationService NotificationService
+@inject NavigationManager NavigationManager
+
 <RadzenComponents />
 <PageTitle>Сценарии | Киберполигон</PageTitle>
 
-<div class="scenarios-grid">
+<div class="scenarios-grid" style="padding: 20px;">
     <div class="d-flex justify-content-between align-items-center mb-5">
         <h1 class="cyber-header">Боевые сценарии</h1>
         <AuthorizeView Roles="Admin">
@@ -30,29 +32,32 @@
         <div class="row">
             @foreach (var item in scenarios)
             {
-                @* --- ЗАМЕНИТЕ ЭТУ СТРОКУ --- *@
-                @* <div class="col-md-4 mb-4 d-flex align-items-stretch"> *@
-
-                @* --- НА ЭТУ --- *@
                 <div class="col-md-4 mb-4">
-                    @* Просто стандартная колонка, без d-flex *@
-
-                    @* Класс h-100 на карточке мы оставляем! Он по-прежнему растягивает её по высоте соседних *@
-                    <RadzenCard class="cyber-card h-100">
+                    <RadzenCard class="cyber-card h-100" Style="display: flex; flex-direction: column; justify-content: space-between;">
                         <div class="card-glow"></div>
-                        <h3 class="item-title">@item.Title</h3>
-                        <p class="item-desc">@item.Description</p>
+                        <div>
+                            <h3 class="item-title">@item.Title</h3>
+                            <p class="item-desc">@item.Description</p>
+                        </div>
 
-                        <div class="d-flex justify-content-between mt-4">
-                            <RadzenButton Text="Подробнее"
-                                          ButtonStyle="ButtonStyle.Info"
-                                          Variant="Variant.Outlined"
-                                          class="cyan-border"
-                                          Click="@(() => OpenDetails(item))" />
+                        @* Блок кнопок внизу карточки *@
+                        <div class="mt-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <RadzenButton Text="Подробнее"
+                                              ButtonStyle="ButtonStyle.Info"
+                                              Variant="Variant.Outlined"
+                                              class="cyan-border"
+                                              Click="@(() => OpenDetails(item))" />
+
+                                <RadzenButton Text="Начать"
+                                              Icon="play_arrow"
+                                              ButtonStyle="ButtonStyle.Success"
+                                              Click="@(() => NavigationManager.NavigateTo($"/scenario/{item.Id}/workspace"))" />
+                            </div>
 
                             <AuthorizeView Roles="Admin">
-                                <div class="admin-tools">
-                                    <RadzenButton Icon="edit" Size="ButtonSize.Small"
+                                <div class="admin-tools d-flex justify-content-end gap-2 border-top border-secondary pt-2 mt-2">
+                                    <RadzenButton Icon="edit" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Light"
                                                   Click="@(() => OpenEditDialog(item))" />
                                     <RadzenButton Icon="delete" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Danger"
                                                   Click="@(() => DeleteItem(item.Id))" />
@@ -65,6 +70,8 @@
         </div>
     }
 </div>
+
+@* Окно удаления (Visual Dialog) оставляем без изменений *@
 @if (isDeleteVisualDialogVisible)
 {
     <div class="cyber-modal-overlay">
@@ -83,9 +90,9 @@
         </div>
     </div>
 }
+
 @code {
     List<CyberScenario>? scenarios;
-
 
     protected override async Task OnInitializedAsync() => await Refresh();
 
@@ -103,24 +110,21 @@
     {
         await DialogService.OpenAsync<ScenarioDetails>(scenario.Title,
               new Dictionary<string, object> { { "Item", scenario } },
-              new DialogOptions { Width = "900px", Height = "700px" });
+              new DialogOptions { Width = "900px", Height = "600px" });
     }
 
     bool isDeleteVisualDialogVisible = false;
     int scenarioIdToDelete = 0;
 
-    // 1. Метод, который срабатывает при клике на иконку урны в карточке
     void DeleteItem(int id)
     {
         scenarioIdToDelete = id;
-        isDeleteVisualDialogVisible = true; // Просто показываем наше окно
+        isDeleteVisualDialogVisible = true;
     }
 
-    // 2. Метод, если пользователь нажал OK
     async Task ConfirmDelete()
     {
-        isDeleteVisualDialogVisible = false; // Прячем окно
-
+        isDeleteVisualDialogVisible = false;
         if (scenarioIdToDelete != 0)
         {
             await ScenarioService.DeleteAsync(scenarioIdToDelete);
@@ -130,7 +134,6 @@
         scenarioIdToDelete = 0;
     }
 
-    // 3. Метод, если пользователь закрыл окно или нажал CANCEL
     void CloseDeleteDialog()
     {
         isDeleteVisualDialogVisible = false;
