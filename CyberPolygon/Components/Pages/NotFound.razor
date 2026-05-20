@@ -1,5 +1,89 @@
 ﻿@page "/not-found"
 @layout MainLayout
+@inject NavigationManager NavigationManager
 
-<h3>Not Found</h3>
-<p>Sorry, the content you are looking for does not exist.</p>
+<div class="error-wrapper">
+    <div class="cyber-error-card">
+        <RadzenIcon Icon="gps_off" Style="font-size: 6rem; color: #00eeff; margin-bottom: 1rem; filter: drop-shadow(0 0 10px #00eeff);" />
+        
+        <h1 class="glitch-text">404: TARGET NOT FOUND</h1>
+        <p class="error-msg">Запрошенный хост или путь в сети киберполигона не обнаружен. Пакеты данных потеряны.</p>
+        
+        <div class="mt-4">
+            <a href="/" class="cyber-btn cyber-btn-main">
+                <RadzenIcon Icon="home"></RadzenIcon>
+                ВЕРНУТЬСЯ В ШТАБ
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .error-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 80vh;
+        /* Фон страницы теперь прозрачный, наследует фон вашего сайта */
+    }
+
+    .cyber-error-card {
+        text-align: center;
+        padding: 40px;
+        /* Возвращаем темный стиль только для карточки */
+        background: rgba(25, 25, 25, 0.95); 
+        border: 1px solid #00eeff;
+        border-radius: 8px;
+        box-shadow: 0 0 20px rgba(0, 238, 255, 0.2);
+        max-width: 500px;
+    }
+
+    .glitch-text {
+        font-size: 2.5rem;
+        color: #00eeff; /* Светло-голубой, хорошо виден на темном фоне карточки */
+        text-transform: uppercase;
+        margin-bottom: 20px;
+        letter-spacing: 2px;
+    }
+
+    .error-msg {
+        color: #e1e1e1; /* Светлый текст внутри карточки */
+        font-size: 1.1rem;
+    }
+
+    /* Базовые настройки кнопки */
+    .cyber-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px; /* Расстояние между иконкой и текстом */
+        padding: 12px 24px;
+        font-family: 'Courier New', Courier, monospace;
+        text-transform: uppercase;
+        text-decoration: none !important; /* Убираем подчеркивание */
+        font-weight: bold;
+        border-radius: 4px;
+        border: 1px solid;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        text-align:center;
+    }
+
+        /* Эффект наведения */
+        .cyber-btn:hover {
+            text-decoration: none !important;
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px currentColor;
+        }
+
+    /* ВАРИАНТ: СИНИЙ (Для NotFound) */
+    .cyber-btn-main {
+        border-color: #00d4ff;
+        color: #00d4ff;
+        background: rgba(0, 212, 255, 0.1);
+    }
+
+        .cyber-btn-main:hover {
+            background: #00d4ff;
+            color: #000;
+        }
+</style>
