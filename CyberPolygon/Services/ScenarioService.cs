@@ -17,9 +17,9 @@ public class ScenarioService
     public async Task<List<CyberScenario>> GetAllAsync()
     {
         using var context = await _contextFactory.CreateDbContextAsync();
-        // Добавляем Include, чтобы подтягивать вопросы из БД!
         return await context.Scenarios
             .Include(s => s.Questions)
+            .Include(s => s.Documents) // <-- ДОБАВЛЕНО
             .ToListAsync();
     }
 
@@ -34,9 +34,9 @@ public class ScenarioService
         }
         else
         {
-            // Для корректного обновления графа связанных данных (включая удаление/добавление вопросов)
             var existingScenario = await context.Scenarios
                 .Include(s => s.Questions)
+                .Include(s => s.Documents) // <-- ОБЯЗАТЕЛЬНО ПОДТЯГИВАЕМ СУЩЕСТВУЮЩИЕ ДОКУМЕНТЫ
                 .FirstOrDefaultAsync(s => s.Id == scenario.Id);
 
             if (existingScenario != null)
@@ -44,24 +44,35 @@ public class ScenarioService
                 context.Entry(existingScenario).CurrentValues.SetValues(scenario);
                 existingScenario.GameMode = scenario.GameMode;
 
-                // Удаляем вопросы, которых больше нет в измененном объекте
+                // --- СИНХРОНИЗАЦИЯ ВОПРОСОВ (Твой рабочий код) ---
                 foreach (var existingQuestion in existingScenario.Questions.ToList())
                 {
                     if (!scenario.Questions.Any(q => q.Id == existingQuestion.Id))
                         context.Remove(existingQuestion);
                 }
-
-                // Добавляем или обновляем вопросы
                 foreach (var q in scenario.Questions)
                 {
                     var existingQ = existingScenario.Questions.FirstOrDefault(eq => eq.Id == q.Id);
-                    if (existingQ == null)
+                    if (existingQ == null) existingScenario.Questions.Add(q);
+                    else context.Entry(existingQ).CurrentValues.SetValues(q);
+                }
+
+                // --- СИНХРОНИЗАЦИЯ ДОКУМЕНТОВ (ДОБАВЛЕНО, ЧТОБЫ НЕ ИСЧЕЗАЛИ ФАЙЛЫ) ---
+                foreach (var existingDoc in existingScenario.Documents.ToList())
+                {
+                    if (!scenario.Documents.Any(d => d.Id == existingDoc.Id))
+                        context.Remove(existingDoc); // Удаляем из БД, если админ удалил на форме
+                }
+                foreach (var d in scenario.Documents)
+                {
+                    var existingD = existingScenario.Documents.FirstOrDefault(ed => ed.Id == d.Id);
+                    if (existingD == null)
                     {
-                        existingScenario.Questions.Add(q);
+                        existingScenario.Documents.Add(d); // Добавляем новый документ
                     }
                     else
                     {
-                        context.Entry(existingQ).CurrentValues.SetValues(q);
+                        context.Entry(existingD).CurrentValues.SetValues(d); // Обновляем старый (например, название)
                     }
                 }
             }
@@ -197,12 +208,10 @@ public class ScenarioService
 
     public async Task<CyberScenario?> GetByIdAsync(int id)
     {
-        // Создаем контекст через фабрику, как и в других твоих методах
         using var context = await _contextFactory.CreateDbContextAsync();
-
-        // Обращаемся к context.Scenarios
         return await context.Scenarios
-            .Include(s => s.Questions) // Подтягиваем связанные вопросы
+            .Include(s => s.Questions)
+            .Include(s => s.Documents) // <-- ДОБАВЛЕНО
             .FirstOrDefaultAsync(s => s.Id == id);
     }
 }

@@ -151,10 +151,10 @@
                     <div class="rz-p-10" style="text-align: center; color: var(--text-muted);">
                         <RadzenIcon Icon="find_in_page" Style="font-size: 3rem; opacity: 0.2;" />
                         <RadzenText TextStyle="TextStyle.Body1" class="rz-mt-2">Активных записей не обнаружено</RadzenText>
-                        <RadzenButton Text="НАЧАТЬ ТРЕНИРОВКУ"
-                                      ButtonStyle="ButtonStyle.Info"
-                                      class="rz-mt-4"
-                                      Click="@(() => NavigationManager.NavigateTo("scenario"))" />
+                        <a href="scenario" class="rz-mt-4">
+                            <RadzenIcon Icon="list" class="rz-mr-1" /> ВСЕ СЦЕНАРИИ
+                        </a>
+
                     </div>
                 }
                 else
