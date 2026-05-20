@@ -6,6 +6,7 @@
 @inject DialogService DialogService
 @inject NotificationService NotificationService
 @inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthStateProvider
 
 <RadzenComponents />
 <PageTitle>Сценарии | Киберполигон</PageTitle>
@@ -35,6 +36,18 @@
                 <div class="col-md-4 mb-4">
                     <RadzenCard class="cyber-card h-100" Style="display: flex; flex-direction: column; justify-content: space-between;">
                         <div class="card-glow"></div>
+                        <AuthorizeView Roles="Admin">
+                            <div style="position: absolute; top: 12px; right: 12px; z-index: 10;">
+                                @if (item.IsVisible)
+                                {
+                                    <span class="badge bg-success" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">Открыт</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary" style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; color: #8b949e !important; border: 1px solid #30363d;">Черновик</span>
+                                }
+                            </div>
+                        </AuthorizeView>
                         <div>
                             <h3 class="item-title">@item.Title</h3>
                             <p class="item-desc">@item.Description</p>
@@ -94,9 +107,29 @@
 @code {
     List<CyberScenario>? scenarios;
 
+
     protected override async Task OnInitializedAsync() => await Refresh();
 
-    async Task Refresh() => scenarios = await ScenarioService.GetAllAsync();
+    async Task Refresh()
+    {
+        // Тянем все данные из сервиса
+        var allScenarios = await ScenarioService.GetAllAsync();
+
+        // Проверяем роль текущего сеанса
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.IsInRole("Admin"))
+        {
+            // Админу отдаем всё (включая черновики)
+            scenarios = allScenarios;
+        }
+        else
+        {
+            // Пользователям — только опубликованные
+            scenarios = allScenarios.Where(s => s.IsVisible).ToList();
+        }
+    }
 
     async Task OpenEditDialog(CyberScenario scenario)
     {

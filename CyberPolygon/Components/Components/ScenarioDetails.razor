@@ -11,30 +11,32 @@
 
     <RadzenTabs RenderMode="TabRenderMode.Client" class="custom-tabs">
         <Tabs>
-            <RadzenTabsItem Text="Легенда" Icon="history_edu">
-                <div class="details-content-box">
-                    <h4 class="details-subtitle">Оперативная сводка (Легенда)</h4>
-                    <div class="rich-text-area" style="color:white;">
-                        @((MarkupString)Item.Legend)
+            @* Легенда *@
+            @if (!string.IsNullOrWhiteSpace(Item.Legend))
+            {
+                <RadzenTabsItem Text="Легенда" Icon="history_edu">
+                    <div class="details-content-box">
+                        <h4 class="details-subtitle">Оперативная сводка (Легенда)</h4>
+                        <div class="rich-text-area" style="color:white;">
+                            @((MarkupString)Item.Legend)
+                        </div>
                     </div>
-                </div>
-            </RadzenTabsItem>
+                </RadzenTabsItem>
+            }
 
-            <RadzenTabsItem Text="Схема" Icon="hub">
-                <div class="details-content-box text-center">
-                    <h4 class="details-subtitle">Архитектура сети</h4>
-                    @if (!string.IsNullOrEmpty(Item.SchemaPath))
-                    {
+            @* Схема *@
+            @if (!string.IsNullOrEmpty(Item.SchemaPath))
+            {
+                <RadzenTabsItem Text="Схема" Icon="hub">
+                    <div class="details-content-box text-center">
+                        <h4 class="details-subtitle">Архитектура сети</h4>
                         <div class="schema-container">
                             <img src="@Item.SchemaPath" alt="Схема сети" class="img-fluid rounded shadow-lg" style="border: 1px solid #00eeff; max-height: 400px;" />
                         </div>
-                    }
-                    else
-                    {
-                        <div class="alert alert-secondary mt-3 bg-dark text-muted border-secondary">Схема для данного сценария не загружена.</div>
-                    }
-                </div>
-            </RadzenTabsItem>
+                    </div>
+                </RadzenTabsItem>
+            }
+           
 
             
             <AuthorizeView Roles="Admin">
@@ -50,7 +52,7 @@
 
                             @if (completedUsers == null || !completedUsers.Any())
                             {
-                                <div class="text-muted">Пока никто не прошел этот сценарий.</div>
+                                <div style="color:white;">Пока никто не прошел этот сценарий.</div>
                             }
                             else
                             {

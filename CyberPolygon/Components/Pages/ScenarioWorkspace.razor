@@ -1,6 +1,4 @@
 ﻿@page "/scenario/{Id:int}/workspace"
-@using CyberPolygon.Data
-@using Microsoft.EntityFrameworkCore
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @rendermode InteractiveServer
@@ -38,41 +36,40 @@
         @* ОСНОВНЫЕ ВКЛАДКИ РАБОЧЕГО ПРОСТРАНСТВА *@
         <RadzenTabs RenderMode="TabRenderMode.Client" class="custom-tabs">
             <Tabs>
-                @* Вкладка 1: Легенда *@
-                <RadzenTabsItem Text="Легенда" Icon="history_edu">
-                    <div class="details-content-box p-4" style="background: rgba(255, 255, 255, 0.02); border-radius: 4px; min-height: 450px;">
-                        <h4 style="color: #00eeff;" class="mb-3">Оперативная сводка</h4>
-                        <div style="color: white; line-height: 1.6;">
-                            @((MarkupString)scenario.Legend)
+                @* Вкладка 1: Легенда (Показываем, если строка не пустая) *@
+                @if (!string.IsNullOrWhiteSpace(scenario.Legend))
+                {
+                    <RadzenTabsItem Text="Легенда" Icon="history_edu">
+                        <div class="details-content-box p-4" style="background: rgba(255, 255, 255, 0.02); border-radius: 4px; min-height: 450px;">
+                            <h4 style="color: #00eeff;" class="mb-3">Оперативная сводка</h4>
+                            <div style="color: white; line-height: 1.6;">
+                                @((MarkupString)scenario.Legend)
+                            </div>
                         </div>
-                    </div>
-                </RadzenTabsItem>
+                    </RadzenTabsItem>
+                }
 
-                @* Вкладка 2: Схема *@
-                <RadzenTabsItem Text="Схема сети" Icon="hub">
-                    <div class="details-content-box p-4 text-center" style="background: rgba(255, 255, 255, 0.02); border-radius: 4px; min-height: 450px;">
-                        <h4 style="color: #00eeff;" class="text-start mb-3">Топология инфраструктуры</h4>
-                        @if (!string.IsNullOrEmpty(scenario.SchemaPath))
-                        {
+                @* Вкладка 2: Схема (Показываем, только если загружен путь к изображению) *@
+                @if (!string.IsNullOrEmpty(scenario.SchemaPath))
+                {
+                    <RadzenTabsItem Text="Схема сети" Icon="hub">
+                        <div class="details-content-box p-4 text-center" style="background: rgba(255, 255, 255, 0.02); border-radius: 4px; min-height: 450px;">
+                            <h4 style="color: #00eeff;" class="text-start mb-3">Топология инфраструктуры</h4>
                             <div class="schema-container p-2" style="background: #111; border: 1px solid #333; display: inline-block; border-radius: 4px;">
                                 <img src="@scenario.SchemaPath" alt="Схема сети" class="img-fluid" style="max-height: 500px; border: 1px solid rgba(0,238,255,0.3);" />
                             </div>
-                        }
-                        else
-                        {
-                            <div class="alert alert-secondary bg-dark text-muted border-secondary">Инфраструктурная схема отсутствует.</div>
-                        }
-                    </div>
-                </RadzenTabsItem>
+                        </div>
+                    </RadzenTabsItem>
+                }
 
-                @* Вкладка 3: Документация (СКАЧИВАНИЕ ФАЙЛОВ) *@
-                <RadzenTabsItem Text="Документация" Icon="description">
-                    <div class="details-content-box p-4" style="background: rgba(255, 255, 255, 0.02); border-radius: 4px; min-height: 450px;">
-                        <h4 style="color: #00eeff;" class="mb-3">Сопутствующие материалы и руководства</h4>
-                        <p class="text-muted">Перед выполнением заданий ознакомьтесь с прикрепленными методическими файлами.</p>
+                @* Вкладка 3: Документация (Показываем, если есть прикрепленные документы) *@
+                @if (scenario.Documents != null && scenario.Documents.Any())
+                {
+                    <RadzenTabsItem Text="Документация" Icon="description">
+                        <div class="details-content-box p-4" style="background: rgba(255, 255, 255, 0.02); border-radius: 4px; min-height: 450px;">
+                            <h4 style="color: #00eeff;" class="mb-3">Сопутствующие материалы и руководства</h4>
+                            <p class="text-muted">Перед выполнением заданий ознакомьтесь с прикрепленными методическими файлами.</p>
 
-                        @if (scenario.Documents != null && scenario.Documents.Any())
-                        {
                             @foreach (var doc in scenario.Documents)
                             {
                                 <div class="p-3 mb-3 d-flex align-items-center justify-content-between" style="background: #161b22; border: 1px solid #30363d; border-radius: 4px;">
@@ -83,21 +80,14 @@
                                             <div class="text-muted" style="font-size: 0.85rem;">Файл хранится на защищенном сервере платформы</div>
                                         </div>
                                     </div>
-                                    @* Прямая ссылка на скачивание файла из коллекции *@
                                     <a href="@doc.FilePath" download target="_blank" class="btn btn-outline-info" style="border-radius: 4px; text-decoration: none; padding: 8px 16px; border: 1px solid #00bfff; color: #00bfff;">
                                         <RadzenIcon Icon="download" class="rz-mr-1" Style="vertical-align: middle;" /> СКАЧАТЬ ФАЙЛ
                                     </a>
                                 </div>
                             }
-                        }
-                        else
-                        {
-                            <div class="alert alert-warning bg-dark text-warning border-warning mt-3">
-                                <RadzenIcon Icon="warning" class="rz-mr-2" /> Документация для этого сценария не добавлена администратором.
-                            </div>
-                        }
-                    </div>
-                </RadzenTabsItem>
+                        </div>
+                    </RadzenTabsItem>
+                }
 
                 @* Вкладка 4: Задание (ИНТЕРАКТИВНЫЙ ТЕСТ) *@
                 <RadzenTabsItem Text="Задания" Icon="terminal">
@@ -201,7 +191,7 @@
 
                                 @if (completedUsers == null || !completedUsers.Any())
                                 {
-                                    <div class="text-muted">Ни один агент еще не завершил данный сценарий.</div>
+                                    <div style="color:white;">Ни один агент еще не завершил данный сценарий.</div>
                                 }
                                 else
                                 {

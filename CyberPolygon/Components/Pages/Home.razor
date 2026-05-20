@@ -165,12 +165,17 @@
                 user = await context.Set<ApplicationUser>().FirstOrDefaultAsync(u => u.Id == userId);
             }
 
-            // 2. ДИНАМИЧЕСКИЙ ПОДСЧЕТ СЦЕНАРИЕВ
-            // Запрашиваем количество напрямую из твоей таблицы
-            totalScenarios = await context.Set<CyberScenario>().CountAsync();
-
-            // Если у тебя есть поле "IsActive" или "IsPublished", запрос может выглядеть так:
-            // totalScenarios = await context.Set<CyberScenario>().CountAsync(s => s.IsPublished);
+            // 2. ДИНАМИЧЕСКИЙ ПОДСЧЕТ СЦЕНАРИЕВ С УЧЕТОМ ОДОБРЕНИЯ АДМИНИСТРАТОРА
+            if (authState.User.IsInRole("Admin"))
+            {
+                // Администратор видит полную статистику по всем модулям базы
+                totalScenarios = await context.Set<CyberScenario>().CountAsync();
+            }
+            else
+            {
+                // Курсанты видят на счетчике только те сценарии, где IsVisible == true
+                totalScenarios = await context.Set<CyberScenario>().CountAsync(s => s.IsVisible);
+            }
         }
     }
 }

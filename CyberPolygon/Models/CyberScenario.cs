@@ -9,11 +9,9 @@ public enum ScenarioGameMode
 public class CyberScenario
 {
     public int Id { get; set; }
-
+    public bool IsVisible { get; set; } = false;
     public List<ScenarioDocument> Documents { get; set; } = new();
-
     public string Task { get; set; } = string.Empty;
-
     [Required(ErrorMessage = "Название обязательно")]
     public string Title { get; set; } = string.Empty;
 

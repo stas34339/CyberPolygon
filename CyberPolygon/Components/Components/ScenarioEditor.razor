@@ -1,11 +1,19 @@
 ﻿@inject ScenarioService ScenarioService
 @inject DialogService DialogService
+@inject NotificationService NotificationService
 
 <RadzenTemplateForm TItem="CyberScenario" Data="@Item" Submit="@OnSave">
     <div class="row custom-editor-form" style="padding-right: 10px;">
-        <div class="col-12 mb-3">
+        <div class="col-md-9 mb-3">
             <label class="cyber-label">Название</label>
             <RadzenTextBox @bind-Value="@Item.Title" class="w-100 dark-input" />
+        </div>
+
+        <div class="col-md-3 mb-3 d-flex flex-column justify-content-end">
+            <label class="cyber-label">Доступен пользователям</label>
+            <div class="d-flex align-items-center" style="height: 35px;">
+                <RadzenSwitch @bind-Value="@Item.IsVisible" />
+            </div>
         </div>
 
         <div class="col-12 mb-3">
@@ -83,8 +91,9 @@
 
                         @if (!Item.Questions.Any())
                         {
-                            <div class="text-center p-4 border border-secondary border-dashed rounded" style="color: #8b949e;">
-                                Вопросы еще не добавлены. Задание будет пустым.
+                            <div class="text-center p-4 border border-danger border-dashed rounded" style="color: #ff4444; background: rgba(255, 68, 68, 0.05);">
+                                <RadzenIcon Icon="warning" class="rz-mr-2" />
+                                Внимание: Задания не добавлены. Сохранение сценария заблокировано.
                             </div>
                         }
 
@@ -196,6 +205,21 @@
 
     async Task OnSave()
     {
+        // Жесткая проверка на наличие хотя бы одного вопроса
+        if (Item.Questions == null || !Item.Questions.Any())
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Warning,
+                Summary = "Отказ системы",
+                Detail = "Сценарий должен содержать минимум одно задание. Перейдите на вкладку 'Задания и Вопросы'.",
+                Duration = 5000
+            });
+
+            return; // Прерываем процесс сохранения
+        }
+
+        // Если валидация пройдена, сохраняем
         await ScenarioService.SaveAsync(Item);
         DialogService.Close(true);
     }
