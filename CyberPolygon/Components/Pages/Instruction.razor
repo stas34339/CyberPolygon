@@ -1,0 +1,248 @@
+﻿@page "/instruction"
+
+<div class="instruction-container p-4">
+    <div class="d-flex align-items-center gap-3 mb-4 header-block pb-3">
+        <RadzenIcon Icon="help_center" Style="color: #00e5ff; font-size: 2rem;" />
+        <div>
+            <h1 class="page-title m-0">Руководство оператора киберполигона</h1>
+            <p class="text-muted m-0" style="font-size: 0.85rem; font-family: monospace;">
+                ИНФОРМАЦИОННО-АНАЛИТИЧЕСКИЙ ДЕПАРТАМЕНТ // ИНСТРУКЦИЯ ПО ПРОХОЖДЕНИЮ СЦЕНАРИЕВ
+            </p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <RadzenAccordion Multiple="false" class="cyber-accordion">
+                <Items>
+                    <RadzenAccordionItem Text="ЭТАП 1: Получение брифинга и анализ инцидента" Icon="assignment" Expanded="true">
+                        <div class="accordion-content">
+                            <p>Каждый тренировочный сценарий моделирует реальный инцидент информационной безопасности в подшефной инфраструктуре.</p>
+                            <ul>
+                                <li><strong>Изучите описание:</strong> Внимательно прочитайте вводные данные воркспейса. Там указаны время, характер аномалии и первые признаки компрометации.</li>
+                                <li><strong>Определите вектор:</strong> На основе описания локализуйте потенциально уязвимые сервисы или скомпрометированные учетные записи.</li>
+                            </ul>
+                        </div>
+                    </RadzenAccordionItem>
+
+                    <RadzenAccordionItem Text="ЭТАП 2: Работа в виртуальном окружении и с ПО" Icon="computer">
+                        <div class="accordion-content">
+                            <p>Для проведения расследования вам предоставляются два ключевых инструмента:</p>
+
+                            <div class="tool-box mb-3">
+                                <span class="tool-badge bg-info-cyber">Виртуальная машина (ВМ)</span>
+                                <p class="m-0 mt-2 text-muted">Полностью изолированный слепок целевой системы, где развернута инфраструктура в момент инцидента. Используйте её для поиска логов, анализа конфигураций и выявления вредоносного ПО.</p>
+                            </div>
+
+                            <div class="tool-box">
+                                <span class="tool-badge bg-blue-cyber">Справочная документация по ПО</span>
+                                <p class="m-0 mt-2 text-muted">Технические руководства и регламенты по работе со специализированным софтом безопасности, развернутым на полигоне. Поможет, если вы не знаете специфических команд или синтаксиса утилит.</p>
+                            </div>
+                        </div>
+                    </RadzenAccordionItem>
+
+                    <RadzenAccordionItem Text="ЭТАП 3: Расследование и закрытие вопросов" Icon="fact_check">
+                        <div class="accordion-content">
+                            <p>Итогом вашей работы является серия ответов на ключевые вопросы аналитиков ИАО.</p>
+                            <ul>
+                                <li>Формат ответов может варьироваться: от ввода конкретного хэша вредоноса или IP-адреса атакующего до выбора правильного вектора закрепления в системе.</li>
+                                <li>Пока на все обязательные вопросы внутри сценария не даны ответы, расследование не может считаться завершенным.</li>
+                            </ul>
+                        </div>
+                    </RadzenAccordionItem>
+                </Items>
+            </RadzenAccordion>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="rules-card p-4">
+                <div class="d-flex align-items-center gap-2 mb-3 text-warning-cyber">
+                    <RadzenIcon Icon="gavel" Style="font-size: 1.3rem;" />
+                    <h3 class="rules-title m-0">Правила начисления XP</h3>
+                </div>
+
+                <p class="text-muted" style="font-size: 0.9rem;">
+                    Обратите внимание, что на полигоне действует динамическая система оценки, параметры которой задаются администратором индивидуально для каждого сценария.
+                </p>
+
+                <hr class="cyber-hr" />
+
+                <div class="d-flex flex-column gap-3">
+                    <div class="d-flex align-items-start gap-2">
+                        <RadzenIcon Icon="add_circle_outline" Style="color: #28a745; font-size: 1.1rem; margin-top: 3px;" />
+                        <div>
+                            <span class="d-block text-white font-weight-bold" style="font-size: 0.85rem;">Успешное выполнение</span>
+                            <small class="text-muted">За каждый правильный ответ вам начисляются баллы опыта (XP), установленные автором вопроса.</small>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-start gap-2">
+                        <RadzenIcon Icon="remove_circle_outline" Style="color: #ff4444; font-size: 1.1rem; margin-top: 3px;" />
+                        <div>
+                            <span class="d-block text-white font-weight-bold" style="font-size: 0.85rem;">Штрафные санкции</span>
+                            <small class="text-muted">Ошибочные попытки ввода ответа могут списывать XP (значение штрафа также динамически настраивается администратором).</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert-zone mt-4 p-3 border border-warning rounded">
+                    <div class="d-flex gap-2">
+                        <RadzenIcon Icon="warning" Style="color: #ffb703;" />
+                        <span style="font-size: 0.8rem; font-family: monospace; color: #ffb703; text-transform: uppercase;">Внимание оператора</span>
+                    </div>
+                    <p class="m-0 mt-2 text-muted" style="font-size: 0.75rem; line-height: 1.4;">
+                        Не угадывайте ответы вслепую. Серия неверных сабмитов способна полностью обнулить ваш итоговый рейтинг за сценарий. Опирайтесь только на факты из логов ВМ.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .instruction-container {
+        background-color: #0d1117;
+        min-height: 100vh;
+        color: #e6edf3 !important; /* Сделали основной текст контрастным */
+    }
+
+    .header-block {
+        border-bottom: 1px solid #21262d;
+    }
+
+    .page-title {
+        font-family: monospace;
+        color: #ffffff !important; /* Яркий белый заголовок */
+        font-size: 1.5rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* Кастомизация аккордеона Radzen под кибер-стиль */
+    .cyber-accordion {
+        background: transparent !important;
+        border: none !important;
+    }
+
+    ::deep .rz-accordion-header {
+        background-color: #161b22 !important;
+        border: 1px solid #30363d !important;
+        margin-bottom: 8px;
+        border-radius: 4px !important;
+        transition: all 0.2s ease;
+    }
+
+        /* Текст внутри заголовков аккордеона */
+        ::deep .rz-accordion-header a {
+            color: #ffffff !important;
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        ::deep .rz-accordion-header:hover {
+            border-color: #00e5ff !important;
+            box-shadow: 0 0 8px rgba(0, 229, 255, 0.15);
+        }
+
+    /* Внутренний блок раскрытого аккордеона */
+    ::deep .rz-accordion-content {
+        background-color: #161b22 !important; /* Сделали чуть светлее фона, чтобы читалcя текст */
+        border: 1px solid #30363d !important;
+        border-top: none !important;
+        color: #e6edf3 !important; /* Контрастный текст внутри контента */
+        padding: 20px !important;
+        margin-top: -9px;
+        margin-bottom: 15px;
+        border-bottom-left-radius: 4px;
+        border-bottom-right-radius: 4px;
+    }
+
+    .accordion-content p {
+        color: #e6edf3 !important;
+    }
+
+    .accordion-content strong {
+        color: #00e5ff !important; /* Выделение важных слов неоновым голубым */
+    }
+
+    .accordion-content ul {
+        padding-left: 20px;
+        margin-top: 10px;
+        color: #e6edf3 !important;
+    }
+
+    .accordion-content li {
+        margin-bottom: 8px;
+    }
+
+    /* Модули инструментов внутри этапов */
+    .tool-box {
+        background: #0d1117 !important; /* Внутренний фон блоков делаем темнее */
+        border: 1px dashed #444c56;
+        padding: 15px;
+        border-radius: 4px;
+    }
+
+        .tool-box .text-muted {
+            color: #8b949e !important; /* Читаемый серый для второстепенного описания ПО */
+        }
+
+    .tool-badge {
+        font-family: monospace;
+        font-size: 0.75rem;
+        padding: 3px 8px;
+        border-radius: 3px;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+
+    .bg-info-cyber {
+        background: rgba(0, 229, 255, 0.1);
+        color: #00e5ff !important;
+        border: 1px solid rgba(0, 229, 255, 0.3);
+    }
+
+    .bg-blue-cyber {
+        background: rgba(88, 166, 255, 0.1);
+        color: #58a6ff !important;
+        border: 1px solid rgba(88, 166, 255, 0.3);
+    }
+
+    /* Боковая карточка правил */
+    .rules-card {
+        background-color: #161b22;
+        border: 1px solid #30363d;
+        border-radius: 6px;
+        color: #e6edf3 !important;
+    }
+
+        .rules-card .text-muted {
+            color: #c9d1d9 !important; /* Текст правил делаем светлее обычной заглушки */
+        }
+
+    .rules-title {
+        font-family: monospace;
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .text-warning-cyber {
+        color: #ffb703 !important;
+    }
+
+    .cyber-hr {
+        border-top: 1px solid #30363d;
+        margin: 1.5rem 0;
+    }
+
+    .alert-zone {
+        background: rgba(255, 183, 3, 0.02);
+        border-color: rgba(255, 183, 3, 0.3) !important;
+    }
+
+        .alert-zone .text-muted {
+            color: #ffb703 !important; /* Текст предупреждения теперь горит желтым, а не блекнет */
+            opacity: 0.85;
+        }
+</style>
