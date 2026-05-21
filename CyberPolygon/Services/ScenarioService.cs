@@ -129,12 +129,14 @@ public class ScenarioService
             .FirstOrDefaultAsync(p => p.UserId == userId && p.CyberScenarioId == scenarioId);
     }
 
-    // 2. Сохранить успешное прохождение
-    public async Task SaveUserProgressAsync(string userId, int scenarioId, int score)
+    public async Task StartScenarioAsync(string userId, int scenarioId, int durationMinutes)
     {
         using var context = await _contextFactory.CreateDbContextAsync();
         var progress = await context.UserProgresses
             .FirstOrDefaultAsync(p => p.UserId == userId && p.CyberScenarioId == scenarioId);
+
+        var now = DateTime.UtcNow;
+        var endTime = durationMinutes > 0 ? now.AddMinutes(durationMinutes) : (DateTime?)null;
 
         if (progress == null)
         {
@@ -142,22 +144,62 @@ public class ScenarioService
             {
                 UserId = userId,
                 CyberScenarioId = scenarioId,
-                Score = score,
-                IsCompleted = true,
-                CompletedAt = DateTime.UtcNow
+                Status = AttemptStatus.InProgress,
+                StartedAt = now,
+                TargetEndTime = endTime
             });
         }
         else
         {
-            progress.Score = score;
-            progress.IsCompleted = true;
-            progress.CompletedAt = DateTime.UtcNow;
+            // Если была провалена, даем новую попытку
+            progress.Status = AttemptStatus.InProgress;
+            progress.StartedAt = now;
+            progress.TargetEndTime = endTime;
+            progress.Score = 0;
+            progress.CompletedAt = null;
+            progress.TimeSpent = null;
             context.UserProgresses.Update(progress);
         }
         await context.SaveChangesAsync();
     }
 
-    // 3. АДМИН: Сбросить прогресс ВСЕХ пользователей для конкретного сценария
+
+    public async Task CompleteUserProgressAsync(string userId, int scenarioId, int score)
+    {
+        using var context = await _contextFactory.CreateDbContextAsync();
+        var progress = await context.UserProgresses
+            .FirstOrDefaultAsync(p => p.UserId == userId && p.CyberScenarioId == scenarioId);
+
+        if (progress != null && progress.Status == AttemptStatus.InProgress)
+        {
+            progress.Score = score;
+            progress.Status = AttemptStatus.Completed;
+            progress.CompletedAt = DateTime.UtcNow;
+            if (progress.StartedAt.HasValue)
+            {
+                progress.TimeSpent = progress.CompletedAt.Value - progress.StartedAt.Value;
+            }
+            context.UserProgresses.Update(progress);
+            await context.SaveChangesAsync();
+        }
+    }
+
+    public async Task FailUserProgressAsync(string userId, int scenarioId)
+    {
+        using var context = await _contextFactory.CreateDbContextAsync();
+        var progress = await context.UserProgresses
+            .FirstOrDefaultAsync(p => p.UserId == userId && p.CyberScenarioId == scenarioId);
+
+        if (progress != null && progress.Status == AttemptStatus.InProgress)
+        {
+            progress.Status = AttemptStatus.Failed;
+            progress.CompletedAt = DateTime.UtcNow;
+            context.UserProgresses.Update(progress);
+            await context.SaveChangesAsync();
+        }
+    }
+
+
     public async Task ResetAllProgressForScenarioAsync(int scenarioId)
     {
         using var context = await _contextFactory.CreateDbContextAsync();
@@ -172,25 +214,28 @@ public class ScenarioService
     public async Task<List<UserScenarioProgressDto>> GetAllProgressForScenarioAsync(int scenarioId)
     {
         using var context = await _contextFactory.CreateDbContextAsync();
-
         return await context.UserProgresses
-            .Where(p => p.CyberScenarioId == scenarioId && p.IsCompleted)
-            .Join(context.Users, // Соединяем с таблицей пользователей Identity
-                progress => progress.UserId, // Ключ из таблицы прогресса
-                user => user.Id,             // Ключ из таблицы пользователей
-                (progress, user) => new UserScenarioProgressDto // Проецируем в наш DTO
+            .Where(p => p.CyberScenarioId == scenarioId) // Теперь берем всех: и InProgress, и Completed
+            .Join(context.Users,
+                progress => progress.UserId,
+                user => user.Id,
+                (progress, user) => new UserScenarioProgressDto
                 {
                     Id = progress.Id,
                     UserId = progress.UserId,
                     UserName = user.UserName ?? "Без имени",
                     Email = user.Email ?? string.Empty,
                     Score = progress.Score,
-                    IsCompleted = progress.IsCompleted,
-                    CompletedAt = progress.CompletedAt
+                    Status = progress.Status,
+                    CompletedAt = progress.CompletedAt,
+                    TimeSpent = progress.TimeSpent
                 })
             .OrderByDescending(p => p.CompletedAt)
             .ToListAsync();
     }
+
+
+
 
     // АДМИН: Точечный сброс прогресса одного пользователя
     public async Task ResetUserProgressAsync(string userId, int scenarioId)
@@ -211,7 +256,7 @@ public class ScenarioService
         using var context = await _contextFactory.CreateDbContextAsync();
         return await context.Scenarios
             .Include(s => s.Questions)
-            .Include(s => s.Documents) // <-- ДОБАВЛЕНО
+            .Include(s => s.Documents)
             .FirstOrDefaultAsync(s => s.Id == id);
     }
 }

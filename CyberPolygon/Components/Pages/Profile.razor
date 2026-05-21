@@ -311,16 +311,16 @@
                 // Считаем скрытые сценарии, которые сейчас не видны обычным курсантам
                 adminDraftScenarios = await context.Set<CyberScenario>().CountAsync(s => !s.IsVisible);
 
-                // Считаем общее число записей прохождения со статусом "Завершено" по всей платформе
-                adminGlobalCompletions = await context.Set<UserScenarioProgress>().CountAsync(p => p.IsCompleted);
+                // Считаем общее число записей, где заполнена дата завершения
+                adminGlobalCompletions = await context.Set<UserScenarioProgress>().CountAsync(p => p.CompletedAt != null);
             }
 
             // 3. Получаем историю прогресса конкретного пользователя
             completedScenariosList = await context.Set<UserScenarioProgress>()
-                .Include(p => p.Scenario)
-                .Where(p => p.UserId == userId && p.IsCompleted)
-                .OrderByDescending(p => p.CompletedAt)
-                .ToListAsync();
+              .Include(p => p.Scenario)
+              .Where(p => p.UserId == userId && p.CompletedAt != null)
+              .OrderByDescending(p => p.CompletedAt)
+              .ToListAsync();
 
             completedCount = completedScenariosList.Count;
 

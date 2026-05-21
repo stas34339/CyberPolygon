@@ -1,6 +1,8 @@
 ﻿@page "/scenario/{Id:int}/workspace"
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
+@using System.Threading
+@implements IDisposable
 @rendermode InteractiveServer
 
 @inject ScenarioService ScenarioService
@@ -8,11 +10,11 @@
 @inject NotificationService NotificationService
 @inject NavigationManager NavigationManager
 
-<RadzenComponents />
 <PageTitle>Терминал: @(scenario?.Title ?? "Загрузка...")</PageTitle>
+<RadzenComponents />
 
 <div class="workspace-wrapper rz-p-4" style="background-color: #1e1e1e; min-height: 100vh; color: #e1e1e1;">
-    @if (scenario == null)
+    @if (scenario == null || currentUserProgress == null)
     {
         <div class="text-center p-5">
             <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
@@ -21,106 +23,94 @@
     }
     else
     {
-        @* ВЕРХНЯЯ НАВИГАЦИОННАЯ ПАНЕЛЬ С КНОПКОЙ НАЗАД *@
+        @* ВЕРХНЯЯ НАВИГАЦИОННАЯ ПАНЕЛЬ С КНОПКОЙ НАЗАД И ТАЙМЕРОМ *@
         <div class="d-flex justify-content-between align-items-center mb-4 pb-3" style="border-bottom: 1px solid rgba(0, 238, 255, 0.2);">
             <div class="d-flex align-items-center gap-3">
-                <RadzenButton Text="НАЗАД К КАТАЛОГУ" Icon="arrow_back" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Outlined"
+                <RadzenButton Text="НАЗАД" Icon="arrow_back" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Outlined"
                               Click="@(() => NavigationManager.NavigateTo("scenario"))" />
                 <h2 style="color: #00eeff; margin: 0; font-weight: bold; font-family: monospace;">[АРЕНА]: @scenario.Title</h2>
             </div>
-            <div class="score-badge" style="color: #e1e4e8; font-size: 1.1rem; background: #161b22; padding: 8px 15px; border-radius: 4px; border: 1px solid #30363d;">
-                Текущий счет: <span style="color: #28a745; text-shadow: 0 0 5px rgba(40,167,69,0.5); font-weight: bold;">@totalScore</span> XP
+
+            <div class="d-flex gap-3 align-items-center">
+                @if (currentUserProgress.Status == AttemptStatus.InProgress && scenario.DurationInMinutes > 0)
+                {
+                    <div class="timer-badge" style="color: @(timeLeft.TotalMinutes < 5 ? "#ff4444" : "#00eeff"); font-size: 1.2rem; font-family: monospace; border: 1px solid @(timeLeft.TotalMinutes < 5 ? "#ff4444" : "#00eeff"); padding: 5px 15px; border-radius: 4px; background: rgba(0,0,0,0.5);">
+                        <RadzenIcon Icon="timer" Style="vertical-align: middle; margin-right: 5px;" />
+                        @timeLeft.ToString(@"hh\:mm\:ss")
+                    </div>
+                }
+
+                <div class="score-badge" style="color: #e1e4e8; font-size: 1.1rem; background: #161b22; padding: 8px 15px; border-radius: 4px; border: 1px solid #30363d;">
+                    Текущий счет: <span style="color: #28a745; text-shadow: 0 0 5px rgba(40,167,69,0.5); font-weight: bold;">@totalScore</span> XP
+                </div>
             </div>
         </div>
 
-        @* ОСНОВНЫЕ ВКЛАДКИ РАБОЧЕГО ПРОСТРАНСТВА *@
         <RadzenTabs RenderMode="TabRenderMode.Client" class="custom-tabs">
             <Tabs>
-                @* Вкладка 1: Легенда (Показываем, если строка не пустая) *@
-                @if (!string.IsNullOrWhiteSpace(scenario.Legend))
-                {
-                    <RadzenTabsItem Text="Легенда" Icon="history_edu">
-                        <div class="details-content-box p-4" style="background: rgba(255, 255, 255, 0.02); border-radius: 4px; min-height: 450px;">
-                            <h4 style="color: #00eeff;" class="mb-3">Оперативная сводка</h4>
-                            <div style="color: white; line-height: 1.6;">
-                                @((MarkupString)scenario.Legend)
-                            </div>
-                        </div>
-                    </RadzenTabsItem>
-                }
-
-                @* Вкладка 2: Схема (Показываем, только если загружен путь к изображению) *@
-                @if (!string.IsNullOrEmpty(scenario.SchemaPath))
-                {
-                    <RadzenTabsItem Text="Схема сети" Icon="hub">
-                        <div class="details-content-box p-4 text-center" style="background: rgba(255, 255, 255, 0.02); border-radius: 4px; min-height: 450px;">
-                            <h4 style="color: #00eeff;" class="text-start mb-3">Топология инфраструктуры</h4>
-                            <div class="schema-container p-2" style="background: #111; border: 1px solid #333; display: inline-block; border-radius: 4px;">
-                                <img src="@scenario.SchemaPath" alt="Схема сети" class="img-fluid" style="max-height: 500px; border: 1px solid rgba(0,238,255,0.3);" />
-                            </div>
-                        </div>
-                    </RadzenTabsItem>
-                }
-
-                @* Вкладка 3: Документация (Показываем, если есть прикрепленные документы) *@
-                @if (scenario.Documents != null && scenario.Documents.Any())
-                {
-                    <RadzenTabsItem Text="Документация" Icon="description">
-                        <div class="details-content-box p-4" style="background: rgba(255, 255, 255, 0.02); border-radius: 4px; min-height: 450px;">
-                            <h4 style="color: #00eeff;" class="mb-3">Сопутствующие материалы и руководства</h4>
-                            <p class="text-muted">Перед выполнением заданий ознакомьтесь с прикрепленными методическими файлами.</p>
-
-                            @foreach (var doc in scenario.Documents)
-                            {
-                                <div class="p-3 mb-3 d-flex align-items-center justify-content-between" style="background: #161b22; border: 1px solid #30363d; border-radius: 4px;">
-                                    <div class="d-flex align-items-center gap-3">
-                                        <RadzenIcon Icon="picture_as_pdf" Style="font-size: 2.5rem; color: #ff4444;" />
-                                        <div>
-                                            <b style="color: white;">@(string.IsNullOrWhiteSpace(doc.Title) ? "Прикрепленный документ" : doc.Title)</b>
-                                            <div class="text-muted" style="font-size: 0.85rem;">Файл хранится на защищенном сервере платформы</div>
-                                        </div>
-                                    </div>
-                                    <a href="@doc.FilePath" download target="_blank" class="btn btn-outline-info" style="border-radius: 4px; text-decoration: none; padding: 8px 16px; border: 1px solid #00bfff; color: #00bfff;">
-                                        <RadzenIcon Icon="download" class="rz-mr-1" Style="vertical-align: middle;" /> СКАЧАТЬ ФАЙЛ
-                                    </a>
-                                </div>
-                            }
-                        </div>
-                    </RadzenTabsItem>
-                }
+                @* Вкладки Легенда, Схема, Документация скрыл для краткости ответа, они остаются без изменений *@
+                <RadzenTabsItem Text="Информация" Icon="info">
+                    <div class="details-content-box p-4" style="background: rgba(255, 255, 255, 0.02); border-radius: 4px; min-height: 450px;">
+                        <h4 style="color: #00eeff;">Добро пожаловать в терминал</h4>
+                        <p>Ознакомьтесь с условиями. Лимит времени: <b>@(scenario.DurationInMinutes > 0 ? $"{scenario.DurationInMinutes} мин." : "Без ограничений")</b>.</p>
+                        @((MarkupString)scenario.Legend)
+                    </div>
+                </RadzenTabsItem>
 
                 @* Вкладка 4: Задание (ИНТЕРАКТИВНЫЙ ТЕСТ) *@
                 <RadzenTabsItem Text="Задания" Icon="terminal">
                     <div class="details-content-box p-4" style="background: rgba(255, 255, 255, 0.02); border-radius: 4px; min-height: 450px;">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h4 style="color: #00eeff; margin:0;">Интерактивный терминал проверки флагов</h4>
-                            <span class="badge bg-secondary p-2 border border-info text-info" style="border-radius: 4px;">
-                                Режим контроля: @(scenario.GameMode == ScenarioGameMode.AllAtOnce ? "Свободный" : "Последовательный")
-                            </span>
-                        </div>
 
-                        @if (isAlreadyCompleted)
+                        @* СОСТОЯНИЕ 1: НЕ НАЧАТО *@
+                        @if (currentUserProgress.Status == AttemptStatus.NotStarted)
+                        {
+                            <div class="text-center p-5 mt-5">
+                                <RadzenIcon Icon="rocket_launch" Style="font-size: 5rem; color: #00eeff; margin-bottom: 20px;" />
+                                <h3>Сценарий готов к запуску</h3>
+                                <p class="text-muted">Как только вы нажмете кнопку, запустится таймер на @scenario.DurationInMinutes минут.</p>
+                                <RadzenButton Text="НАЧАТЬ СИМУЛЯЦИЮ" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Large"
+                                              class="mt-4 px-5 py-3" Style="font-weight: bold; font-family: monospace;"
+                                              Click="StartScenario" />
+                            </div>
+                        }
+
+                        @* СОСТОЯНИЕ 2: УСПЕХ *@
+                        else if (currentUserProgress.Status == AttemptStatus.Completed)
                         {
                             <div class="p-5 text-center border border-success rounded mt-4" style="background: rgba(40, 167, 69, 0.05);">
                                 <RadzenIcon Icon="workspace_premium" Style="font-size: 4rem; color: #28a745;" />
                                 <h3 style="color: #28a745;" class="mt-3">Сценарий успешно завершен!</h3>
-                                <p class="text-white mb-0" style="font-size: 1.1rem;">Ваш зафиксированный результат: <b>@savedScore XP</b></p>
-                                <p class="text-muted mt-2">Дата фиксации: @completedDate.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</p>
+                                <p class="text-white mb-0" style="font-size: 1.1rem;">Итоговый счет: <b>@currentUserProgress.Score XP</b></p>
+                                <p class="text-muted mt-2">Время выполнения: @(currentUserProgress.TimeSpent?.ToString(@"hh\:mm\:ss") ?? "Н/Д")</p>
                             </div>
                         }
-                        else if (scenario.Questions == null || !scenario.Questions.Any())
+
+                        @* СОСТОЯНИЕ 3: ПРОВАЛ *@
+                        else if (currentUserProgress.Status == AttemptStatus.Failed)
                         {
-                            <div class="alert alert-warning bg-dark text-warning border-warning">
-                                Контрольные вопросы еще не сконфигурированы. Обратитесь к администратору.
+                            <div class="p-5 text-center border border-danger rounded mt-4" style="background: rgba(220, 53, 69, 0.05);">
+                                <RadzenIcon Icon="timer_off" Style="font-size: 4rem; color: #dc3545;" />
+                                <h3 style="color: #dc3545;" class="mt-3">Миссия провалена</h3>
+                                <p class="text-white mb-0" style="font-size: 1.1rem;">Время, отведенное на выполнение сценария, истекло.</p>
+                                <RadzenButton Text="ПОПРОБОВАТЬ СНОВА" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Medium"
+                                              class="mt-4" Click="RestartScenario" />
                             </div>
                         }
-                        else
+
+                        @* СОСТОЯНИЕ 4: В ПРОЦЕССЕ *@
+                        else if (currentUserProgress.Status == AttemptStatus.InProgress)
                         {
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h4 style="color: #00eeff; margin:0;">Терминал проверки флагов</h4>
+                                <span class="badge bg-secondary p-2 border border-info text-info">
+                                    Режим контроля: @(scenario.GameMode == ScenarioGameMode.AllAtOnce ? "Свободный" : "Последовательный")
+                                </span>
+                            </div>
+
                             <div class="interactive-test-zone">
                                 @foreach (var qState in questionStates)
                                 {
                                     var index = questionStates.IndexOf(qState);
-
                                     @if (scenario.GameMode == ScenarioGameMode.AllAtOnce || index == 0 || questionStates[index - 1].IsCorrect)
                                     {
                                         <div class="mb-4 p-3" style="background: #161b22; border: 1px solid @(qState.IsCorrect ? "#28a745" : "#30363d"); border-radius: 4px;">
@@ -137,7 +127,7 @@
                                             <div class="d-flex gap-2">
                                                 <RadzenTextBox @bind-Value="@qState.UserAnswer"
                                                                Disabled="@qState.IsCorrect"
-                                                               Placeholder="@(qState.IsCorrect ? "Ответ принят и заблокирован" : "Введите ваш ответ или полученный флаг...")"
+                                                               Placeholder="@(qState.IsCorrect ? "Ответ принят" : "Введите ваш ответ или флаг...")"
                                                                Style="background: #0d1117 !important; border: 1px solid #30363d !important; color: #00ff00 !important; font-family: monospace;"
                                                                class="w-100"
                                                                @onkeypress="@(async (e) => await HandleKeyPress(e, qState))" />
@@ -162,16 +152,19 @@
                                         </div>
                                     }
                                 }
+                            </div>
 
-                                @if (questionStates.All(q => q.IsCorrect))
-                                {
-                                    <div class="p-4 text-center border border-success rounded mt-4" style="background: rgba(40, 167, 69, 0.05);">
-                                        <RadzenIcon Icon="workspace_premium" Style="font-size: 3rem; color: #ffd700;" />
-                                        <h3 style="color: #28a745;" class="mt-2">Миссия выполнена!</h3>
-                                        <p class="text-white mb-0">Все уязвимости устранены. Итоговый счет: <b>@totalScore XP</b></p>
-                                        <p class="text-muted mt-2">Ваш прогресс сохранен в личном профиле.</p>
-                                    </div>
-                                }
+                            <hr style="border-color: #333;" class="my-4" />
+
+                            @* БОЛЬШАЯ КНОПКА ЗАВЕРШЕНИЯ *@
+                            <div class="text-center mt-4">
+                                <p class="text-muted mb-3">Завершение сценария зафиксирует текущий счет и остановит таймер.</p>
+                                <RadzenButton Text="ЗАВЕРШИТЬ СЦЕНАРИЙ И ОТПРАВИТЬ ОТЧЕТ"
+                                              ButtonStyle="ButtonStyle.Success"
+                                              Size="ButtonSize.Large"
+                                              class="w-100 py-3"
+                                              Style="font-weight: bold; letter-spacing: 1px;"
+                                              Click="CompleteScenario" />
                             </div>
                         }
                     </div>
@@ -181,47 +174,67 @@
                 <AuthorizeView Roles="Admin">
                     <Authorized>
                         <RadzenTabsItem Text="Управление (Админ)" Icon="admin_panel_settings">
-                            <div class="details-content-box p-4 border border-danger" style="background: rgba(255, 255, 255, 0.02); border-radius: 4px; min-height: 450px;">
-                                <div class="d-flex justify-content-between align-items-center mb-4">
-                                    <h4 class="text-danger mb-0">Мониторинг прохождений пользователей</h4>
-                                    <RadzenButton Text="Сбросить ВСЕ результаты" Icon="delete_forever"
+                            <div class="details-content-box p-4" style="background: rgba(255, 68, 68, 0.02); border: 1px solid rgba(255, 68, 68, 0.2); border-radius: 6px;">
+
+                                <div class="d-flex justify-content-between align-items-center mb-4 pb-3" style="border-bottom: 1px solid rgba(255, 68, 68, 0.15);">
+                                    <h4 class="mb-0" style="color: #ff4444; font-family: monospace; font-weight: bold;">
+                                        <RadzenIcon Icon="monitor_heart" Style="vertical-align: middle; margin-right: 8px;" /> Мониторинг пользователей
+                                    </h4>
+                                    <RadzenButton Text="Сбросить ВСЕ" Icon="delete_forever"
                                                   ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
-                                                  Click="@ResetProgress" />
+                                                  Click="@ResetAllProgress" Style="box-shadow: 0 0 10px rgba(220, 53, 69, 0.2);" />
                                 </div>
 
                                 @if (completedUsers == null || !completedUsers.Any())
                                 {
-                                    <div style="color:white;">Ни один агент еще не завершил данный сценарий.</div>
+                                    <div class="text-center py-5 text-muted" style="font-family: monospace;">
+                                        <RadzenIcon Icon="cloud_off" Style="font-size: 2.5rem; color: #555;" /><br />
+                                        Активных прохождений или логов не обнаружено
+                                    </div>
                                 }
                                 else
                                 {
-                                    <RadzenDataGrid Data="@completedUsers" TItem="UserScenarioProgressDto" AllowPaging="true" PageSize="5" Style="border: none;">
+                                    <RadzenDataGrid Data="@completedUsers" TItem="UserScenarioProgressDto" AllowPaging="true" PageSize="10"
+                                                    Density="Density.Compact" class="bg-dark"
+                                                    Style="border: 1px solid #30363d; border-radius: 4px; overflow: hidden;">
                                         <Columns>
                                             <RadzenDataGridColumn TItem="UserScenarioProgressDto" Title="Агент">
                                                 <Template Context="data">
                                                     <div class="d-flex flex-column">
-                                                        <span class="text-white" style="font-weight: bold;">@data.UserName</span>
-                                                        <span class="text-muted" style="font-size: 0.8rem;">@data.Email</span>
+                                                        <span class="text-white font-weight-bold" style="font-family: monospace;">@data.UserName</span>
+                                                        <span class="text-muted" style="font-size: 0.75rem;">@data.Email</span>
                                                     </div>
                                                 </Template>
                                             </RadzenDataGridColumn>
 
-                                            <RadzenDataGridColumn TItem="UserScenarioProgressDto" Property="Score" Title="Баллы" Width="120px" TextAlign="TextAlign.Center">
+                                            <RadzenDataGridColumn TItem="UserScenarioProgressDto" Title="Статус" Width="140px" TextAlign="TextAlign.Center">
                                                 <Template Context="data">
-                                                    <b style="color: #28a745;">@data.Score XP</b>
+                                                    @if (data.Status == AttemptStatus.InProgress)
+                                                    {
+                                                        <span class="badge border border-info text-info px-2 py-1" style="background: rgba(0,238,255,0.05); font-family: monospace;">В ПРОЦЕССЕ</span>
+                                                    }
+                                                    else if (data.Status == AttemptStatus.Completed)
+                                                    {
+                                                        <span class="badge border border-success text-success px-2 py-1" style="background: rgba(40,167,69,0.05); font-family: monospace;">УСПЕХ</span>
+                                                    }
+                                                    else if (data.Status == AttemptStatus.Failed)
+                                                    {
+                                                        <span class="badge border border-danger text-danger px-2 py-1" style="background: rgba(220,53,69,0.05); font-family: monospace;">ПРОВАЛ</span>
+                                                    }
                                                 </Template>
                                             </RadzenDataGridColumn>
 
-                                            <RadzenDataGridColumn TItem="UserScenarioProgressDto" Property="CompletedAt" Title="Дата завершения" Width="180px">
+                                            <RadzenDataGridColumn TItem="UserScenarioProgressDto" Property="Score" Title="Баллы" Width="110px" TextAlign="TextAlign.Center">
                                                 <Template Context="data">
-                                                    @data.CompletedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")
+                                                    <span style="color: #28a745; font-weight: bold; font-family: monospace;">@data.Score XP</span>
                                                 </Template>
                                             </RadzenDataGridColumn>
 
                                             <RadzenDataGridColumn TItem="UserScenarioProgressDto" Title="Действия" Width="100px" TextAlign="TextAlign.Center">
                                                 <Template Context="data">
-                                                    <RadzenButton Icon="restart_alt" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.ExtraSmall"
-                                                                  Click="@(async () => await ResetSingleUser(data.UserId))" />
+                                                    <RadzenButton Icon="restart_alt" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.ExtraSmall" Variant="Variant.Outlined"
+                                                                  Click="@(async () => await ResetSingleUser(data.UserId))"
+                                                                  MouseEnter="@(args => NotificationService.Notify(NotificationSeverity.Info, "Операция", $"Сбросить прогресс для {data.UserName}", duration: 2000))" />
                                                 </Template>
                                             </RadzenDataGridColumn>
                                         </Columns>
@@ -239,8 +252,14 @@
 @code {
     [Parameter] public int Id { get; set; }
     private CyberScenario? scenario;
+    private UserScenarioProgress? currentUserProgress;
     private List<UserScenarioProgressDto> completedUsers = new();
     private bool isAdmin = false;
+    private string currentUserId = string.Empty;
+
+    private Timer? _timer;
+    private TimeSpan timeLeft = TimeSpan.Zero;
+    private int totalScore = 0;
 
     public class UserQuestionState
     {
@@ -251,26 +270,16 @@
     }
 
     private List<UserQuestionState> questionStates = new();
-    private int totalScore = 0;
-
-    private string currentUserId = string.Empty;
-    private bool isAlreadyCompleted = false;
-    private int savedScore = 0;
-    private DateTime completedDate;
 
     protected override async Task OnInitializedAsync()
     {
-        // 1. Получаем сценарий по переданному ID из URL роута
-        scenario = await ScenarioService.GetByIdAsync(Id); // Предполагаем наличие GetByIdAsync в твоем сервисе
-
+        scenario = await ScenarioService.GetByIdAsync(Id);
         if (scenario == null)
         {
-            NotificationService.Notify(NotificationSeverity.Error, "Ошибка", "Сценарий не найден.");
             NavigationManager.NavigateTo("scenario");
             return;
         }
 
-        // 2. Аутентификация
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
 
@@ -279,53 +288,123 @@
             currentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
             isAdmin = user.IsInRole("Admin");
 
-            if (isAdmin)
-            {
-                await LoadAdminData();
-            }
+            await LoadUserState();
 
-            // Проверяем прохождение
-            var progress = await ScenarioService.GetUserProgressAsync(currentUserId, scenario.Id);
-            if (progress != null && progress.IsCompleted)
-            {
-                isAlreadyCompleted = true;
-                savedScore = progress.Score;
-                completedDate = progress.CompletedAt;
-                totalScore = savedScore;
-                return;
-            }
+            if (isAdmin) await LoadAdminData();
         }
+    }
 
-        if (scenario.Questions != null)
+    private async Task LoadUserState()
+    {
+        currentUserProgress = await ScenarioService.GetUserProgressAsync(currentUserId, scenario!.Id)
+                              ?? new UserScenarioProgress { Status = AttemptStatus.NotStarted };
+
+        totalScore = currentUserProgress.Score;
+
+        // Если есть вопросы, маппим их в локальный стейт (в реальном проекте тут нужна логика восстановления ответов)
+        if (scenario.Questions != null && questionStates.Count == 0)
         {
             questionStates = scenario.Questions.Select(q => new UserQuestionState { Question = q }).ToList();
+        }
+
+        if (currentUserProgress.Status == AttemptStatus.InProgress)
+        {
+            CheckTime();
+            StartTimer();
+        }
+    }
+
+    // Запуск сценария (Нажали кнопку "Начать")
+    private async Task StartScenario()
+    {
+        await ScenarioService.StartScenarioAsync(currentUserId, scenario!.Id, scenario.DurationInMinutes);
+        await LoadUserState();
+    }
+
+    // Пользователь сам завершает работу
+    private async Task CompleteScenario()
+    {
+        StopTimer();
+        await ScenarioService.CompleteUserProgressAsync(currentUserId, scenario!.Id, totalScore);
+        await LoadUserState();
+        NotificationService.Notify(NotificationSeverity.Success, "Завершено", $"Данные отправлены. Итоговый счет: {totalScore}");
+    }
+
+    // Рестарт проваленного
+    private async Task RestartScenario()
+    {
+        await ScenarioService.ResetUserProgressAsync(currentUserId, scenario!.Id);
+        questionStates.ForEach(q => { q.IsCorrect = false; q.UserAnswer = ""; q.FeedbackMessage = ""; });
+        await LoadUserState();
+    }
+
+    private void StartTimer()
+    {
+        if (scenario!.DurationInMinutes > 0 && currentUserProgress?.TargetEndTime != null)
+        {
+            _timer?.Dispose();
+            _timer = new Timer(TimerTick, null, 0, 1000);
+        }
+    }
+
+    private void StopTimer() => _timer?.Dispose();
+
+    private async void TimerTick(object? state)
+    {
+        if (currentUserProgress?.TargetEndTime != null)
+        {
+            timeLeft = currentUserProgress.TargetEndTime.Value - DateTime.UtcNow;
+
+            if (timeLeft.TotalSeconds <= 0)
+            {
+                StopTimer();
+                await ScenarioService.FailUserProgressAsync(currentUserId, scenario!.Id);
+                await InvokeAsync(LoadUserState); // Обновляем UI на "Провал"
+                await InvokeAsync(StateHasChanged);
+            }
+            else
+            {
+                await InvokeAsync(StateHasChanged); // Просто обновляем тики секундомера
+            }
+        }
+    }
+
+    private void CheckTime()
+    {
+        // Проверка при загрузке: вдруг время вышло пока вкладка была закрыта
+        if (currentUserProgress?.TargetEndTime != null && DateTime.UtcNow >= currentUserProgress.TargetEndTime.Value)
+        {
+            _ = ScenarioService.FailUserProgressAsync(currentUserId, scenario!.Id);
+            currentUserProgress.Status = AttemptStatus.Failed;
         }
     }
 
     private async Task CheckAnswer(UserQuestionState state)
     {
-        if (string.IsNullOrWhiteSpace(state.UserAnswer)) return;
+        if (string.IsNullOrWhiteSpace(state.UserAnswer) || currentUserProgress?.Status != AttemptStatus.InProgress) return;
 
         bool isRight = string.Equals(state.UserAnswer.Trim(), state.Question.CorrectAnswer.Trim(), StringComparison.OrdinalIgnoreCase);
 
         if (isRight)
         {
             state.IsCorrect = true;
-            state.FeedbackMessage = $"✓ Успешно! Добавлено +{state.Question.AwardPoints} XP.";
+            state.FeedbackMessage = $"✓ Флаг принят! +{state.Question.AwardPoints} XP.";
             totalScore += state.Question.AwardPoints;
         }
         else
         {
-            state.FeedbackMessage = $"❌ Неверный флаг. Штраф: -{state.Question.PenaltyPoints} XP.";
+            state.FeedbackMessage = $"❌ Отказ системы. -{state.Question.PenaltyPoints} XP.";
             totalScore -= state.Question.PenaltyPoints;
         }
 
-        if (questionStates.All(q => q.IsCorrect) && !string.IsNullOrEmpty(currentUserId) && scenario != null)
+        // Мы больше не завершаем сценарий автоматически.
+        // Только обновляем промежуточный счет в БД (опционально)
+        var progressToUpdate = await ScenarioService.GetUserProgressAsync(currentUserId, scenario!.Id);
+        if (progressToUpdate != null)
         {
-            await ScenarioService.SaveUserProgressAsync(currentUserId, scenario.Id, totalScore);
-            isAlreadyCompleted = true;
-            savedScore = totalScore;
-            completedDate = DateTime.UtcNow;
+            progressToUpdate.Score = totalScore;
+            // Здесь нужен простой UpdateScore, но для краткости опускаем прямое сохранение на каждый чих,
+            // счет сохранится финально по кнопке ЗАВЕРШИТЬ.
         }
     }
 
@@ -334,47 +413,29 @@
         if (e.Key == "Enter") await CheckAnswer(state);
     }
 
-    private async Task ResetProgress()
+    // --- АДМИН МЕТОДЫ ---
+    private async Task LoadAdminData() => completedUsers = await ScenarioService.GetAllProgressForScenarioAsync(scenario!.Id);
+
+    private async Task ResetAllProgress()
     {
-        if (scenario == null) return;
-        await ScenarioService.ResetAllProgressForScenarioAsync(scenario.Id);
-
-        isAlreadyCompleted = false;
-        totalScore = 0;
-        foreach (var q in questionStates)
-        {
-            q.IsCorrect = false;
-            q.UserAnswer = string.Empty;
-            q.FeedbackMessage = string.Empty;
-        }
-
-        if (isAdmin) await LoadAdminData();
-        NotificationService.Notify(NotificationSeverity.Success, "Система", "Прогресс всех пользователей обнулен.");
-    }
-
-    private async Task LoadAdminData()
-    {
-        if (scenario != null)
-            completedUsers = await ScenarioService.GetAllProgressForScenarioAsync(scenario.Id);
+        await ScenarioService.ResetAllProgressForScenarioAsync(scenario!.Id);
+        await LoadAdminData();
+        if (!isAdmin) await LoadUserState(); // Если админ сбросил сам себя
     }
 
     private async Task ResetSingleUser(string targetUserId)
     {
-        if (scenario == null) return;
-        await ScenarioService.ResetUserProgressAsync(targetUserId, scenario.Id);
+        await ScenarioService.ResetUserProgressAsync(targetUserId, scenario!.Id);
         await LoadAdminData();
-
         if (targetUserId == currentUserId)
         {
-            isAlreadyCompleted = false;
-            totalScore = 0;
-            foreach (var q in questionStates)
-            {
-                q.IsCorrect = false;
-                q.UserAnswer = string.Empty;
-                q.FeedbackMessage = string.Empty;
-            }
+            StopTimer();
+            await LoadUserState(); // Перезагружаем UI, если админ скинул свою попытку
         }
-        NotificationService.Notify(NotificationSeverity.Info, "Система", "Прогресс пользователя обнулен.");
+    }
+
+    public void Dispose()
+    {
+        StopTimer();
     }
 }

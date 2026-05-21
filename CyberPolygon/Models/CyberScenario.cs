@@ -1,5 +1,14 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
+
+public enum AttemptStatus
+{
+    NotStarted,
+    InProgress,
+    Completed,
+    Failed
+}
+
 public enum ScenarioGameMode
 {
     AllAtOnce, // Все вопросы доступны сразу
@@ -21,7 +30,7 @@ public class CyberScenario
     public string Legend { get; set; } = string.Empty;
 
     public string? SchemaPath { get; set; }
-
+    public int DurationInMinutes { get; set; } = 60;
     public string? DocumentationPath { get; set; }
     public string? DocumentationFileName { get; set; }
 
@@ -51,17 +60,21 @@ public class ScenarioQuestion
 public class UserScenarioProgress
 {
     public int Id { get; set; }
-
     [Required]
-    public string UserId { get; set; } = string.Empty; // ID пользователя из Identity
-
+    public string UserId { get; set; } = string.Empty;
     public int CyberScenarioId { get; set; }
     public int Score { get; set; }
-    public bool IsCompleted { get; set; }
-    public DateTime CompletedAt { get; set; }
+
+    // НОВЫЕ ПОЛЯ ВМЕСТО IsCompleted
+    public AttemptStatus Status { get; set; } = AttemptStatus.NotStarted;
+    public DateTime? StartedAt { get; set; }
+    public DateTime? TargetEndTime { get; set; } // До какого времени нужно сдать
+    public TimeSpan? TimeSpent { get; set; }     // Сколько реально потратил
+    public DateTime? CompletedAt { get; set; }
 
     public CyberScenario Scenario { get; set; }
 }
+
 public class UserScenarioProgressDto
 {
     public int Id { get; set; }
@@ -69,6 +82,8 @@ public class UserScenarioProgressDto
     public string UserName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public int Score { get; set; }
-    public bool IsCompleted { get; set; }
-    public DateTime CompletedAt { get; set; }
+
+    public AttemptStatus Status { get; set; }
+    public DateTime? CompletedAt { get; set; }
+    public TimeSpan? TimeSpent { get; set; }
 }

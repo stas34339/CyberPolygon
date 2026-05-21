@@ -21,21 +21,32 @@
             <RadzenTextArea @bind-Value="@Item.Description" class="w-100 dark-input" Style="height:60px;" />
         </div>
 
-        <div class="col-md-6 mb-3">
+        <div class="col-md-4 mb-3">
             <label class="cyber-label">Режим выполнения теста</label>
             <RadzenDropDown @bind-Value="@Item.GameMode" TValue="ScenarioGameMode"
                             Data="@(Enum.GetValues(typeof(ScenarioGameMode)))" class="w-100 dark-input">
                 <Template Context="mode">
                     @if ((ScenarioGameMode)mode == ScenarioGameMode.AllAtOnce)
                     {
-                        <span>Доступны все вопросы сразу</span>
+                        <span style="color:white;">Доступны все вопросы сразу</span>
                     }
                     else
                     {
-                        <span>Последовательно (по очереди)</span>
+                        <span style="color:white;">Последовательно (по очереди)</span>
                     }
                 </Template>
             </RadzenDropDown>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label class="cyber-label">Лимит времени (минуты)</label>
+            <RadzenNumeric @bind-Value="@Item.DurationInMinutes" Min="0" Max="360" class="w-100 dark-input" Placeholder="0" />
+            <span style="font-size: 0.75rem; color: #8b949e; display: block; margin-top: 2px;">0 — без ограничений времени</span>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label class="cyber-label">Схема (загрузка файла)</label>
+            <InputFile OnChange="HandleFileUpload" class="form-control bg-dark text-white border-secondary" style="height: 35px; padding: 4px 12px;" />
         </div>
 
         <div class="col-md-6 mb-3">
