@@ -1,6 +1,7 @@
 ﻿using CyberPolygon.Data;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.EntityFrameworkCore;
+using static CyberPolygon.Data.ApplicationDbContext;
 
 public class ScenarioService
 {
@@ -125,15 +126,35 @@ public class ScenarioService
     public async Task<UserScenarioProgress?> GetUserProgressAsync(string userId, int scenarioId)
     {
         using var context = await _contextFactory.CreateDbContextAsync();
+        var scenario = await context.Scenarios.FindAsync(scenarioId);
+
+        // Если сценарий назначен на команду - ищем общую командную сессию
+        if (scenario != null && scenario.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId.HasValue)
+        {
+            return await context.UserProgresses
+                .FirstOrDefaultAsync(p => p.CyberScenarioId == scenarioId
+                                       && p.TeamId == scenario.TargetTeamId.Value
+                                       && p.IsTeamAttempt);
+        }
+
+        // Иначе ищем личную сессию
         return await context.UserProgresses
-            .FirstOrDefaultAsync(p => p.UserId == userId && p.CyberScenarioId == scenarioId);
+            .FirstOrDefaultAsync(p => p.UserId == userId && p.CyberScenarioId == scenarioId && !p.IsTeamAttempt);
     }
 
     public async Task StartScenarioAsync(string userId, int scenarioId, int durationMinutes)
     {
         using var context = await _contextFactory.CreateDbContextAsync();
-        var progress = await context.UserProgresses
-            .FirstOrDefaultAsync(p => p.UserId == userId && p.CyberScenarioId == scenarioId);
+        var scenario = await context.Scenarios.FindAsync(scenarioId);
+
+        bool isTeamMode = scenario?.Scope == VisibilityScope.TeamOnly;
+        int? teamId = isTeamMode ? scenario?.TargetTeamId : null;
+
+        // ВАЖНО: Ищем прогресс (он может быть уже создан другим членом команды)
+        var progress = await context.UserProgresses.FirstOrDefaultAsync(p =>
+            p.CyberScenarioId == scenarioId &&
+            ((isTeamMode && p.TeamId == teamId && p.IsTeamAttempt) || (!isTeamMode && p.UserId == userId && !p.IsTeamAttempt))
+        );
 
         var now = DateTime.UtcNow;
         var endTime = durationMinutes > 0 ? now.AddMinutes(durationMinutes) : (DateTime?)null;
@@ -142,16 +163,18 @@ public class ScenarioService
         {
             context.UserProgresses.Add(new UserScenarioProgress
             {
-                UserId = userId,
+                UserId = isTeamMode ? null : userId, // Для команды UserId можно не писать, важен TeamId
+                TeamId = teamId,
+                IsTeamAttempt = isTeamMode,
                 CyberScenarioId = scenarioId,
                 Status = AttemptStatus.InProgress,
                 StartedAt = now,
-                TargetEndTime = endTime
+                TargetEndTime = endTime,
+                Score = 0
             });
         }
         else
         {
-            // Если была провалена, даем новую попытку
             progress.Status = AttemptStatus.InProgress;
             progress.StartedAt = now;
             progress.TargetEndTime = endTime;
@@ -160,6 +183,7 @@ public class ScenarioService
             progress.TimeSpent = null;
             context.UserProgresses.Update(progress);
         }
+
         await context.SaveChangesAsync();
     }
 
@@ -259,4 +283,78 @@ public class ScenarioService
             .Include(s => s.Documents)
             .FirstOrDefaultAsync(s => s.Id == id);
     }
+
+    public async Task UpdateScoreAsync(int progressId, int newScore)
+    {
+        using var context = await _contextFactory.CreateDbContextAsync();
+        var progress = await context.UserProgresses.FindAsync(progressId);
+        if (progress != null)
+        {
+            progress.Score = newScore;
+            await context.SaveChangesAsync();
+        }
+    }
+    public async Task<(bool Success, bool AlreadySolved, int NewScore)> ProcessTeamAnswerAsync(int progressId, int questionId, bool isCorrect, int awardPoints, int penaltyPoints)
+    {
+        using var context = await _contextFactory.CreateDbContextAsync();
+        var progress = await context.UserProgresses.FindAsync(progressId);
+
+        if (progress == null || progress.Status != AttemptStatus.InProgress)
+            return (false, false, 0);
+
+        // Проверяем, не решил ли этот вопрос кто-то другой из команды миллисекунду назад
+        bool alreadySolved = await context.UserAnswerProgresses
+            .AnyAsync(a => a.UserScenarioProgressId == progressId && a.QuestionId == questionId);
+
+        if (alreadySolved)
+            return (false, true, progress.Score); // Вопрос уже решен, очки не начисляем
+
+        if (isCorrect)
+        {
+            context.UserAnswerProgresses.Add(new UserAnswerProgress
+            {
+                UserScenarioProgressId = progressId,
+                QuestionId = questionId
+            });
+            progress.Score += awardPoints;
+        }
+        else
+        {
+            progress.Score -= penaltyPoints;
+            // Опционально: if (progress.Score < 0) progress.Score = 0; // Не даем уйти в минус
+        }
+
+        await context.SaveChangesAsync();
+        return (true, false, progress.Score);
+    }
+
+    // 2. Получение списка решенных задач для подсветки зеленым в UI
+    public async Task<List<int>> GetCompletedQuestionsAsync(int progressId)
+    {
+        using var context = await _contextFactory.CreateDbContextAsync();
+        return await context.UserAnswerProgresses
+            .Where(a => a.UserScenarioProgressId == progressId)
+            .Select(a => a.QuestionId)
+            .ToListAsync();
+    }
+
+    // 3. Командное завершение сценария (работает по ID сессии, а не ID юзера)
+    public async Task CompleteProgressByIdAsync(int progressId)
+    {
+        using var context = await _contextFactory.CreateDbContextAsync();
+        var progress = await context.UserProgresses.FindAsync(progressId);
+
+        if (progress != null && progress.Status == AttemptStatus.InProgress)
+        {
+            progress.Status = AttemptStatus.Completed;
+            progress.CompletedAt = DateTime.UtcNow;
+            if (progress.StartedAt.HasValue)
+            {
+                progress.TimeSpent = progress.CompletedAt.Value - progress.StartedAt.Value;
+            }
+            context.UserProgresses.Update(progress);
+            await context.SaveChangesAsync();
+        }
+    }
+
 }

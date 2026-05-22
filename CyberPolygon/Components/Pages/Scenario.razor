@@ -1,5 +1,7 @@
 ﻿@page "/scenario"
 @using CyberPolygon.Components.Components
+@using Microsoft.EntityFrameworkCore
+@using CyberPolygon.Data
 @rendermode InteractiveServer
 
 @inject ScenarioService ScenarioService
@@ -7,6 +9,7 @@
 @inject NotificationService NotificationService
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthStateProvider
+@inject IDbContextFactory<CyberPolygon.Data.ApplicationDbContext> ContextFactory
 
 <RadzenComponents />
 <PageTitle>Сценарии | Киберполигон</PageTitle>
@@ -112,22 +115,38 @@
 
     async Task Refresh()
     {
-        // Тянем все данные из сервиса
         var allScenarios = await ScenarioService.GetAllAsync();
-
-        // Проверяем роль текущего сеанса
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
+        var userPrincipal = authState.User;
 
-        if (user.IsInRole("Admin"))
+        if (userPrincipal.IsInRole("Admin"))
         {
-            // Админу отдаем всё (включая черновики)
             scenarios = allScenarios;
         }
         else
         {
-            // Пользователям — только опубликованные
-            scenarios = allScenarios.Where(s => s.IsVisible).ToList();
+            var userId = userPrincipal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            using var context = await ContextFactory.CreateDbContextAsync();
+            var dbUser = await context.Set<ApplicationUser>()
+                .Include(u => u.Teams)
+                .FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (dbUser == null)
+            {
+                scenarios = new List<CyberScenario>();
+                return;
+            }
+
+            int userGroupId = dbUser.GroupId ?? 0;
+            var userTeamIds = dbUser.Teams.Select(t => t.Id).ToList();
+
+            // Фильтруем только опубликованные с учетом Scope матрицы
+            scenarios = allScenarios.Where(s => s.IsVisible && (
+                s.Scope == VisibilityScope.Public ||
+                (s.Scope == VisibilityScope.GroupOnly && s.TargetGroupId == userGroupId) ||
+                (s.Scope == VisibilityScope.TeamOnly && s.TargetTeamId.HasValue && userTeamIds.Contains(s.TargetTeamId.Value))
+            )).ToList();
         }
     }
 

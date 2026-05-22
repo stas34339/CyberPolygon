@@ -10,6 +10,99 @@
 @inject IJSRuntime JS
 @rendermode InteractiveServer
 
+<style>
+    .cyber-logo-container {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 15px 20px;
+        background: #1a1d21;
+        border-radius: 4px;
+        width: fit-content;
+        position: relative;
+        overflow: hidden;
+        /* Фон с мерцанием */
+        background-image: linear-gradient(-45deg, transparent 40%, rgba(0, 238, 255, 0.1) 50%, transparent 60%);
+        background-size: 200% 100%;
+        animation: shimmerEffect 4s infinite linear;
+    }
+
+    .logo-shield-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 4px;
+    }
+
+    .shield-icon {
+        font-size: 28px;
+        z-index: 2;
+        /* Светло-синее свечение */
+        filter: drop-shadow(0 0 10px rgba(0, 238, 255, 0.7));
+        animation: shieldPulse 3s ease-in-out infinite;
+    }
+
+    .logo-title {
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        font-size: 18px;
+        margin: 0;
+        line-height: 1;
+        letter-spacing: 1px;
+    }
+
+    .text-cyan {
+        color: #00eeff; /* Светло-синий (cyan) */
+        font-weight: 800;
+    }
+
+    .text-gray {
+        color: #e1e4e8; /* Светло-серый/белый */
+        font-weight: 300;
+        margin-left: 2px;
+    }
+
+    .accent-line {
+        height: 1px;
+        /* Светло-синяя линия */
+        background: linear-gradient(90deg, #00eeff 0%, rgba(0, 238, 255, 0) 100%);
+        margin: 4px 0;
+    }
+
+    .logo-subtitle {
+        color: #8b949e;
+        font-size: 9px;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin: 0;
+        white-space: nowrap;
+    }
+
+    /* Анимация мерцания фона */
+    @@keyframes shimmerEffect {
+        0% {
+            background-position: -100% 0;
+        }
+
+        100% {
+            background-position: 100% 0;
+        }
+    }
+
+    /* Анимация пульсации щита */
+    @@keyframes shieldPulse {
+        0%, 100% {
+            transform: scale(1);
+            filter: drop-shadow(0 0 10px rgba(0, 238, 255, 0.7));
+        }
+
+        50% {
+            transform: scale(1.05);
+            filter: drop-shadow(0 0 14px rgba(0, 238, 255, 1));
+        }
+    }
+
+</style>
+
 <form id="logoutForm" action="Account/Logout" method="post" style="display: none;">
     <AntiforgeryToken />
     <input type="hidden" name="ReturnUrl" value="@currentUrl" />

@@ -17,6 +17,7 @@ builder.Services.AddRadzenComponents();
 builder.Services.AddScoped<DialogService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<TooltipService>();
+builder.Services.AddSingleton<ScenarioSessionManager>();
 builder.Services.AddScoped<ContextMenuService>();
 builder.Services.AddRadzenCookieThemeService(options =>
 {

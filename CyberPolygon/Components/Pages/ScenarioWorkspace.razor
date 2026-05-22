@@ -5,6 +5,7 @@
 @implements IDisposable
 @rendermode InteractiveServer
 
+@inject ScenarioSessionManager SessionManager
 @inject ScenarioService ScenarioService
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NotificationService NotificationService
@@ -292,6 +293,21 @@
 
             if (isAdmin) await LoadAdminData();
         }
+
+        // Подписка на действия команды
+        SessionManager.TeamProgressChanged += OnTeamProgressChanged;
+    }
+
+    private async void OnTeamProgressChanged(int teamId)
+    {
+        if (scenario?.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId == teamId)
+        {
+            await InvokeAsync(async () =>
+            {
+                await LoadUserState();
+                StateHasChanged();
+            });
+        }
     }
 
     private async Task LoadUserState()
@@ -301,10 +317,19 @@
 
         totalScore = currentUserProgress.Score;
 
-        // Если есть вопросы, маппим их в локальный стейт (в реальном проекте тут нужна логика восстановления ответов)
         if (scenario.Questions != null && questionStates.Count == 0)
         {
             questionStates = scenario.Questions.Select(q => new UserQuestionState { Question = q }).ToList();
+        }
+
+        // === СИНХРОНИЗАЦИЯ ГАЛОЧЕК ИЗ БД ===
+        if (currentUserProgress.Id != 0)
+        {
+            var solvedIds = await ScenarioService.GetCompletedQuestionsAsync(currentUserProgress.Id);
+            foreach (var qState in questionStates)
+            {
+                qState.IsCorrect = solvedIds.Contains(qState.Question.Id);
+            }
         }
 
         if (currentUserProgress.Status == AttemptStatus.InProgress)
@@ -314,28 +339,111 @@
         }
     }
 
-    // Запуск сценария (Нажали кнопку "Начать")
     private async Task StartScenario()
     {
         await ScenarioService.StartScenarioAsync(currentUserId, scenario!.Id, scenario.DurationInMinutes);
         await LoadUserState();
+
+        // Сигнал команде: "Я запустил таймер, присоединяйтесь!"
+        if (scenario!.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId.HasValue)
+        {
+            SessionManager.NotifyTeamUpdate(scenario.TargetTeamId.Value);
+        }
     }
 
-    // Пользователь сам завершает работу
+    private async Task CheckAnswer(UserQuestionState state)
+    {
+        if (string.IsNullOrWhiteSpace(state.UserAnswer) || currentUserProgress?.Status != AttemptStatus.InProgress) return;
+
+        bool isRight = string.Equals(state.UserAnswer.Trim(), state.Question.CorrectAnswer.Trim(), StringComparison.OrdinalIgnoreCase);
+
+        // Используем атомарный процессор из сервиса
+        var result = await ScenarioService.ProcessTeamAnswerAsync(
+            currentUserProgress.Id,
+            state.Question.Id,
+            isRight,
+            state.Question.AwardPoints,
+            state.Question.PenaltyPoints
+        );
+
+        if (!result.Success)
+        {
+            if (result.AlreadySolved)
+            {
+                state.FeedbackMessage = "Кто-то из вашей команды уже решил это задание!";
+                state.IsCorrect = true;
+            }
+            return;
+        }
+
+        // Обновляем локальный счет из БД
+        totalScore = result.NewScore;
+
+        if (isRight)
+        {
+            state.IsCorrect = true;
+            state.FeedbackMessage = $"✓ Флаг принят! Команда получает +{state.Question.AwardPoints} XP.";
+        }
+        else
+        {
+            state.FeedbackMessage = $"❌ Отказ системы. Штраф команды: -{state.Question.PenaltyPoints} XP.";
+        }
+
+        // Сигнал команде: "Я ответил на вопрос, обновите очки и галочки!"
+        if (scenario!.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId.HasValue)
+        {
+            SessionManager.NotifyTeamUpdate(scenario.TargetTeamId.Value);
+        }
+    }
+
     private async Task CompleteScenario()
     {
         StopTimer();
-        await ScenarioService.CompleteUserProgressAsync(currentUserId, scenario!.Id, totalScore);
+        if (currentUserProgress != null)
+        {
+            // Завершаем сессию для всей команды по ID прогресса
+            await ScenarioService.CompleteProgressByIdAsync(currentUserProgress.Id);
+        }
+
         await LoadUserState();
-        NotificationService.Notify(NotificationSeverity.Success, "Завершено", $"Данные отправлены. Итоговый счет: {totalScore}");
+        NotificationService.Notify(NotificationSeverity.Success, "Успех", $"Командное расследование завершено. Счет: {totalScore}");
+
+        // Сигнал команде: "Сценарий завершен, всем показать экран успеха!"
+        if (scenario!.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId.HasValue)
+        {
+            SessionManager.NotifyTeamUpdate(scenario.TargetTeamId.Value);
+        }
     }
 
-    // Рестарт проваленного
-    private async Task RestartScenario()
+    private async Task HandleKeyPress(KeyboardEventArgs e, UserQuestionState state)
     {
-        await ScenarioService.ResetUserProgressAsync(currentUserId, scenario!.Id);
-        questionStates.ForEach(q => { q.IsCorrect = false; q.UserAnswer = ""; q.FeedbackMessage = ""; });
-        await LoadUserState();
+        if (e.Key == "Enter") await CheckAnswer(state);
+    }
+
+    private async void TimerTick(object? state)
+    {
+        if (currentUserProgress?.TargetEndTime != null)
+        {
+            timeLeft = currentUserProgress.TargetEndTime.Value - DateTime.UtcNow;
+
+            if (timeLeft.TotalSeconds <= 0)
+            {
+                StopTimer();
+                await ScenarioService.FailUserProgressAsync(currentUserId, scenario!.Id);
+                await InvokeAsync(LoadUserState);
+                await InvokeAsync(StateHasChanged);
+
+                // Сигнал команде: "Время вышло, всем показать экран провала!"
+                if (scenario!.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId.HasValue)
+                {
+                    SessionManager.NotifyTeamUpdate(scenario.TargetTeamId.Value);
+                }
+            }
+            else
+            {
+                await InvokeAsync(StateHasChanged);
+            }
+        }
     }
 
     private void StartTimer()
@@ -349,29 +457,8 @@
 
     private void StopTimer() => _timer?.Dispose();
 
-    private async void TimerTick(object? state)
-    {
-        if (currentUserProgress?.TargetEndTime != null)
-        {
-            timeLeft = currentUserProgress.TargetEndTime.Value - DateTime.UtcNow;
-
-            if (timeLeft.TotalSeconds <= 0)
-            {
-                StopTimer();
-                await ScenarioService.FailUserProgressAsync(currentUserId, scenario!.Id);
-                await InvokeAsync(LoadUserState); // Обновляем UI на "Провал"
-                await InvokeAsync(StateHasChanged);
-            }
-            else
-            {
-                await InvokeAsync(StateHasChanged); // Просто обновляем тики секундомера
-            }
-        }
-    }
-
     private void CheckTime()
     {
-        // Проверка при загрузке: вдруг время вышло пока вкладка была закрыта
         if (currentUserProgress?.TargetEndTime != null && DateTime.UtcNow >= currentUserProgress.TargetEndTime.Value)
         {
             _ = ScenarioService.FailUserProgressAsync(currentUserId, scenario!.Id);
@@ -379,48 +466,26 @@
         }
     }
 
-    private async Task CheckAnswer(UserQuestionState state)
+    // Рестарт проваленного
+    private async Task RestartScenario()
     {
-        if (string.IsNullOrWhiteSpace(state.UserAnswer) || currentUserProgress?.Status != AttemptStatus.InProgress) return;
+        await ScenarioService.ResetUserProgressAsync(currentUserId, scenario!.Id);
+        questionStates.ForEach(q => { q.IsCorrect = false; q.UserAnswer = ""; q.FeedbackMessage = ""; });
+        await LoadUserState();
 
-        bool isRight = string.Equals(state.UserAnswer.Trim(), state.Question.CorrectAnswer.Trim(), StringComparison.OrdinalIgnoreCase);
-
-        if (isRight)
+        if (scenario!.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId.HasValue)
         {
-            state.IsCorrect = true;
-            state.FeedbackMessage = $"✓ Флаг принят! +{state.Question.AwardPoints} XP.";
-            totalScore += state.Question.AwardPoints;
-        }
-        else
-        {
-            state.FeedbackMessage = $"❌ Отказ системы. -{state.Question.PenaltyPoints} XP.";
-            totalScore -= state.Question.PenaltyPoints;
-        }
-
-        // Мы больше не завершаем сценарий автоматически.
-        // Только обновляем промежуточный счет в БД (опционально)
-        var progressToUpdate = await ScenarioService.GetUserProgressAsync(currentUserId, scenario!.Id);
-        if (progressToUpdate != null)
-        {
-            progressToUpdate.Score = totalScore;
-            // Здесь нужен простой UpdateScore, но для краткости опускаем прямое сохранение на каждый чих,
-            // счет сохранится финально по кнопке ЗАВЕРШИТЬ.
+            SessionManager.NotifyTeamUpdate(scenario.TargetTeamId.Value);
         }
     }
 
-    private async Task HandleKeyPress(KeyboardEventArgs e, UserQuestionState state)
-    {
-        if (e.Key == "Enter") await CheckAnswer(state);
-    }
-
-    // --- АДМИН МЕТОДЫ ---
     private async Task LoadAdminData() => completedUsers = await ScenarioService.GetAllProgressForScenarioAsync(scenario!.Id);
 
     private async Task ResetAllProgress()
     {
         await ScenarioService.ResetAllProgressForScenarioAsync(scenario!.Id);
         await LoadAdminData();
-        if (!isAdmin) await LoadUserState(); // Если админ сбросил сам себя
+        if (!isAdmin) await LoadUserState();
     }
 
     private async Task ResetSingleUser(string targetUserId)
@@ -430,12 +495,13 @@
         if (targetUserId == currentUserId)
         {
             StopTimer();
-            await LoadUserState(); // Перезагружаем UI, если админ скинул свою попытку
+            await LoadUserState();
         }
     }
 
     public void Dispose()
     {
         StopTimer();
+        SessionManager.TeamProgressChanged -= OnTeamProgressChanged;
     }
 }

@@ -1,0 +1,78 @@
+﻿@using CyberPolygon.Data
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<ApplicationDbContext> ContextFactory
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+@using Radzen
+@rendermode InteractiveServer
+
+<div class="p-4">
+    <h5 class="mb-4">
+        Управление командами для:
+        <span class="text-cyan">@TargetUser?.UserName</span>
+    </h5>
+
+    @if (TeamsList != null && TeamsList.Any())
+    {
+        @foreach (var team in TeamsList)
+        {
+            var isMember = TargetUser?.Teams?.Any(t => t.Id == team.Id) ?? false;
+
+            <div class="d-flex align-items-center mb-3 p-2 border-bottom border-secondary">
+                <RadzenCheckBox TValue="bool"
+                                Value="@isMember"
+                                Change="@(async (bool val) => await ToggleTeam(TargetUser!.Id, team.Id, val))" />
+                <label class="ms-2 mb-0 user-select-none">
+                    <strong>@team.Name</strong>
+                    <small class="text-muted">(@team.Group?.Name)</small>
+                </label>
+            </div>
+        }
+    }
+    else
+    {
+        <p class="text-muted">Список команд пуст.</p>
+    }
+
+    <div class="mt-4 d-flex justify-content-end gap-2">
+        <RadzenButton Text="Закрыть" ButtonStyle="ButtonStyle.Light" Click="CloseDialog" />
+    </div>
+</div>
+
+@code {
+    [Parameter] public ApplicationUser TargetUser { get; set; } = default!;
+    [Parameter] public List<UserTeam> TeamsList { get; set; } = default!;
+
+    private async Task ToggleTeam(string userId, int teamId, bool shouldAdd)
+    {
+        using var context = await ContextFactory.CreateDbContextAsync();
+
+        var user = await context.Set<ApplicationUser>()
+                    .Include(u => u.Teams)
+                    .FirstOrDefaultAsync(u => u.Id == userId);
+
+        var team = await context.UserTeams.FindAsync(teamId);
+
+        if (user != null && team != null)
+        {
+            if (shouldAdd && !user.Teams.Any(t => t.Id == teamId))
+            {
+                user.Teams.Add(team);
+            }
+            else if (!shouldAdd)
+            {
+                user.Teams.RemoveAll(t => t.Id == teamId);
+            }
+
+            await context.SaveChangesAsync();
+
+            NotificationService.Notify(NotificationSeverity.Success, "Успешно",
+                shouldAdd ? $"Добавлен в команду «{team.Name}»" : $"Удалён из команды «{team.Name}»");
+        }
+    }
+
+    private void CloseDialog()
+    {
+        DialogService.Close();        // ← Самый надёжный способ
+    }
+}

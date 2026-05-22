@@ -1,6 +1,11 @@
-﻿@inject ScenarioService ScenarioService
+﻿@using Microsoft.EntityFrameworkCore
+@* Замени на свой namespace, если он отличается *@
+@using CyberPolygon.Data
+
+@inject ScenarioService ScenarioService
 @inject DialogService DialogService
 @inject NotificationService NotificationService
+@inject ApplicationDbContext DbContext
 
 <RadzenTemplateForm TItem="CyberScenario" Data="@Item" Submit="@OnSave">
     <div class="row custom-editor-form" style="padding-right: 10px;">
@@ -21,6 +26,57 @@
             <RadzenTextArea @bind-Value="@Item.Description" class="w-100 dark-input" Style="height:60px;" />
         </div>
 
+        @* ================= БЛОК УПРАВЛЕНИЯ ДОСТУПОМ ================= *@
+        <div class="col-md-4 mb-3">
+            <label class="cyber-label">Уровень доступа</label>
+            <RadzenDropDown @bind-Value="@Item.Scope" TValue="VisibilityScope"
+                            Data="@(Enum.GetValues(typeof(VisibilityScope)))" class="w-100 dark-input">
+                <Template Context="scope">
+                    @if ((VisibilityScope)scope == VisibilityScope.Public)
+                    {
+                        <span style="color: #28a745;">Всем (Публично)</span>
+                    }
+                    else if ((VisibilityScope)scope == VisibilityScope.GroupOnly)
+                    {
+                        <span style="color: #00eeff;">Только группе</span>
+                    }
+                    else if ((VisibilityScope)scope == VisibilityScope.TeamOnly)
+                    {
+                        <span style="color: #ffd700;">Только команде</span>
+                    }
+                </Template>
+            </RadzenDropDown>
+        </div>
+
+        @if (Item.Scope == VisibilityScope.GroupOnly)
+        {
+            <div class="col-md-8 mb-3">
+                <label class="cyber-label">Выберите учебную группу</label>
+                <RadzenDropDown @bind-Value="@Item.TargetGroupId" TValue="int?" Data="@groups"
+                                ValueProperty="Id" TextProperty="Name"
+                                class="w-100 dark-input border-dashed" Placeholder="Укажите группу из базы..." />
+            </div>
+        }
+        else if (Item.Scope == VisibilityScope.TeamOnly)
+        {
+            <div class="col-md-8 mb-3">
+                <label class="cyber-label">Выберите команду</label>
+                <RadzenDropDown @bind-Value="@Item.TargetTeamId" TValue="int?" Data="@teams"
+                                ValueProperty="Id" TextProperty="Name"
+                                class="w-100 dark-input border-dashed" Placeholder="Укажите команду из базы..." />
+            </div>
+        }
+        else
+        {
+            <div class="col-md-8 mb-3 d-flex align-items-center">
+                <span style="color: #8b949e; font-size: 0.85rem; margin-top: 20px;">
+                    <RadzenIcon Icon="info" class="rz-mr-1" style="font-size: 1rem; vertical-align: middle;" />
+                    Сценарий будет доступен в общем списке для всех курсантов.
+                </span>
+            </div>
+        }
+        @* ============================================================ *@
+
         <div class="col-md-4 mb-3">
             <label class="cyber-label">Режим выполнения теста</label>
             <RadzenDropDown @bind-Value="@Item.GameMode" TValue="ScenarioGameMode"
@@ -28,11 +84,11 @@
                 <Template Context="mode">
                     @if ((ScenarioGameMode)mode == ScenarioGameMode.AllAtOnce)
                     {
-                        <span style="color:white;">Доступны все вопросы сразу</span>
+                        <span style="color:white;">Доступны все сразу</span>
                     }
                     else
                     {
-                        <span style="color:white;">Последовательно (по очереди)</span>
+                        <span style="color:white;">Последовательно</span>
                     }
                 </Template>
             </RadzenDropDown>
@@ -49,12 +105,7 @@
             <InputFile OnChange="HandleFileUpload" class="form-control bg-dark text-white border-secondary" style="height: 35px; padding: 4px 12px;" />
         </div>
 
-        <div class="col-md-6 mb-3">
-            <label class="cyber-label">Схема (загрузка файла)</label>
-            <InputFile OnChange="HandleFileUpload" class="form-control bg-dark text-white border-secondary" />
-        </div>
-
-        @* НОВОЕ ПОЛЕ ЗАГРУЗКИ ДОКУМЕНТАЦИИ *@
+        @* ПОЛЕ ЗАГРУЗКИ ДОКУМЕНТАЦИИ *@
         <div class="col-12 mb-3">
             <RadzenFieldset Text="Прикрепленные документы">
                 @foreach (var doc in Item.Documents)
@@ -199,11 +250,30 @@
 
     private bool isUploading = false;
 
-    protected override void OnInitialized()
+    // Списки для выпадающих меню
+    private IEnumerable<UserGroup> groups = new List<UserGroup>();
+    private IEnumerable<UserTeam> teams = new List<UserTeam>();
+
+    protected override async Task OnInitializedAsync()
     {
-        // Инициализируем коллекции, если они пустые, чтобы избежать NullReferenceException
         Item.Questions ??= new List<ScenarioQuestion>();
         Item.Documents ??= new List<ScenarioDocument>();
+
+        try
+        {
+            // Подтягиваем данные напрямую из контекста БД (асинхронно, чтобы не стопорить UI)
+            groups = await DbContext.UserGroups.AsNoTracking().ToListAsync();
+            teams = await DbContext.UserTeams.AsNoTracking().ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Ошибка БД",
+                Detail = "Не удалось загрузить списки групп или команд."
+            });
+        }
     }
 
     void AddQuestion() => Item.Questions.Add(new ScenarioQuestion { AwardPoints = 10, PenaltyPoints = 5 });
@@ -216,31 +286,58 @@
 
     async Task OnSave()
     {
-        // Жесткая проверка на наличие хотя бы одного вопроса
-        if (Item.Questions == null || !Item.Questions.Any())
+        // 1. Умная очистка ID перед сохранением (предотвращает мусор в БД)
+        if (Item.Scope == VisibilityScope.Public)
         {
-            NotificationService.Notify(new NotificationMessage
+            Item.TargetGroupId = null;
+            Item.TargetTeamId = null;
+        }
+        else if (Item.Scope == VisibilityScope.GroupOnly)
+        {
+            Item.TargetTeamId = null; // Очищаем ненужное
+            if (Item.TargetGroupId == null)
             {
-                Severity = NotificationSeverity.Warning,
-                Summary = "Отказ системы",
-                Detail = "Сценарий должен содержать минимум одно задание. Перейдите на вкладку 'Задания и Вопросы'.",
-                Duration = 5000
-            });
-
-            return; // Прерываем процесс сохранения
+                ShowError("Необходимо выбрать конкретную учебную группу.");
+                return;
+            }
+        }
+        else if (Item.Scope == VisibilityScope.TeamOnly)
+        {
+            Item.TargetGroupId = null; // Очищаем ненужное
+            if (Item.TargetTeamId == null)
+            {
+                ShowError("Необходимо выбрать конкретную команду.");
+                return;
+            }
         }
 
-        // Если валидация пройдена, сохраняем
+        // 2. Валидация вопросов
+        if (Item.Questions == null || !Item.Questions.Any())
+        {
+            ShowError("Сценарий должен содержать минимум одно задание. Перейдите на вкладку 'Задания и Вопросы'.");
+            return;
+        }
+
+        // 3. Сохранение
         await ScenarioService.SaveAsync(Item);
         DialogService.Close(true);
     }
 
+    private void ShowError(string detail)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Warning,
+            Summary = "Внимание",
+            Detail = detail,
+            Duration = 5000
+        });
+    }
+
     private async Task UploadDocumentAsync(InputFileChangeEventArgs e, ScenarioDocument doc)
     {
-        // Вызываем сервис для загрузки файла на сервер
         doc.FilePath = await ScenarioService.UploadSchemaAsync(e.File);
 
-        // Если админ не ввел название ручками, берем имя загруженного файла
         if (string.IsNullOrWhiteSpace(doc.Title))
         {
             doc.Title = e.File.Name;
