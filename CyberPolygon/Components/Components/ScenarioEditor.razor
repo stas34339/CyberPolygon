@@ -1,11 +1,14 @@
 ﻿@using Microsoft.EntityFrameworkCore
-@* Замени на свой namespace, если он отличается *@
 @using CyberPolygon.Data
 
 @inject ScenarioService ScenarioService
 @inject DialogService DialogService
 @inject NotificationService NotificationService
 @inject ApplicationDbContext DbContext
+
+<head>
+    <link rel="stylesheet" href="@Assets["_content/Radzen.Blazor/css/Standard-Dark.css"]" />
+</head>
 
 <RadzenTemplateForm TItem="CyberScenario" Data="@Item" Submit="@OnSave">
     <div class="row custom-editor-form" style="padding-right: 10px;">
@@ -26,7 +29,7 @@
             <RadzenTextArea @bind-Value="@Item.Description" class="w-100 dark-input" Style="height:60px;" />
         </div>
 
-        @* ================= БЛОК УПРАВЛЕНИЯ ДОСТУПОМ ================= *@
+        @* БЛОК УПРАВЛЕНИЯ ДОСТУПОМ *@
         <div class="col-md-4 mb-3">
             <label class="cyber-label">Уровень доступа</label>
             <RadzenDropDown @bind-Value="@Item.Scope" TValue="VisibilityScope"
@@ -34,15 +37,15 @@
                 <Template Context="scope">
                     @if ((VisibilityScope)scope == VisibilityScope.Public)
                     {
-                        <span style="color: #28a745;">Всем (Публично)</span>
+                        <span style="color: #98c379;">Всем (Публично)</span>
                     }
                     else if ((VisibilityScope)scope == VisibilityScope.GroupOnly)
                     {
-                        <span style="color: #00eeff;">Только группе</span>
+                        <span style="color: var(--accent-cyan);">Только группе</span>
                     }
                     else if ((VisibilityScope)scope == VisibilityScope.TeamOnly)
                     {
-                        <span style="color: #ffd700;">Только команде</span>
+                        <span style="color: #e5c07b;">Только команде</span>
                     }
                 </Template>
             </RadzenDropDown>
@@ -54,7 +57,7 @@
                 <label class="cyber-label">Выберите учебную группу</label>
                 <RadzenDropDown @bind-Value="@Item.TargetGroupId" TValue="int?" Data="@groups"
                                 ValueProperty="Id" TextProperty="Name"
-                                class="w-100 dark-input border-dashed" Placeholder="Укажите группу из базы..." />
+                                class="w-100 dark-input" Style="color: var(--rz-text-color-base-200)" Placeholder="Укажите группу из базы..." />
             </div>
         }
         else if (Item.Scope == VisibilityScope.TeamOnly)
@@ -63,19 +66,18 @@
                 <label class="cyber-label">Выберите команду</label>
                 <RadzenDropDown @bind-Value="@Item.TargetTeamId" TValue="int?" Data="@teams"
                                 ValueProperty="Id" TextProperty="Name"
-                                class="w-100 dark-input border-dashed" Placeholder="Укажите команду из базы..." />
+                                class="w-100 dark-input" Style="color: var(--rz-text-color-base-200)" Placeholder="Укажите команду из базы..." />
             </div>
         }
         else
         {
             <div class="col-md-8 mb-3 d-flex align-items-center">
-                <span style="color: #8b949e; font-size: 0.85rem; margin-top: 20px;">
+                <span style="color: var(--text-muted); font-size: 0.85rem; margin-top: 20px;">
                     <RadzenIcon Icon="info" class="rz-mr-1" style="font-size: 1rem; vertical-align: middle;" />
                     Сценарий будет доступен в общем списке для всех курсантов.
                 </span>
             </div>
         }
-        @* ============================================================ *@
 
         <div class="col-md-4 mb-3">
             <label class="cyber-label">Режим выполнения теста</label>
@@ -84,11 +86,11 @@
                 <Template Context="mode">
                     @if ((ScenarioGameMode)mode == ScenarioGameMode.AllAtOnce)
                     {
-                        <span style="color:white;">Доступны все сразу</span>
+                        <span style="color: var(--text-light);">Доступны все сразу</span>
                     }
                     else
                     {
-                        <span style="color:white;">Последовательно</span>
+                        <span style="color: var(--text-light);">Последовательно</span>
                     }
                 </Template>
             </RadzenDropDown>
@@ -97,7 +99,7 @@
         <div class="col-md-4 mb-3">
             <label class="cyber-label">Лимит времени (минуты)</label>
             <RadzenNumeric @bind-Value="@Item.DurationInMinutes" Min="0" Max="360" class="w-100 dark-input" Placeholder="0" />
-            <span style="font-size: 0.75rem; color: #8b949e; display: block; margin-top: 2px;">0 — без ограничений времени</span>
+            <span style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 2px;">0 — без ограничений времени</span>
         </div>
 
         <div class="col-md-4 mb-3">
@@ -121,7 +123,7 @@
                             }
                             else
                             {
-                                <RadzenText TextStyle="TextStyle.Caption" style="color: #28a745;">
+                                <RadzenText TextStyle="TextStyle.Caption" style="color: #98c379;">
                                     <RadzenIcon Icon="check_circle" class="rz-mr-1" /> Загружен: @doc.FilePath
                                 </RadzenText>
                             }
@@ -141,19 +143,20 @@
         <RadzenTabs class="w-100 mt-3 custom-tabs">
             <Tabs>
                 <RadzenTabsItem Text="Легенда">
-                    <RadzenHtmlEditor @bind-Value="@Item.Legend" style="height: 250px; background:#1e2227; color:aliceblue;" />
+                    <RadzenHtmlEditor @bind-Value="@Item.Legend" style="height: 250px; background: var(--bg-card); color: var(--text-light);" />
                 </RadzenTabsItem>
                 <RadzenTabsItem Text="Задания и Вопросы">
                     <div class="questions-container p-2">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 style="color: #00eeff; margin:0;">Конструктор интерактивного теста</h5>
+                            <h5 style="color: var(--accent-cyan); margin:0;">Конструктор интерактивного теста</h5>
                             <RadzenButton Text="Добавить вопрос" Icon="add" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Small"
                                           Click="@AddQuestion" />
                         </div>
 
                         @if (!Item.Questions.Any())
                         {
-                            <div class="text-center p-4 border border-danger border-dashed rounded" style="color: #ff4444; background: rgba(255, 68, 68, 0.05);">
+                            <div class="text-center p-4 border border-danger border-dashed rounded"
+                                 style="color: #e06c75; background: rgba(224, 108, 117, 0.05); border-color: var(--border-color) !important;">
                                 <RadzenIcon Icon="warning" class="rz-mr-2" />
                                 Внимание: Задания не добавлены. Сохранение сценария заблокировано.
                             </div>
@@ -164,7 +167,7 @@
                             var index = Item.Questions.IndexOf(q);
                             <div class="question-card mb-3 p-3">
                                 <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-secondary">
-                                    <span style="color:#00eeff; font-weight:bold;">Вопрос №@(index + 1)</span>
+                                    <span style="color: var(--accent-cyan); font-weight:bold;">Вопрос №@(index + 1)</span>
                                     <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall" Variant="Variant.Outlined"
                                                   Click="@(() => RemoveQuestion(q))" />
                                 </div>
@@ -174,15 +177,15 @@
                                         <RadzenTextBox @bind-Value="@q.Text" Placeholder="Например: Какой порт использует SSH?" class="w-100 dark-input" />
                                     </div>
                                     <div class="col-md-6 mb-2">
-                                        <label class="cyber-sub-label" style="color: #28a745;">Эталонный ответ (Пример ответа)</label>
+                                        <label class="cyber-sub-label" style="color: #98c379;">Эталонный ответ (Пример ответа)</label>
                                         <RadzenTextBox @bind-Value="@q.CorrectAnswer" Placeholder="Например: 22" class="w-100 dark-input success-border" />
                                     </div>
                                     <div class="col-md-3 mb-2">
-                                        <label class="cyber-sub-label" style="color:#ffd700;">Награда (+ баллы)</label>
+                                        <label class="cyber-sub-label" style="color: #e5c07b;">Награда (+ баллы)</label>
                                         <RadzenNumeric @bind-Value="@q.AwardPoints" Min="1" class="w-100 dark-input" />
                                     </div>
                                     <div class="col-md-3 mb-2">
-                                        <label class="cyber-sub-label" style="color:#ff4444;">Штраф (- баллы)</label>
+                                        <label class="cyber-sub-label" style="color: #e06c75;">Штраф (- баллы)</label>
                                         <RadzenNumeric @bind-Value="@q.PenaltyPoints" Min="0" class="w-100 dark-input" />
                                     </div>
                                 </div>
@@ -201,7 +204,7 @@
 
 <style>
     .cyber-label {
-        color: #00eeff !important;
+        color: var(--accent-cyan) !important;
         font-size: 0.9rem;
         text-transform: uppercase;
         letter-spacing: 1px;
@@ -210,47 +213,54 @@
     }
 
     .cyber-sub-label {
-        color: #e1e4e8;
+        color: var(--text-muted);
         font-size: 0.8rem;
         margin-bottom: 3px;
         display: block;
     }
 
     .dark-input, .dark-input input {
-        background-color: #161b22 !important;
-        border: 1px solid #30363d !important;
-        color: #ffffff !important;
+        background-color: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
+        color: var(--text-light) !important;
     }
 
     .success-border {
-        border: 1px solid #28a745 !important;
+        border: 1px solid #98c379 !important;
     }
 
     .question-card {
-        background: rgba(255, 255, 255, 0.02);
-        border: 1px solid #30363d;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
         border-radius: 6px;
     }
 
-    .border-dashed {
-        border-style: dashed !important;
-    }
-
     .custom-tabs .rz-tabview-nav li:not(.rz-tabview-selected) a span {
-        color: #8b949e !important;
+        color: var(--text-muted) !important;
     }
 
     .custom-tabs .rz-tabview-nav li.rz-tabview-selected a span {
-        color: #00eeff !important;
+        color: var(--accent-cyan) !important;
     }
+
+    .rz-button {
+        transition: all 0.2s ease;
+    }
+
+        .rz-button:hover {
+            filter: brightness(1.1);
+            transform: scale(1.02);
+        }
+
+        .rz-button:active {
+            transform: scale(0.98);
+        }
 </style>
 
 @code {
     [Parameter] public CyberScenario Item { get; set; } = new();
 
     private bool isUploading = false;
-
-    // Списки для выпадающих меню
     private IEnumerable<UserGroup> groups = new List<UserGroup>();
     private IEnumerable<UserTeam> teams = new List<UserTeam>();
 
@@ -261,7 +271,6 @@
 
         try
         {
-            // Подтягиваем данные напрямую из контекста БД (асинхронно, чтобы не стопорить UI)
             groups = await DbContext.UserGroups.AsNoTracking().ToListAsync();
             teams = await DbContext.UserTeams.AsNoTracking().ToListAsync();
         }
@@ -286,7 +295,6 @@
 
     async Task OnSave()
     {
-        // 1. Умная очистка ID перед сохранением (предотвращает мусор в БД)
         if (Item.Scope == VisibilityScope.Public)
         {
             Item.TargetGroupId = null;
@@ -294,7 +302,7 @@
         }
         else if (Item.Scope == VisibilityScope.GroupOnly)
         {
-            Item.TargetTeamId = null; // Очищаем ненужное
+            Item.TargetTeamId = null;
             if (Item.TargetGroupId == null)
             {
                 ShowError("Необходимо выбрать конкретную учебную группу.");
@@ -303,7 +311,7 @@
         }
         else if (Item.Scope == VisibilityScope.TeamOnly)
         {
-            Item.TargetGroupId = null; // Очищаем ненужное
+            Item.TargetGroupId = null;
             if (Item.TargetTeamId == null)
             {
                 ShowError("Необходимо выбрать конкретную команду.");
@@ -311,14 +319,12 @@
             }
         }
 
-        // 2. Валидация вопросов
         if (Item.Questions == null || !Item.Questions.Any())
         {
             ShowError("Сценарий должен содержать минимум одно задание. Перейдите на вкладку 'Задания и Вопросы'.");
             return;
         }
 
-        // 3. Сохранение
         await ScenarioService.SaveAsync(Item);
         DialogService.Close(true);
     }
@@ -337,7 +343,6 @@
     private async Task UploadDocumentAsync(InputFileChangeEventArgs e, ScenarioDocument doc)
     {
         doc.FilePath = await ScenarioService.UploadSchemaAsync(e.File);
-
         if (string.IsNullOrWhiteSpace(doc.Title))
         {
             doc.Title = e.File.Name;
