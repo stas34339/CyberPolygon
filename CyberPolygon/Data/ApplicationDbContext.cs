@@ -1,7 +1,6 @@
-using Microsoft.AspNetCore.Identity;
+using CyberPolygon.Data.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
 
 
 namespace CyberPolygon.Data
@@ -16,6 +15,9 @@ namespace CyberPolygon.Data
         public DbSet<UserTeam> UserTeams { get; set; }
         // Добавь это свойство к остальным DbSet
         public DbSet<UserAnswerProgress> UserAnswerProgresses { get; set; }
+        public DbSet<InstructionModel> Instructions { get; set; }
+
+
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

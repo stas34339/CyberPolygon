@@ -137,10 +137,6 @@
         }
 </style>
 
-<head>
-    <link rel="stylesheet" href="@Assets["_content/Radzen.Blazor/css/Standard-Dark.css"]" />
-</head>
-
 <form id="logoutForm" action="Account/Logout" method="post">
     <AntiforgeryToken />
     <input type="hidden" name="ReturnUrl" value="@currentUrl" />

@@ -4,23 +4,119 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NotificationService NotificationService
 
-<head>
-    <link rel="stylesheet" href="@Assets["_content/Radzen.Blazor/css/Standard-Dark.css"]" />
-</head>
+<style>
+    :root {
+        --bg-main: #1e1e1e;
+        --bg-card: #24272c;
+        --text-muted: #8fa0b5;
+        --text-light: #cbe0f5;
+        --accent-cyan: #4ec3d1;
+        --border-color: #343a42;
+    }
+
+    /* ПЕРЕКРАШИВАЕМ ФОН ДИАЛОГОВОГО ОКНА RADZEN */
+    .rz-dialog-wrapper .rz-dialog,
+    .rz-dialog-content {
+        background-color: var(--bg-main) !important;
+        color: var(--text-muted) !important;
+    }
+
+    .rz-dialog-titlebar {
+        background-color: var(--bg-card) !important;
+        color: var(--text-light) !important;
+        border-bottom: 1px solid var(--border-color) !important;
+    }
+
+    .scenario-details-wrapper {
+        background-color: var(--bg-main);
+        color: var(--text-muted);
+        padding: 10px;
+    }
+
+    .details-header-wrapper {
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .details-main-title {
+        font-size: 2.2rem;
+        font-weight: bold;
+        color: var(--text-light);
+        word-break: break-all;
+    }
+
+    .details-subtitle {
+        color: var(--accent-cyan);
+    }
+
+    .details-content-box {
+        padding: 20px;
+        min-height: 400px;
+        background: var(--bg-card);
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+    }
+
+    .rich-text-area {
+        color: var(--text-light) !important;
+    }
+
+    /* Настройка табов */
+    .custom-tabs .rz-tabview-nav {
+        background: transparent !important;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+        .custom-tabs .rz-tabview-nav li:not(.rz-tabview-selected) a span {
+            color: var(--text-muted) !important;
+        }
+
+        .custom-tabs .rz-tabview-nav li.rz-tabview-selected a span {
+            color: var(--accent-cyan) !important;
+        }
+
+    /* Таблица админа внутри деталей */
+    .rz-datagrid {
+        background-color: transparent !important;
+        border: none !important;
+    }
+
+    .rz-grid-table thead th {
+        background-color: rgba(0,0,0,0.2) !important;
+        color: var(--accent-cyan) !important;
+        border-bottom: 1px solid var(--border-color) !important;
+    }
+
+    .rz-grid-table tbody tr {
+        background-color: transparent !important;
+    }
+
+    .rz-grid-table td {
+        border-bottom: 1px solid var(--border-color) !important;
+        color: var(--text-muted) !important;
+    }
+
+    .rz-pager {
+        background-color: transparent !important;
+        border-top: 1px solid var(--border-color) !important;
+        color: var(--text-muted) !important;
+    }
+</style>
 
 <div class="scenario-details-wrapper">
     <div class="details-header-wrapper d-flex justify-content-between align-items-center">
         <h2 class="details-main-title">@Item.Title</h2>
     </div>
 
-    <RadzenTabs RenderMode="TabRenderMode.Client" class="custom-tabs" >
+    <RadzenTabs RenderMode="TabRenderMode.Client" class="custom-tabs">
         <Tabs>
             @if (!string.IsNullOrWhiteSpace(Item.Legend))
             {
                 <RadzenTabsItem Text="Легенда" Icon="history_edu">
                     <div class="details-content-box">
                         <h4 class="details-subtitle">Оперативная сводка (Легенда)</h4>
-                        <div class="rich-text-area" style="color: var(--text-light);">
+                        <div class="rich-text-area">
                             @((MarkupString)Item.Legend)
                         </div>
                     </div>
@@ -46,9 +142,7 @@
                         <div class="details-content-box" style="border: 1px solid var(--border-color);">
                             <div class="d-flex justify-content-between align-items-center mb-4">
                                 <h4 class="details-subtitle mb-0" style="color: #e06c75;">Статистика прохождений</h4>
-                                <RadzenButton Text="Сбросить ВСЕ" Icon="delete_forever"
-                                              ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
-                                              Click="@ResetProgress" />
+                                <RadzenButton Text="Сбросить ВСЕ" Icon="delete_forever" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Click="@ResetProgress" />
                             </div>
 
                             @if (completedUsers == null || !completedUsers.Any())
@@ -57,9 +151,7 @@
                             }
                             else
                             {
-                                <RadzenDataGrid Data="@completedUsers" TItem="UserScenarioProgressDto"
-                                                AllowPaging="true" PageSize="5"
-                                                Style="background: transparent; border: none;">
+                                <RadzenDataGrid Data="@completedUsers" TItem="UserScenarioProgressDto" AllowPaging="true" PageSize="5">
                                     <Columns>
                                         <RadzenDataGridColumn TItem="UserScenarioProgressDto" Title="Пользователь">
                                             <Template Context="data">
@@ -70,15 +162,13 @@
                                             </Template>
                                         </RadzenDataGridColumn>
 
-                                        <RadzenDataGridColumn TItem="UserScenarioProgressDto" Property="Score"
-                                                              Title="Баллы" Width="100px" TextAlign="TextAlign.Center">
+                                        <RadzenDataGridColumn TItem="UserScenarioProgressDto" Property="Score" Title="Баллы" Width="100px" TextAlign="TextAlign.Center">
                                             <Template Context="data">
                                                 <b style="color: var(--accent-cyan);">@data.Score XP</b>
                                             </Template>
                                         </RadzenDataGridColumn>
 
-                                        <RadzenDataGridColumn TItem="UserScenarioProgressDto" Title="Статус"
-                                                              Width="120px" TextAlign="TextAlign.Center">
+                                        <RadzenDataGridColumn TItem="UserScenarioProgressDto" Title="Статус" Width="120px" TextAlign="TextAlign.Center">
                                             <Template Context="data">
                                                 @if (data.Status == AttemptStatus.Completed)
                                                 {
@@ -86,7 +176,7 @@
                                                 }
                                                 else if (data.Status == AttemptStatus.InProgress)
                                                 {
-                                                    <span style="color: var(--accent-blue);">В процессе</span>
+                                                    <span style="color: var(--accent-cyan);">В процессе</span>
                                                 }
                                                 else if (data.Status == AttemptStatus.Failed)
                                                 {
@@ -95,11 +185,9 @@
                                             </Template>
                                         </RadzenDataGridColumn>
 
-                                        <RadzenDataGridColumn TItem="UserScenarioProgressDto" Title="Действия"
-                                                              Width="100px" TextAlign="TextAlign.Center">
+                                        <RadzenDataGridColumn TItem="UserScenarioProgressDto" Title="Действия" Width="100px" TextAlign="TextAlign.Center">
                                             <Template Context="data">
-                                                <RadzenButton Icon="restart_alt" ButtonStyle="ButtonStyle.Warning"
-                                                              Size="ButtonSize.ExtraSmall"
+                                                <RadzenButton Icon="restart_alt" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.ExtraSmall"
                                                               Click="@(async () => await ResetSingleUser(data.UserId))" />
                                             </Template>
                                         </RadzenDataGridColumn>
@@ -114,66 +202,10 @@
     </RadzenTabs>
 </div>
 
-<style>
-    /* Глобальные переменные уже в app.css, здесь только локальные стили */
-    .details-header-wrapper {
-        margin-bottom: 20px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid var(--border-color);
-    }
-
-    .details-main-title {
-        font-size: 2.2rem;
-        font-weight: bold;
-        color: var(--accent-cyan);
-        word-break: break-all;
-        letter-spacing: 1px;
-    }
-
-    .details-content-box {
-        padding: 20px;
-        min-height: 400px;
-        background-color: var(--bg-card);
-        border-radius: 6px;
-        border: 1px solid var(--border-color);
-    }
-
-    .details-subtitle {
-        color: var(--text-light);
-        font-weight: 600;
-        font-size: 1.1rem;
-    }
-
-    /* Табы */
-    .custom-tabs .rz-tabview-nav li:not(.rz-tabview-selected) a span {
-        color: var(--text-muted) !important;
-    }
-
-    .custom-tabs .rz-tabview-nav li.rz-tabview-selected a span {
-        color: var(--accent-cyan) !important;
-    }
-
-    /* Интерактивные кнопки */
-    .rz-button {
-        transition: all 0.2s ease;
-    }
-
-        .rz-button:hover {
-            filter: brightness(1.1);
-            transform: scale(1.03);
-        }
-
-        .rz-button:active {
-            transform: scale(0.98);
-        }
-</style>
-
 @code {
-    // Вся C#-логика остаётся без изменений, как в исходном коде
     [Parameter] public CyberScenario Item { get; set; } = new();
     private List<UserScenarioProgressDto> completedUsers = new();
     private bool isAdmin = false;
-
     public class UserQuestionState
     {
         public ScenarioQuestion Question { get; set; } = new();
@@ -188,7 +220,6 @@
     private string currentUserId = string.Empty;
     private bool isAlreadyCompleted = false;
     private int savedScore = 0;
-
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
@@ -223,7 +254,6 @@
     private async Task CheckAnswer(UserQuestionState state)
     {
         if (string.IsNullOrWhiteSpace(state.UserAnswer)) return;
-
         bool isRight = string.Equals(state.UserAnswer.Trim(), state.Question.CorrectAnswer.Trim(), StringComparison.OrdinalIgnoreCase);
 
         if (isRight)
@@ -255,7 +285,6 @@
     private async Task ResetProgress()
     {
         await ScenarioService.ResetAllProgressForScenarioAsync(Item.Id);
-
         isAlreadyCompleted = false;
         totalScore = 0;
         foreach (var q in questionStates)

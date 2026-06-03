@@ -4,300 +4,62 @@
 @using Radzen
 @using Radzen.Blazor
 @using System.Security.Claims
+@using static CyberPolygon.Data.ApplicationDbContext
 @inject AuthenticationStateProvider AuthProvider
 @inject NavigationManager NavigationManager
 @inject ScenarioSessionManager SessionManager
 @inject NotificationService NotificationService
+@inject DialogService DialogService
 @implements IDisposable
 @rendermode InteractiveServer
+
 <RadzenDialog />
 <PageTitle>Личный кабинет | Киберполигон</PageTitle>
 
 <style>
-    /* Глобальные переменные темы Киберполигона */
     :root {
-        --bg-dark: #0d1117;
-        --bg-card: #161b22;
-        --accent-blue: #00e5ff;
-        --accent-purple: #b388ff;
-        --accent-green: #2e7d32;
-        --accent-danger: #d32f2f;
-        --border-color: #30363d;
-        --text-main: #ffffff;
-        --text-muted: #8b949e;
+        --bg-main: #1e1e1e;
+        --bg-card: #24272c;
+        --bg-card-hover: #2a2e36;
+        --text-muted: #8fa0b5;
+        --text-light: #cbe0f5;
+        --accent-blue: #5ba3e3;
+        --accent-cyan: #4ec3d1;
+        --accent-danger: #e06c75;
+        --border-color: #343a42;
     }
 
-    /* Стили контейнера и карточек */
     .dashboard-wrapper {
-        background-color: var(--bg-dark);
+        background-color: var(--bg-main);
         min-height: 100vh;
-        color: var(--text-main);
-        font-family: 'Courier New', Courier, monospace;
+        color: var(--text-muted);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
     .cyber-card {
         background-color: var(--bg-card) !important;
         border: 1px solid var(--border-color) !important;
-        border-radius: 4px !important;
-        box-shadow: 0 0 10px rgba(0, 229, 255, 0.1);
+        border-radius: 6px !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transition: border-color 0.3s ease;
     }
 
-    .admin-card {
-        border: 1px solid rgba(179, 136, 255, 0.3) !important;
-        box-shadow: 0 0 10px rgba(179, 136, 255, 0.1);
-    }
-
-    /* Текстовые стили */
     .stat-value {
-        font-size: 2.5rem;
+        font-size: 2.2rem;
         font-weight: bold;
-        color: var(--accent-blue);
+        color: var(--text-light);
     }
 
-    .text-cyan {
-        color: var(--accent-blue) !important;
-    }
+    .text-cyan { color: var(--accent-cyan) !important; }
+    .text-blue { color: var(--accent-blue) !important; }
+    .text-green { color: #98c379 !important; }
+    .text-danger { color: var(--accent-danger) !important; }
+    .text-muted { color: var(--text-muted) !important; }
 
-    .text-purple {
-        color: var(--accent-purple) !important;
-    }
-
-    .text-green {
-        color: #28a745 !important;
-    }
-
-    .text-muted {
-        color: var(--text-muted) !important;
-    }
-
-    /* Выравнивание элементов управления и кнопок */
-    .cyber-input-group {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        width: 100%;
-    }
-
-    .rz-button {
-        border-radius: 4px !important;
-        text-transform: uppercase;
-        font-weight: bold;
-        letter-spacing: 1px;
-    }
-
-    /* Чистая HTML-кнопка управления */
-    .cyber-btn-small-info {
-        background: transparent;
-        border: 1px solid var(--accent-blue);
-        color: var(--accent-blue);
-        padding: 5px 12px;
-        border-radius: 4px;
-        font-size: 0.85rem;
-        font-family: 'Courier New', Courier, monospace;
-        font-weight: bold;
-        cursor: pointer;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        transition: all 0.2s ease-in-out;
-        text-transform: uppercase;
-    }
-
-        .cyber-btn-small-info:hover {
-            background-color: rgba(0, 229, 255, 0.1);
-            box-shadow: 0 0 8px rgba(0, 229, 255, 0.4);
-            color: #ffffff;
-        }
-
-        .cyber-btn-small-info:active {
-            transform: scale(0.98);
-        }
-
-    /* ФОРСИРОВАНИЕ ТЕМНОЙ ТЕМЫ ДЛЯ RADZEN КОМПОНЕНТОВ */
-    ::deep .rz-cell-data,
-    ::deep .rz-column-title,
-    ::deep .rz-inputtext,
-    ::deep .rz-chkbox-box,
-    ::deep .rz-paginator-page,
-    ::deep .rz-paginator-summary {
-        color: var(--text-main) !important;
-    }
-
-    ::deep .rz-datagrid-data td {
-        background-color: var(--bg-card) !important;
-        border-bottom: 1px solid var(--border-color) !important;
-        color: var(--text-main) !important;
-    }
-
-    ::deep .rz-datagrid-header-cell {
-        background-color: #0d1117 !important;
-        color: var(--accent-blue) !important;
-        font-weight: bold;
-    }
-
-    ::deep .rz-dropdown {
-        background-color: #0d1117 !important;
-        border: 1px solid var(--border-color) !important;
-        color: var(--text-main) !important;
-        width: 100% !important;
-    }
-
-    ::deep .rz-dropdown-label {
-        color: var(--text-main) !important;
-    }
-
-    ::deep .rz-dropdown-items-wrapper {
-        background-color: var(--bg-card) !important;
-        border: 1px solid var(--border-color) !important;
-    }
-
-    ::deep .rz-dropdown-item {
-        color: var(--text-main) !important;
-    }
-
-        ::deep .rz-dropdown-item:hover {
-            background-color: var(--border-color) !important;
-            color: var(--accent-blue) !important;
-        }
-
-    ::deep .rz-textbox {
-        background-color: #0d1117 !important;
-        border: 1px solid var(--border-color) !important;
-        color: var(--text-main) !important;
-    }
-
-    /* Кастомная изолированная модальная система */
-    .cyber-modal-backdrop {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background: rgba(0, 0, 0, 0.85);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-    }
-
-    .cyber-modal-content {
-        background-color: var(--bg-card);
-        border: 1px solid var(--accent-purple);
-        box-shadow: 0 0 20px rgba(179, 136, 255, 0.2);
-        width: 550px;
-        border-radius: 4px;
-        overflow: hidden;
-        animation: fadeIn 0.2s ease-out;
-    }
-
-    .cyber-modal-header {
-        background-color: #0d1117;
-        padding: 15px 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 1px solid var(--border-color);
-    }
-
-        .cyber-modal-header h4 {
-            margin: 0;
-            color: var(--accent-purple);
-            font-size: 1.1rem;
-            font-weight: bold;
-        }
-
-    .cyber-close-x {
-        background: transparent;
-        border: none;
-        color: var(--text-muted);
-        font-size: 1.5rem;
-        cursor: pointer;
-        line-height: 1;
-    }
-
-        .cyber-close-x:hover {
-            color: #ffffff;
-        }
-
-    .cyber-modal-body {
-        padding: 20px;
-    }
-
-    .teams-scroll-zone {
-        max-height: 240px;
-        overflow-y: auto;
-        border: 1px solid var(--border-color);
-        padding: 12px;
-        background: #0d1117;
-        border-radius: 4px;
-    }
-
-    .team-checkbox-row {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 6px 0;
-        border-bottom: 1px solid rgba(48, 54, 61, 0.5);
-    }
-
-        .team-checkbox-row:last-child {
-            border-bottom: none;
-        }
-
-        .team-checkbox-row input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            accent-color: var(--accent-blue);
-            cursor: pointer;
-        }
-
-        .team-checkbox-row label {
-            color: #ffffff;
-            margin: 0;
-            cursor: pointer;
-            font-size: 0.95rem;
-        }
-
-    .cyber-modal-footer {
-        padding: 15px 20px;
-        text-align: right;
-        background: #0d1117;
-        border-top: 1px solid var(--border-color);
-    }
-
-    .cyber-btn-secondary {
-        background: transparent;
-        border: 1px solid var(--text-muted);
-        color: var(--text-muted);
-        padding: 6px 18px;
-        border-radius: 4px;
-        font-weight: bold;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-        .cyber-btn-secondary:hover {
-            color: #ffffff;
-            border-color: #ffffff;
-            background-color: rgba(255,255,255,0.05);
-        }
-
-    @@keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: scale(0.95);
-        }
-
-        to {
-            opacity: 1;
-            transform: scale(1);
-        }
-    }
-
-    /* Стабильная разметка вкладок */
+    /* Табы */
     .tabs-navigation {
         display: flex;
-        border-bottom: 2px solid var(--border-color);
+        border-bottom: 1px solid var(--border-color);
         margin-bottom: 20px;
         gap: 5px;
     }
@@ -307,21 +69,98 @@
         border: none;
         padding: 12px 24px;
         color: var(--text-muted);
-        font-weight: bold;
+        font-weight: 600;
         cursor: pointer;
         transition: all 0.3s;
         border-bottom: 2px solid transparent;
-        margin-bottom: -2px;
+        margin-bottom: -1px;
     }
 
-        .tab-trigger:hover {
-            color: var(--accent-blue);
-        }
+    .tab-trigger:hover { color: var(--text-light); }
+    .tab-trigger.active {
+        color: var(--accent-cyan);
+        border-bottom: 2px solid var(--accent-cyan);
+        background-color: rgba(78, 195, 209, 0.05);
+    }
 
-        .tab-trigger.active {
-            color: var(--accent-blue);
-            border-bottom: 2px solid var(--accent-blue);
-            background-color: rgba(0, 229, 255, 0.05);
+    /* Таблицы */
+    ::deep .rz-datagrid { background-color: var(--bg-card) !important; border: 1px solid var(--border-color) !important; }
+    ::deep .rz-grid-table thead th { background-color: #1a1d21 !important; color: var(--accent-cyan) !important; border-bottom: 1px solid var(--border-color) !important; }
+    ::deep .rz-grid-table tbody tr { background-color: transparent !important; color: var(--text-muted) !important; }
+    ::deep .rz-grid-table td { border-bottom: 1px solid var(--border-color) !important; color: var(--text-light) !important; }
+    ::deep .rz-pager { background-color: #1a1d21 !important; border-top: 1px solid var(--border-color) !important; color: var(--text-muted) !important; }
+
+    
+    .rz-textbox, .rz-dropdown {
+        background-color: var(--bg-main) !important;
+        border: 1px solid var(--border-color) !important;
+        color: var(--text-light) !important;
+    }
+
+    .rz-dropdown-label {
+        color: var(--text-light) !important;
+    }
+
+    .rz-dropdown-panel {
+        background-color: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
+    }
+
+    .rz-dropdown-items-wrapper {
+        background-color: var(--bg-card) !important;
+    }
+
+    .rz-dropdown-item {
+        color: var(--text-light) !important;
+        background-color: transparent !important;
+    }
+
+    .rz-dropdown-item:hover {
+        background-color: var(--bg-card-hover) !important;
+        color: var(--accent-cyan) !important;
+    }
+
+    .rz-dropdown-item.rz-state-highlight {
+        background-color: var(--accent-blue) !important;
+        color: #1e1e1e !important;
+        font-weight: bold;
+    }
+    
+    .team-badge {
+        background-color: rgba(91, 163, 227, 0.15);
+        color: var(--accent-blue);
+        border: 1px solid var(--accent-blue);
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+    }
+    /* Исправление текста в диалоговых окнах Radzen */
+    .rz-dialog {
+        background-color: var(--bg-card) !important;
+        color: var(--text-light) !important;
+        border: 1px solid var(--border-color) !important;
+    }
+
+    .rz-dialog-title {
+        color: var(--text-light) !important;
+    }
+
+    .rz-dialog-content {
+        color: var(--text-light) !important;
+    }
+
+    /* Исправление выпадающих списков (глобально для порталов) */
+    .rz-dropdown-panel, .rz-autocomplete-panel {
+        background-color: var(--bg-card) !important;
+        color: var(--text-light) !important;
+    }
+
+    .rz-dropdown-item {
+        color: var(--text-light) !important;
+    }
+
+        .rz-dropdown-item:hover {
+            background-color: var(--bg-card-hover) !important;
         }
 </style>
 
@@ -329,80 +168,128 @@
     @if (!isLoaded)
     {
         <div class="d-flex justify-content-center align-items-center" style="height: 60vh;">
-            <div class="text-center">
-                <RadzenIcon Icon="sync" class="rz-spin" Style="color: var(--accent-blue); font-size: 4rem;" />
-                <h5 class="mt-3 text-cyan">СИНХРОНИЗАЦИЯ ПРОФИЛЯ ОПЕРАТИВНИКА...</h5>
-            </div>
+            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" Style="width: 300px; background-color: var(--border-color);" />
         </div>
     }
     else
     {
-        <div class="p-3 mb-4 cyber-card d-flex align-items-center justify-content-between">
+        <div class="p-4 mb-4 cyber-card d-flex flex-wrap align-items-center justify-content-between gap-3">
             <div class="d-flex align-items-center gap-3">
-                <RadzenIcon Icon="account_box" Style="color: var(--accent-blue); font-size: 2.5rem;" />
+                <RadzenIcon Icon="account_circle" Style="color: var(--accent-cyan); font-size: 3.5rem;" />
                 <div>
-                    <h4 class="m-0 text-cyan">Оперативник: @UserDisplayName</h4>
-                    <small class="text-muted">СТАТУС ПОДКЛЮЧЕНИЯ: <span class="text-green">АКТИВЕН</span></small>
+                    <h3 class="m-0" style="color: var(--text-light); font-weight: bold;">@UserDisplayName</h3>
+                    <div class="text-muted" style="font-size: 0.9rem;">
+                        Подразделение: <span style="color: var(--text-light);">@(user?.Group?.Name ?? "Не назначено")</span> | 
+                        Команда: <span style="color: var(--text-light);">@(user?.Teams.Any() == true ? string.Join(", ", user.Teams.Select(t => t.Name)) : "Личное участие")</span>
+                    </div>
                 </div>
             </div>
-            <div class="text-end">
-                <small class="text-muted text-uppercase">Подразделение:</small>
-                <div class="text-white font-weight-bold">@(user?.Group?.Name ?? "НЕ НАЗНАЧЕНО")</div>
-            </div>
+            
+            @if (activeScenario != null)
+            {
+                <div style="background: rgba(78, 195, 209, 0.1); border: 1px solid var(--accent-cyan); border-radius: 6px; padding: 10px 20px;">
+                    <div class="text-cyan mb-1" style="font-size: 0.8rem; font-weight: bold; text-transform: uppercase;">
+                        <RadzenIcon Icon="warning" Style="font-size: 1rem; vertical-align: middle; margin-right: 5px;" /> Активная симуляция
+                    </div>
+                    <div style="color: var(--text-light); font-weight: bold;">@activeScenario.Scenario.Title</div>
+                    <div class="text-muted" style="font-size: 0.85rem;">
+                        Текущий счет: <span class="text-cyan">@activeScenario.Score XP</span> | Прогресс: @activeScenarioQuestionsSolved / @activeScenarioTotalQuestions
+                        @if(activeScenario.IsTeamAttempt) { <span class="team-badge ml-2" style="padding: 2px 8px; font-size: 0.75rem;">КОМАНДА</span> }
+                    </div>
+                </div>
+            }
         </div>
 
         <div class="tabs-navigation">
             <button class="tab-trigger @(activeTabIndex == 0 ? "active" : "")" @onclick="() => activeTabIndex = 0">
-                <RadzenIcon Icon="bar_chart" Style="@(activeTabIndex == 0 ? "color: var(--accent-blue);" : "color: var(--text-muted);")" /> СТАТИСТИКА И ЛОГИ
+                <RadzenIcon Icon="bar_chart" Style="vertical-align: middle;" /> СТАТИСТИКА
+            </button>
+            <button class="tab-trigger @(activeTabIndex == 1 ? "active" : "")" @onclick="() => activeTabIndex = 1">
+                <RadzenIcon Icon="leaderboard" Style="vertical-align: middle;" /> РЕЙТИНГИ КОМАНД И АГЕНТОВ
             </button>
             @if (isAdmin)
             {
-                <button class="tab-trigger @(activeTabIndex == 1 ? "active" : "")" @onclick="() => activeTabIndex = 1">
-                    <RadzenIcon Icon="security" Style="@(activeTabIndex == 1 ? "color: var(--accent-blue);" : "color: var(--text-muted);")" /> УПРАВЛЕНИЕ И СЕКТОРЫ
+                <button class="tab-trigger @(activeTabIndex == 2 ? "active" : "")" @onclick="() => activeTabIndex = 2">
+                    <RadzenIcon Icon="admin_panel_settings" Style="vertical-align: middle;" /> УПРАВЛЕНИЕ АДМИНА
                 </button>
             }
         </div>
 
         <div class="tab-content-body">
+            
             @if (activeTabIndex == 0)
             {
                 <RadzenRow Gap="1.5rem" class="mb-4">
                     <RadzenColumn Size="12" SizeMD="4">
-                        <RadzenCard class="cyber-card">
-                            <span class="text-muted text-uppercase d-block mb-2">Доступно симуляций</span>
-                            <div class="stat-value">@totalScenarios</div>
+                        <RadzenCard class="cyber-card text-center">
+                            <span class="text-muted text-uppercase d-block mb-2" style="font-size: 0.85rem;">Доступно симуляций</span>
+                            <div class="d-flex justify-content-center align-items-baseline gap-2">
+                                <span class="stat-value">@totalScenarios</span>
+                                <span class="text-muted" style="font-size: 0.9rem;">(@soloScenarios одиночных / @teamScenarios командных)</span>
+                            </div>
                         </RadzenCard>
                     </RadzenColumn>
                     <RadzenColumn Size="12" SizeMD="4">
-                        <RadzenCard class="cyber-card">
-                            <span class="text-muted text-uppercase d-block mb-2">Успешные ликвидации</span>
-                            <div class="stat-value" style="color: #28a745;">@completedCount</div>
+                        <RadzenCard class="cyber-card text-center">
+                            <span class="text-muted text-uppercase d-block mb-2" style="font-size: 0.85rem;">Успешные прохождения</span>
+                            <div class="stat-value text-green">@completedCount</div>
                         </RadzenCard>
                     </RadzenColumn>
                     <RadzenColumn Size="12" SizeMD="4">
-                        <RadzenCard class="cyber-card">
-                            <span class="text-muted text-uppercase d-block mb-2">Рейтинг эффективности</span>
-                            <div class="stat-value" style="color: #ffb703;">@successRate%</div>
+                        <RadzenCard class="cyber-card text-center">
+                            <span class="text-muted text-uppercase d-block mb-2" style="font-size: 0.85rem;">Общий заработанный опыт</span>
+                            <div class="stat-value text-cyan">@totalUserScore XP</div>
                         </RadzenCard>
                     </RadzenColumn>
                 </RadzenRow>
 
+                @if (user?.Teams.Any() == true)
+                {
+                    <div class="cyber-card p-4 mb-4">
+                        <h5 class="text-light mb-3"><RadzenIcon Icon="group" Style="color: var(--accent-blue);" /> Моя команда (@user.Teams.First().Name)</h5>
+                        <RadzenDataGrid Data="@myTeamMembers" TItem="TeamMemberDto" class="custom-grid">
+                            <Columns>
+                                <RadzenDataGridColumn TItem="TeamMemberDto" Title="АГЕНТ">
+                                    <Template Context="member">
+                                        <span style="color: @(member.Id == user.Id ? "var(--accent-cyan)" : "var(--text-light)"); font-weight: @(member.Id == user.Id ? "bold" : "normal");">
+                                            @member.Name @(member.Id == user.Id ? "(Вы)" : "")
+                                        </span>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="TeamMemberDto" Property="TotalScore" Title="ВКЛАД В КОМАНДУ (XP)" Width="150px" TextAlign="TextAlign.Center">
+                                    <Template Context="member">
+                                        <span class="text-green font-weight-bold">@member.TotalScore XP</span>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                            </Columns>
+                        </RadzenDataGrid>
+                    </div>
+                }
+
                 <div class="cyber-card p-4">
-                    <h4 class="text-cyan mb-3">Архив завершенных сценариев</h4>
+                    <h5 class="text-light mb-3"><RadzenIcon Icon="history" Style="color: var(--accent-blue);" /> Архив завершенных сценариев</h5>
                     <RadzenDataGrid Data="@completedScenariosList" TItem="UserScenarioProgress" class="custom-grid" AllowPaging="true" PageSize="10">
                         <Columns>
                             <RadzenDataGridColumn TItem="UserScenarioProgress" Title="НАЗВАНИЕ СЦЕНАРИЯ">
                                 <Template Context="data">
-                                    <span class="text-white font-weight-bold">@data.Scenario?.Title</span>
+                                    <span style="color: var(--text-light); font-weight: 500;">@data.Scenario?.Title</span>
                                 </Template>
                             </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="ТИП МИССИИ">
+                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="ТИП МИССИИ" Width="200px">
                                 <Template Context="data">
-                                    <span class="text-muted">@(data.IsTeamAttempt ? "КОМАНДНЫЙ" : "ОДИНОЧНЫЙ")</span>
+                                    @if (data.IsTeamAttempt)
+                                    {
+                                        var teamName = teamsList.FirstOrDefault(t => t.Id == data.TeamId)?.Name ?? "Неизвестная команда";
+                                        <span class="team-badge" style="white-space: normal; display: inline-block; word-break: break-word;">КОМАНДА: @teamName</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">ОДИНОЧНАЯ</span>
+                                    }
                                 </Template>
                             </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="UserScenarioProgress" Property="CompletedAt" Title="ВРЕМЯ ФИКСАЦИИ" FormatString="{0:dd.MM.yyyy HH:mm}" />
-                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="ПОЛУЧЕННЫЙ ОПЫТ">
+                            <RadzenDataGridColumn TItem="UserScenarioProgress" Property="CompletedAt" Title="ВРЕМЯ ФИКСАЦИИ" FormatString="{0:dd.MM.yyyy HH:mm}" Width="160px" />
+                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="ПОЛУЧЕННЫЙ ОПЫТ" Width="140px" TextAlign="TextAlign.Center">
                                 <Template Context="data">
                                     <span class="text-green font-weight-bold">+@data.Score XP</span>
                                 </Template>
@@ -411,86 +298,164 @@
                     </RadzenDataGrid>
                 </div>
             }
-            else if (activeTabIndex == 1 && isAdmin)
+
+            else if (activeTabIndex == 1)
+            {
+                <div class="mb-4 d-flex justify-content-end align-items-center gap-3">
+                    <span class="text-muted">Фильтр топа:</span>
+                    <RadzenDropDown Data="@leaderboardFilters" @bind-Value="selectedFilter" Change="@UpdateLeaderboards" Style="width: 250px;" />
+                </div>
+
+                <RadzenRow Gap="1.5rem">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <div class="cyber-card p-4">
+                            <h5 class="text-light mb-3"><RadzenIcon Icon="emoji_events" Style="color: #e5c07b;" /> Топ Оперативников</h5>
+                            <RadzenDataGrid Data="@topUsers" TItem="UserLeaderboardDto">
+                                <Columns>
+                                    <RadzenDataGridColumn TItem="UserLeaderboardDto" Title="#" Width="50px" TextAlign="TextAlign.Center">
+                                        <Template Context="item">
+                                            <span style="color: @(item.Rank == 1 ? "#e5c07b" : (item.Rank == 2 ? "#d1d5db" : (item.Rank == 3 ? "#d97706" : "var(--text-muted)"))); font-weight: bold;">
+                                                @item.Rank
+                                            </span>
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="UserLeaderboardDto" Title="АГЕНТ">
+                                        <Template Context="item">
+                                            <div style="color: var(--text-light); font-weight: 500;">@item.Name</div>
+                                            @if (selectedFilter == "Все подразделения") { <div style="font-size: 0.75rem; color: var(--text-muted);">@item.GroupName</div> }
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="UserLeaderboardDto" Property="Score" Title="XP" Width="80px" TextAlign="TextAlign.Center">
+                                        <Template Context="item"><span class="text-cyan font-weight-bold">@item.Score</span></Template>
+                                    </RadzenDataGridColumn>
+                                </Columns>
+                            </RadzenDataGrid>
+                        </div>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <div class="cyber-card p-4">
+                            <h5 class="text-light mb-3"><RadzenIcon Icon="military_tech" Style="color: #98c379;" /> Топ Команд</h5>
+                            <RadzenDataGrid Data="@topTeams" TItem="TeamLeaderboardDto">
+                                <Columns>
+                                    <RadzenDataGridColumn TItem="TeamLeaderboardDto" Title="#" Width="50px" TextAlign="TextAlign.Center">
+                                        <Template Context="item">
+                                            <span style="color: @(item.Rank == 1 ? "#e5c07b" : (item.Rank == 2 ? "#d1d5db" : (item.Rank == 3 ? "#d97706" : "var(--text-muted)"))); font-weight: bold;">
+                                                @item.Rank
+                                            </span>
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="TeamLeaderboardDto" Title="КОМАНДА">
+                                        <Template Context="item">
+                                            <div style="color: var(--text-light); font-weight: 500;">@item.Name</div>
+                                            @if (selectedFilter == "Все подразделения") { <div style="font-size: 0.75rem; color: var(--text-muted);">@item.GroupName</div> }
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="TeamLeaderboardDto" Property="Score" Title="XP" Width="80px" TextAlign="TextAlign.Center">
+                                        <Template Context="item"><span class="text-green font-weight-bold">@item.Score</span></Template>
+                                    </RadzenDataGridColumn>
+                                </Columns>
+                            </RadzenDataGrid>
+                        </div>
+                    </RadzenColumn>
+                </RadzenRow>
+            }
+
+            else if (activeTabIndex == 2 && isAdmin)
             {
                 <RadzenRow Gap="1.5rem" class="mb-4">
                     <RadzenColumn Size="12" SizeMD="6">
-                        <RadzenCard class="cyber-card admin-card h-100">
-                            <h5 class="text-purple mb-3"><RadzenIcon Icon="lan" Style="color: var(--accent-purple);" /> СОЗДАТЬ ПОДРАЗДЕЛЕНИЕ</h5>
-                            <div class="cyber-input-group mb-3">
-                                <RadzenTextBox @bind-Value="@newGroupName" Placeholder="Название подразделения" class="flex-grow-1" />
-                                <RadzenButton Text="Добавить" Icon="add" ButtonStyle="ButtonStyle.Info" Click="@CreateGroup" />
+                        <RadzenCard class="cyber-card h-100">
+                            <h5 class="text-light mb-3"><RadzenIcon Icon="lan" Style="color: var(--accent-cyan);" /> УПРАВЛЕНИЕ ПОДРАЗДЕЛЕНИЯМИ</h5>
+                            <div class="d-flex gap-2 mb-3">
+                                <RadzenTextBox @bind-Value="@newGroupName" Placeholder="Название нового подразделения" class="flex-grow-1" />
+                                <RadzenButton Text="Добавить" Icon="add" ButtonStyle="ButtonStyle.Info" Click="@CreateGroup" Style="background: var(--accent-cyan); color: #1e1e1e;" />
                             </div>
-                            <RadzenDataGrid Data="@groupsList" TItem="UserGroup" class="custom-grid" Height="200px">
+                            <RadzenDataGrid Data="@groupsList" TItem="UserGroup" Height="220px">
                                 <Columns>
-                                    <RadzenDataGridColumn TItem="UserGroup" Property="Name" Title="АКТИВНЫЕ ПОДРАЗДЕЛЕНИЯ" />
+                                    <RadzenDataGridColumn TItem="UserGroup" Property="Name" Title="ПОДРАЗДЕЛЕНИЕ" />
+                                    <RadzenDataGridColumn TItem="UserGroup" Title="УДАЛИТЬ" Width="80px" TextAlign="TextAlign.Center">
+                                        <Template Context="grp">
+                                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall" Variant="Variant.Outlined" Click="@(async () => await DeleteGroup(grp.Id))" />
+                                        </Template>
+                                    </RadzenDataGridColumn>
                                 </Columns>
                             </RadzenDataGrid>
                         </RadzenCard>
                     </RadzenColumn>
 
                     <RadzenColumn Size="12" SizeMD="6">
-                        <RadzenCard class="cyber-card admin-card h-100">
-                            <h5 class="text-purple mb-3"><RadzenIcon Icon="group" Style="color: var(--accent-purple);" /> СОЗДАТЬ КОМАНДУ</h5>
+                        <RadzenCard class="cyber-card h-100">
+                            <h5 class="text-light mb-3"><RadzenIcon Icon="group" Style="color: var(--accent-cyan);" /> УПРАВЛЕНИЕ КОМАНДАМИ</h5>
                             <div class="mb-2">
-                                <label class="text-muted small d-block mb-1">Выберите подразделение:</label>
-                                <RadzenDropDown TValue="int" Data="@groupsList" TextProperty="Name" ValueProperty="Id" @bind-Value="@selectedGroupIdForTeam" />
+                                <RadzenDropDown TValue="int" Data="@groupsList" TextProperty="Name" ValueProperty="Id" @bind-Value="@selectedGroupIdForTeam" Placeholder="Выберите подразделение" style="width: 100%;" />
                             </div>
-                            <div class="cyber-input-group">
+                            <div class="d-flex gap-2 mb-3">
                                 <RadzenTextBox @bind-Value="@newTeamName" Placeholder="Название команды" class="flex-grow-1" />
-                                <RadzenButton Text="Создать" Icon="group_add" ButtonStyle="ButtonStyle.Success" Click="@CreateTeam" />
+                                <RadzenButton Text="Создать" Icon="group_add" ButtonStyle="ButtonStyle.Success" Click="@CreateTeam" Style="background: #98c379; color: #1e1e1e;" />
                             </div>
-                            <div class="mt-3">
-                                <label class="text-muted small d-block">Существующие команды:</label>
-                                <span class="text-white small">Всего создано команд: @teamsList.Count</span>
-                            </div>
+                            <RadzenDataGrid Data="@teamsList" TItem="UserTeam" Height="170px">
+                                <Columns>
+                                    <RadzenDataGridColumn TItem="UserTeam" Title="КОМАНДА">
+                                        <Template Context="t"><span style="color: var(--text-light);">@t.Name</span><br/><span style="font-size:0.75rem;color:var(--text-muted);">@t.Group.Name</span></Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="UserTeam" Title="УДАЛИТЬ" Width="80px" TextAlign="TextAlign.Center">
+                                        <Template Context="tm">
+                                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall" Variant="Variant.Outlined" Click="@(async () => await DeleteTeam(tm.Id))" />
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                </Columns>
+                            </RadzenDataGrid>
                         </RadzenCard>
                     </RadzenColumn>
                 </RadzenRow>
 
-                <div class="cyber-card admin-card p-4 mb-4">
-                    <h5 class="text-purple mb-3"><RadzenIcon Icon="assignment_ind" Style="color: var(--accent-purple);" /> ДИСТРИБУЦИЯ ЛИЧНОГО СОСТАВА</h5>
-                    <RadzenDataGrid Data="@usersList" TItem="ApplicationUser" class="custom-grid" AllowPaging="true" PageSize="10">
+                <div class="cyber-card p-4 mb-4">
+                    <h5 class="text-light mb-3"><RadzenIcon Icon="assignment_ind" Style="color: var(--accent-blue);" /> РАСПРЕДЕЛЕНИЕ ОПЕРАТИВНИКОВ</h5>
+                    <RadzenDataGrid Data="@usersList" TItem="ApplicationUser" AllowPaging="true" PageSize="10">
                         <Columns>
-                            <RadzenDataGridColumn TItem="ApplicationUser" Property="UserName" Title="ОПЕРАТОР ПОЛИГОНА" />
+                            <RadzenDataGridColumn TItem="ApplicationUser" Property="UserName" Title="АГЕНТ" />
                             <RadzenDataGridColumn TItem="ApplicationUser" Title="ПОДРАЗДЕЛЕНИЕ">
                                 <Template Context="usr">
-                                    <RadzenDropDown TValue="int?" Data="@groupsList" TextProperty="Name" ValueProperty="Id"
-                                                    Value="@usr.GroupId"
+                                    <RadzenDropDown TValue="int?" Data="@groupsList" TextProperty="Name" ValueProperty="Id" Value="@usr.GroupId"
                                                     Change="@(async (args) => await UpdateUserGroup(usr.Id, args != null ? (int?)Convert.ToInt32(args) : null))"
-                                                    Placeholder="Нет подразделения" AllowClear="true" />
+                                                    Placeholder="Нет подразделения" AllowClear="true" style="width: 100%;" />
                                 </Template>
                             </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="ApplicationUser" Title="КОМАНДНЫЙ СОСТАВ" TextAlign="TextAlign.Center">
+                            <RadzenDataGridColumn TItem="ApplicationUser" Title="КОМАНДЫ" TextAlign="TextAlign.Center">
                                 <Template Context="usr">
-                                    <button type="button" class="cyber-btn-small-info" @onclick="@(() => OpenTeamAssignmentModal(usr))">
-                                        <span class="rzi" style="font-size: 1.1rem;">settings</span>
-                                        Управление
-                                    </button>
+                                    <RadzenButton Text="Управление составом" Icon="settings" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Small" Variant="Variant.Outlined" Click="@(() => OpenTeamAssignmentModal(usr))" />
                                 </Template>
                             </RadzenDataGridColumn>
                         </Columns>
                     </RadzenDataGrid>
                 </div>
 
-                <div class="cyber-card p-4" style="border: 1px solid var(--accent-danger) !important;">
-                    <h5 class="text-danger mb-3"><RadzenIcon Icon="gavel" Style="color: var(--accent-danger);" /> МОНИТОРИНГ ЖИВЫХ СЕССИЙ ПОЛИГОНА</h5>
-                    <RadzenDataGrid Data="@activeSessions" TItem="UserScenarioProgress" class="custom-grid">
+                <div class="cyber-card p-4 mb-4" style="overflow-x: auto;">
+                    <h5 class="text-light mb-3"><RadzenIcon Icon="restart_alt" Style="color: var(--accent-danger);" /> УПРАВЛЕНИЕ СЕССИЯМИ И СБРОС РЕЗУЛЬТАТОВ</h5>
+
+                    <RadzenDataGrid Data="@allProgressList" TItem="UserScenarioProgress" AllowPaging="true" PageSize="5">
                         <Columns>
-                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="ОБЪЕКТ СИМУЛЯЦИИ">
-                                <Template Context="sess">
-                                    <span class="text-white font-weight-bold">@sess.Scenario?.Title</span>
+                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="ОБЪЕКТ" Width="250px">
+                                <Template Context="p">
+                                    <div style="white-space: normal; word-break: break-all;">
+                                        @if (p.IsTeamAttempt)
+                                        {
+                                            <span>👥 @(teamsList.FirstOrDefault(t => t.Id == p.TeamId)?.Name ?? "Команда")</span>
+                                        }
+                                        else
+                                        {
+
+                                            <span>👤 @(usersList.FirstOrDefault(u => u.Id == p.UserId)?.UserName ?? "Пользователь")</span>
+                                        }
+                                    </div>
                                 </Template>
                             </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="СТАРТ СЕССИИ">
-                                <Template Context="sess">
-                                    <span class="text-muted">@(sess.StartedAt?.ToString("dd.MM.yyyy HH:mm:ss") ?? "Синхронизация...")</span>
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="ДЕЙСТВИЕ" TextAlign="TextAlign.Center">
-                                <Template Context="sess">
-                                    <RadzenButton Text="АВАРИЙНЫЙ СБРОС" Icon="bolt" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
-                                                  Click="@(async () => await ForceKillSession(sess.Id))" />
+                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="СЦЕНАРИЙ" Width="200px" />
+                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="СТАТУС" Width="100px" />
+                            <RadzenDataGridColumn TItem="UserScenarioProgress" Property="Score" Title="XP" Width="80px" />
+                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="ДЕЙСТВИЕ" Width="120px" TextAlign="TextAlign.Center">
+                                <Template Context="p">
+                                    <RadzenButton Text="Сбросить" Icon="refresh" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Variant="Variant.Outlined" Click="@(() => ResetProgress(p.Id))" />
                                 </Template>
                             </RadzenDataGridColumn>
                         </Columns>
@@ -501,44 +466,30 @@
     }
 </div>
 
+@* МОДАЛЬНОЕ ОКНО УПРАВЛЕНИЯ КОМАНДАМИ ПОЛЬЗОВАТЕЛЯ *@
 @if (showTeamModal && selectedUserForTeams != null)
 {
-    <div class="cyber-modal-backdrop">
-        <div class="cyber-modal-content">
-            <div class="cyber-modal-header">
-                <h4>УПРАВЛЕНИЕ КОМАНДАМИ: @selectedUserForTeams.UserName</h4>
-                <button type="button" class="cyber-close-x" @onclick="CloseTeamAssignmentModal">&times;</button>
-            </div>
-            <div class="cyber-modal-body">
-                <p class="text-muted small mb-3">Выберите команды для включения оперативника в состав боевых единиц текущего подразделения.</p>
-
-                @{
-                    var availableTeams = selectedUserForTeams.GroupId != null
-                        ? teamsList.Where(t => t.GroupId == selectedUserForTeams.GroupId).ToList()
-                        : teamsList;
-                }
-
-                @if (!availableTeams.Any())
+    <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); backdrop-filter: blur(3px); display: flex; justify-content: center; align-items: center; z-index: 9999;">
+        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 6px; width: 500px; padding: 20px;">
+            <h4 style="color: var(--text-light); margin-top: 0;">Команды: @selectedUserForTeams.UserName</h4>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Назначьте агента в команды его подразделения.</p>
+            
+            @{ var availableTeams = selectedUserForTeams.GroupId != null ? teamsList.Where(t => t.GroupId == selectedUserForTeams.GroupId).ToList() : teamsList; }
+            
+            <div style="max-height: 250px; overflow-y: auto; background: var(--bg-main); border: 1px solid var(--border-color); padding: 10px; border-radius: 4px; margin-bottom: 20px;">
+                @if(!availableTeams.Any()) { <div class="text-danger">В подразделении нет команд.</div> }
+                @foreach (var team in availableTeams)
                 {
-                    <p class="text-danger font-weight-bold">В выбранном подразделении еще не создано ни одной команды!</p>
-                }
-                else
-                {
-                    <div class="teams-scroll-zone">
-                        @foreach (var team in availableTeams)
-                        {
-                            var isChecked = selectedUserForTeams.Teams != null && selectedUserForTeams.Teams.Any(t => t.Id == team.Id);
-                            <div class="team-checkbox-row">
-                                <input type="checkbox" id="team_@team.Id" checked="@isChecked"
-                                       @onchange="@(async (args) => await ToggleTeamAssignment(selectedUserForTeams.Id, team.Id, (bool)args.Value))" />
-                                <label for="team_@team.Id">@team.Name</label>
-                            </div>
-                        }
+                    var isChecked = selectedUserForTeams.Teams != null && selectedUserForTeams.Teams.Any(t => t.Id == team.Id);
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 5px 0; border-bottom: 1px solid var(--border-color);">
+                        <RadzenCheckBox TValue="bool" Value="@isChecked" Change="@(async (val) => await ToggleTeamAssignment(selectedUserForTeams.Id, team.Id, val))" />
+                        <span style="color: var(--text-light);">@team.Name</span>
                     </div>
                 }
             </div>
-            <div class="cyber-modal-footer">
-                <button type="button" class="cyber-btn-secondary" @onclick="CloseTeamAssignmentModal">Закрыть</button>
+            
+            <div class="text-right">
+                <RadzenButton Text="Закрыть" ButtonStyle="ButtonStyle.Secondary" Click="CloseTeamAssignmentModal" />
             </div>
         </div>
     </div>
@@ -553,33 +504,51 @@
     private string UserDisplayName = "Загрузка...";
     private ApplicationUser? user;
 
-    // Списки данных
+    // Вкладка 0 (Статистика)
+    private UserScenarioProgress? activeScenario = null;
+    private int activeScenarioQuestionsSolved = 0;
+    private int activeScenarioTotalQuestions = 0;
+    
     private int totalScenarios = 0;
+    private int soloScenarios = 0;
+    private int teamScenarios = 0;
+    
     private int completedCount = 0;
-    private double successRate = 0;
+    private int totalUserScore = 0;
     private List<UserScenarioProgress> completedScenariosList = new();
+    
+    // Моя команда
+    public class TeamMemberDto { public string Id { get; set; } = ""; public string Name { get; set; } = ""; public int TotalScore { get; set; } }
+    private List<TeamMemberDto> myTeamMembers = new();
+
+    // Вкладка 1 (Рейтинги)
+    private List<string> leaderboardFilters = new() { "Все подразделения", "Мое подразделение" };
+    private string selectedFilter = "Все подразделения";
+    
+    public class UserLeaderboardDto { public int Rank { get; set; } public string Name { get; set; } = ""; public string GroupName { get; set; } = ""; public int Score { get; set; } }
+    public class TeamLeaderboardDto { public int Rank { get; set; } public string Name { get; set; } = ""; public string GroupName { get; set; } = ""; public int Score { get; set; } }
+    
+    private List<UserLeaderboardDto> topUsers = new();
+    private List<TeamLeaderboardDto> topTeams = new();
+
+    // Вкладка 2 (Админ)
     private List<UserGroup> groupsList = new();
     private List<UserTeam> teamsList = new();
     private List<ApplicationUser> usersList = new();
-    private List<UserScenarioProgress> activeSessions = new();
-
-    // Состояние кастомного модального окна
+    private List<UserScenarioProgress> allProgressList = new();
     private bool showTeamModal = false;
     private ApplicationUser? selectedUserForTeams;
-
-    // Переменные связывания форм
     private string newGroupName = "";
     private string newTeamName = "";
     private int selectedGroupIdForTeam;
 
     protected override async Task OnInitializedAsync()
     {
-        SessionManager.ActiveSessionsChanged += OnActiveSessionsChanged;
-
         var authState = await AuthProvider.GetAuthenticationStateAsync();
         isAdmin = authState.User.IsInRole("Admin");
 
         await LoadBaseData();
+        await UpdateLeaderboards();
         isLoaded = true;
     }
 
@@ -590,152 +559,169 @@
         UserDisplayName = authState.User.Identity?.Name ?? "Оперативник";
 
         using var context = await ContextFactory.CreateDbContextAsync();
-
         if (!string.IsNullOrEmpty(userId))
         {
             user = await context.Set<ApplicationUser>()
                 .Include(u => u.Group)
+                .Include(u => u.Teams)
                 .FirstOrDefaultAsync(u => u.Id == userId);
+                
+            activeScenario = await context.UserProgresses
+                .Include(p => p.Scenario).ThenInclude(s => s.Questions)
+                .FirstOrDefaultAsync(p => p.UserId == userId && p.Status == AttemptStatus.InProgress);
+                
+            if (activeScenario != null)
+            {
+                activeScenarioTotalQuestions = activeScenario.Scenario.Questions.Count;
+                activeScenarioQuestionsSolved = await context.Set<UserAnswerProgress>()
+                    .CountAsync(a => a.UserScenarioProgressId == activeScenario.Id);
+            }
         }
 
-        totalScenarios = await context.Scenarios.CountAsync(s => s.IsVisible || isAdmin);
+        var allVisible = await context.Scenarios.Where(s => s.IsVisible || isAdmin).ToListAsync();
+        totalScenarios = allVisible.Count;
+        soloScenarios = allVisible.Count(s => s.Scope == VisibilityScope.Public || s.Scope == VisibilityScope.GroupOnly);
+        teamScenarios = allVisible.Count(s => s.Scope == VisibilityScope.TeamOnly);
+
         completedScenariosList = await context.UserProgresses
             .Include(p => p.Scenario)
-            .Where(p => p.UserId == userId && p.CompletedAt != null)
+            .Where(p => p.UserId == userId && p.Status == AttemptStatus.Completed)
+            .OrderByDescending(p => p.CompletedAt)
             .ToListAsync();
-
+            
         completedCount = completedScenariosList.Count;
-        if (totalScenarios > 0)
+        totalUserScore = completedScenariosList.Sum(s => s.Score);
+
+        if (user?.Teams.Any() == true)
         {
-            successRate = Math.Round(((double)completedCount / totalScenarios) * 100, 1);
+            var myTeamId = user.Teams.First().Id;
+            var teamUsers = await context.Set<UserTeam>()
+                .Where(t => t.Id == myTeamId)
+                .SelectMany(t => t.Users)
+                .ToListAsync();
+                
+            myTeamMembers.Clear();
+            foreach(var tu in teamUsers)
+            {
+                var uScore = await context.UserProgresses.Where(p => p.UserId == tu.Id && p.Status == AttemptStatus.Completed).SumAsync(p => p.Score);
+                myTeamMembers.Add(new TeamMemberDto { Id = tu.Id, Name = tu.UserName ?? "Агент", TotalScore = uScore });
+            }
+            myTeamMembers = myTeamMembers.OrderByDescending(m => m.TotalScore).ToList();
         }
 
         if (isAdmin)
         {
             groupsList = await context.UserGroups.ToListAsync();
             teamsList = await context.UserTeams.Include(t => t.Group).ToListAsync();
-
-            usersList = await context.Set<ApplicationUser>()
-                            .Include(u => u.Group)
-                            .Include(u => u.Teams)
-                            .ToListAsync();
-
-            activeSessions = await context.UserProgresses
+            usersList = await context.Set<ApplicationUser>().Include(u => u.Group).Include(u => u.Teams).ToListAsync();
+            
+            allProgressList = await context.UserProgresses
                 .Include(p => p.Scenario)
-                .Where(p => p.CompletedAt == null)
+                .OrderByDescending(p => p.StartedAt)
                 .ToListAsync();
+        }
+        else
+        {
+            teamsList = await context.UserTeams.ToListAsync();
         }
     }
 
-    private void OpenTeamAssignmentModal(ApplicationUser targetUser)
+    private async Task UpdateLeaderboards()
     {
-        selectedUserForTeams = targetUser;
-        showTeamModal = true;
+        using var context = await ContextFactory.CreateDbContextAsync();
+        
+        int? myGroupId = user?.GroupId;
+        bool filterByGroup = selectedFilter == "Мое подразделение" && myGroupId.HasValue;
+
+        var usersQuery = context.Set<ApplicationUser>().Include(u => u.Group).AsQueryable();
+        if (filterByGroup) usersQuery = usersQuery.Where(u => u.GroupId == myGroupId.Value);
+        
+        var allUsers = await usersQuery.ToListAsync();
+        topUsers.Clear();
+        foreach (var u in allUsers)
+        {
+            var score = await context.UserProgresses.Where(p => p.UserId == u.Id && p.Status == AttemptStatus.Completed && !p.IsTeamAttempt).SumAsync(p => p.Score);
+            if (score > 0) topUsers.Add(new UserLeaderboardDto { Name = u.UserName ?? "Агент", GroupName = u.Group?.Name ?? "Без подразделения", Score = score });
+        }
+        topUsers = topUsers.OrderByDescending(u => u.Score).Select((u, index) => { u.Rank = index + 1; return u; }).Take(10).ToList();
+
+        var teamsQuery = context.UserTeams.Include(t => t.Group).AsQueryable();
+        if (filterByGroup) teamsQuery = teamsQuery.Where(t => t.GroupId == myGroupId.Value);
+        
+        var allTeams = await teamsQuery.ToListAsync();
+        topTeams.Clear();
+        foreach(var t in allTeams)
+        {
+            var score = await context.UserProgresses.Where(p => p.TeamId == t.Id && p.Status == AttemptStatus.Completed && p.IsTeamAttempt).SumAsync(p => p.Score);
+            if (score > 0) topTeams.Add(new TeamLeaderboardDto { Name = t.Name, GroupName = t.Group?.Name ?? "", Score = score });
+        }
+        topTeams = topTeams.OrderByDescending(t => t.Score).Select((t, index) => { t.Rank = index + 1; return t; }).Take(10).ToList();
     }
 
-    private void CloseTeamAssignmentModal()
-    {
-        showTeamModal = false;
-        selectedUserForTeams = null;
-    }
+    // === АДМИН МЕТОДЫ ===
+    private void OpenTeamAssignmentModal(ApplicationUser targetUser) { selectedUserForTeams = targetUser; showTeamModal = true; }
+    private void CloseTeamAssignmentModal() { showTeamModal = false; selectedUserForTeams = null; }
 
     private async Task ToggleTeamAssignment(string userId, int teamId, bool assign)
     {
         using var context = await ContextFactory.CreateDbContextAsync();
-
-        var dbUser = await context.Set<ApplicationUser>()
-                    .Include(u => u.Teams)
-                    .FirstOrDefaultAsync(u => u.Id == userId);
-
+        var dbUser = await context.Set<ApplicationUser>().Include(u => u.Teams).FirstOrDefaultAsync(u => u.Id == userId);
         var dbTeam = await context.UserTeams.FindAsync(teamId);
 
         if (dbUser != null && dbTeam != null)
         {
-            if (assign)
-            {
-                if (!dbUser.Teams.Any(t => t.Id == teamId))
-                {
-                    dbUser.Teams.Add(dbTeam);
-                }
-            }
-            else
-            {
-                var teamToRemove = dbUser.Teams.FirstOrDefault(t => t.Id == teamId);
-                if (teamToRemove != null)
-                {
-                    dbUser.Teams.Remove(teamToRemove);
-                }
-            }
-
+            if (assign && !dbUser.Teams.Any(t => t.Id == teamId)) dbUser.Teams.Add(dbTeam);
+            else if (!assign) { var teamToRemove = dbUser.Teams.FirstOrDefault(t => t.Id == teamId); if (teamToRemove != null) dbUser.Teams.Remove(teamToRemove); }
             await context.SaveChangesAsync();
             await LoadBaseData();
+            if (selectedUserForTeams != null && selectedUserForTeams.Id == userId) selectedUserForTeams = usersList.FirstOrDefault(u => u.Id == userId);
+        }
+    }
 
-            // Синхронизируем состояние открытого окна с обновленным списком
-            if (selectedUserForTeams != null && selectedUserForTeams.Id == userId)
+    private async Task CreateGroup() { if (string.IsNullOrWhiteSpace(newGroupName)) return; using var context = await ContextFactory.CreateDbContextAsync(); context.UserGroups.Add(new UserGroup { Name = newGroupName }); await context.SaveChangesAsync(); newGroupName = ""; await LoadBaseData(); }
+    private async Task CreateTeam() { if (string.IsNullOrWhiteSpace(newTeamName) || selectedGroupIdForTeam <= 0) return; using var context = await ContextFactory.CreateDbContextAsync(); context.UserTeams.Add(new UserTeam { Name = newTeamName, GroupId = selectedGroupIdForTeam }); await context.SaveChangesAsync(); newTeamName = ""; await LoadBaseData(); }
+    private async Task UpdateUserGroup(string userId, int? groupId) { using var context = await ContextFactory.CreateDbContextAsync(); var targetUser = await context.Set<ApplicationUser>().FindAsync(userId); if (targetUser != null) { targetUser.GroupId = groupId; await context.SaveChangesAsync(); } await LoadBaseData(); }
+
+    private async Task DeleteGroup(int groupId)
+    {
+        var confirm = await DialogService.Confirm("Вы уверены, что хотите удалить подразделение? Это действие нельзя отменить.", "Удаление", new ConfirmOptions() { OkButtonText = "Удалить", CancelButtonText = "Отмена" });
+        if (confirm == true)
+        {
+            using var context = await ContextFactory.CreateDbContextAsync();
+            var group = await context.UserGroups.FindAsync(groupId);
+            if (group != null) { context.UserGroups.Remove(group); await context.SaveChangesAsync(); await LoadBaseData(); NotificationService.Notify(NotificationSeverity.Success, "Удалено", "Подразделение удалено."); }
+        }
+    }
+
+    private async Task DeleteTeam(int teamId)
+    {
+        var confirm = await DialogService.Confirm("Удалить команду?", "Удаление", new ConfirmOptions() { OkButtonText = "Удалить", CancelButtonText = "Отмена" });
+        if (confirm == true)
+        {
+            using var context = await ContextFactory.CreateDbContextAsync();
+            var team = await context.UserTeams.FindAsync(teamId);
+            if (team != null) { context.UserTeams.Remove(team); await context.SaveChangesAsync(); await LoadBaseData(); NotificationService.Notify(NotificationSeverity.Success, "Удалено", "Команда удалена."); }
+        }
+    }
+
+    // МЕТОД СБРОСА РЕЗУЛЬТАТОВ / СЕССИЙ
+    private async Task ResetProgress(int progressId)
+    {
+        var confirm = await DialogService.Confirm("Вы действительно хотите полностью сбросить эту сессию? Все набранные очки будут аннулированы.", "Сброс прогресса", new ConfirmOptions() { OkButtonText = "Сбросить", CancelButtonText = "Отмена" });
+        if (confirm == true)
+        {
+            using var context = await ContextFactory.CreateDbContextAsync();
+            var progress = await context.UserProgresses.FindAsync(progressId);
+            if (progress != null)
             {
-                selectedUserForTeams = usersList.FirstOrDefault(u => u.Id == userId);
+                context.UserProgresses.Remove(progress);
+                await context.SaveChangesAsync();
+                NotificationService.Notify(NotificationSeverity.Warning, "Система", "Прогресс успешно сброшен.");
+                await LoadBaseData();
+                await UpdateLeaderboards();
             }
-
-            NotificationService.Notify(NotificationSeverity.Success, "Команды", "Конфигурация состава изменена.");
         }
     }
 
-    private async Task CreateGroup()
-    {
-        if (string.IsNullOrWhiteSpace(newGroupName)) return;
-
-        using var context = await ContextFactory.CreateDbContextAsync();
-        context.UserGroups.Add(new UserGroup { Name = newGroupName });
-        await context.SaveChangesAsync();
-
-        newGroupName = "";
-        await LoadBaseData();
-        NotificationService.Notify(NotificationSeverity.Success, "Система", "Подразделение успешно добавлено.");
-    }
-
-    private async Task CreateTeam()
-    {
-        if (string.IsNullOrWhiteSpace(newTeamName) || selectedGroupIdForTeam <= 0) return;
-
-        using var context = await ContextFactory.CreateDbContextAsync();
-        context.UserTeams.Add(new UserTeam { Name = newTeamName, GroupId = selectedGroupIdForTeam });
-        await context.SaveChangesAsync();
-
-        newTeamName = "";
-        await LoadBaseData();
-        NotificationService.Notify(NotificationSeverity.Success, "Система", "Команда успешно привязана к подразделению.");
-    }
-
-    private async Task UpdateUserGroup(string userId, int? groupId)
-    {
-        using var context = await ContextFactory.CreateDbContextAsync();
-        var targetUser = await context.Set<ApplicationUser>().FindAsync(userId);
-        if (targetUser != null)
-        {
-            targetUser.GroupId = groupId;
-            await context.SaveChangesAsync();
-            NotificationService.Notify(NotificationSeverity.Success, "Система", "Подразделение оперативника обновлено.");
-        }
-        await LoadBaseData();
-    }
-
-    private async Task ForceKillSession(int sessionId)
-    {
-        using var context = await ContextFactory.CreateDbContextAsync();
-        var session = await context.UserProgresses.FindAsync(sessionId);
-        if (session != null)
-        {
-            context.UserProgresses.Remove(session);
-            await context.SaveChangesAsync();
-            NotificationService.Notify(NotificationSeverity.Warning, "Терминал", "Сессия симуляции принудительно уничтожена.");
-        }
-        await LoadBaseData();
-    }
-
-    private void OnActiveSessionsChanged() => InvokeAsync(StateHasChanged);
-
-    public void Dispose()
-    {
-        SessionManager.ActiveSessionsChanged -= OnActiveSessionsChanged;
-    }
+    public void Dispose() { }
 }

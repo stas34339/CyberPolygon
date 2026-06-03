@@ -114,6 +114,12 @@ public class UserScenarioProgressDto
     public string UserId { get; set; } = string.Empty;
     public string UserName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
+
+    // ДОБАВЛЕННЫЕ ПОЛЯ ДЛЯ КОМАНД:
+    public bool IsTeamAttempt { get; set; }
+    public int? TeamId { get; set; }
+    public string TeamName { get; set; } = string.Empty;
+
     public int Score { get; set; }
     public AttemptStatus Status { get; set; }
     public DateTime? CompletedAt { get; set; }

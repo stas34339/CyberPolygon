@@ -1,6 +1,7 @@
 using CyberPolygon.Components;
 using CyberPolygon.Components.Account;
 using CyberPolygon.Data;
+using CyberPolygon.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -19,6 +20,7 @@ builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<TooltipService>();
 builder.Services.AddSingleton<ScenarioSessionManager>();
 builder.Services.AddScoped<ContextMenuService>();
+builder.Services.AddScoped<InstructionService>();
 builder.Services.AddRadzenCookieThemeService(options =>
 {
     options.Name = "ApplicationTheme";

@@ -238,24 +238,45 @@ public class ScenarioService
     public async Task<List<UserScenarioProgressDto>> GetAllProgressForScenarioAsync(int scenarioId)
     {
         using var context = await _contextFactory.CreateDbContextAsync();
-        return await context.UserProgresses
-            .Where(p => p.CyberScenarioId == scenarioId) // Теперь берем всех: и InProgress, и Completed
-            .Join(context.Users,
-                progress => progress.UserId,
-                user => user.Id,
-                (progress, user) => new UserScenarioProgressDto
-                {
-                    Id = progress.Id,
-                    UserId = progress.UserId,
-                    UserName = user.UserName ?? "Без имени",
-                    Email = user.Email ?? string.Empty,
-                    Score = progress.Score,
-                    Status = progress.Status,
-                    CompletedAt = progress.CompletedAt,
-                    TimeSpent = progress.TimeSpent
-                })
-            .OrderByDescending(p => p.CompletedAt)
+
+        var progresses = await context.UserProgresses
+            .Where(p => p.CyberScenarioId == scenarioId)
+            .OrderByDescending(p => p.StartedAt)
             .ToListAsync();
+
+        var result = new List<UserScenarioProgressDto>();
+
+        foreach (var p in progresses)
+        {
+            var dto = new UserScenarioProgressDto
+            {
+                Id = p.Id,
+                Score = p.Score,
+                Status = p.Status,
+                CompletedAt = p.CompletedAt,
+                TimeSpent = p.TimeSpent,
+                IsTeamAttempt = p.IsTeamAttempt,
+                TeamId = p.TeamId,
+                UserId = p.UserId ?? string.Empty
+            };
+
+            if (p.IsTeamAttempt && p.TeamId.HasValue)
+            {
+                var team = await context.UserTeams.FindAsync(p.TeamId.Value);
+                dto.TeamName = team?.Name ?? "Неизвестная команда";
+                dto.UserName = "Командная сессия";
+            }
+            else if (!string.IsNullOrEmpty(p.UserId))
+            {
+                var user = await context.Users.FindAsync(p.UserId);
+                dto.UserName = user?.UserName ?? "Без имени";
+                dto.Email = user?.Email ?? string.Empty;
+            }
+
+            result.Add(dto);
+        }
+
+        return result;
     }
 
 
@@ -268,6 +289,17 @@ public class ScenarioService
         var record = await context.UserProgresses
             .FirstOrDefaultAsync(p => p.UserId == userId && p.CyberScenarioId == scenarioId);
 
+        if (record != null)
+        {
+            context.UserProgresses.Remove(record);
+            await context.SaveChangesAsync();
+        }
+    }
+
+    public async Task ResetProgressByIdAsync(int progressId)
+    {
+        using var context = await _contextFactory.CreateDbContextAsync();
+        var record = await context.UserProgresses.FindAsync(progressId);
         if (record != null)
         {
             context.UserProgresses.Remove(record);

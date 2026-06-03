@@ -1,155 +1,82 @@
 ﻿@page "/instruction"
+@using CyberPolygon.Data.Models
+@using CyberPolygon.Services
+@using Radzen
+@using Radzen.Blazor
+@using Microsoft.AspNetCore.Components.Forms
+@rendermode InteractiveServer
 
-<div class="instruction-container p-4">
-    <div class="d-flex align-items-center gap-3 mb-4 header-block pb-3">
-        <RadzenIcon Icon="help_center" Style="color: #00e5ff; font-size: 2rem;" />
-        <div>
-            <h1 class="page-title m-0">Руководство оператора киберполигона</h1>
-            <p class="text-muted m-0" style="font-size: 0.85rem; font-family: monospace;">
-                ИНФОРМАЦИОННО-АНАЛИТИЧЕСКИЙ ДЕПАРТАМЕНТ // ИНСТРУКЦИЯ ПО ПРОХОЖДЕНИЮ СЦЕНАРИЕВ
-            </p>
-        </div>
-    </div>
+@inject InstructionService InstructionService
+@inject NotificationService NotificationService
+@inject NavigationManager NavigationManager
 
-    <div class="row">
-        <div class="col-lg-8 mb-4">
-            <RadzenAccordion Multiple="false" class="cyber-accordion">
-                <Items>
-                    <RadzenAccordionItem Text="ЭТАП 1: Получение брифинга и анализ инцидента" Icon="assignment" Expanded="true">
-                        <div class="accordion-content">
-                            <p>Каждый тренировочный сценарий моделирует реальный инцидент информационной безопасности в подшефной инфраструктуре.</p>
-                            <ul>
-                                <li><strong>Изучите описание:</strong> Внимательно прочитайте вводные данные воркспейса. Там указаны время, характер аномалии и первые признаки компрометации.</li>
-                                <li><strong>Определите вектор:</strong> На основе описания локализуйте потенциально уязвимые сервисы или скомпрометированные учетные записи.</li>
-                            </ul>
-                        </div>
-                    </RadzenAccordionItem>
-
-                    <RadzenAccordionItem Text="ЭТАП 2: Работа в виртуальном окружении и с ПО" Icon="computer">
-                        <div class="accordion-content">
-                            <p>Для проведения расследования вам предоставляются два ключевых инструмента:</p>
-
-                            <div class="tool-box mb-3">
-                                <span class="tool-badge bg-info-cyber">Виртуальная машина (ВМ)</span>
-                                <p class="m-0 mt-2 text-muted">Полностью изолированный слепок целевой системы, где развернута инфраструктура в момент инцидента. Используйте её для поиска логов, анализа конфигураций и выявления вредоносного ПО.</p>
-                            </div>
-
-                            <div class="tool-box">
-                                <span class="tool-badge bg-blue-cyber">Справочная документация по ПО</span>
-                                <p class="m-0 mt-2 text-muted">Технические руководства и регламенты по работе со специализированным софтом безопасности, развернутым на полигоне. Поможет, если вы не знаете специфических команд или синтаксиса утилит.</p>
-                            </div>
-                        </div>
-                    </RadzenAccordionItem>
-
-                    <RadzenAccordionItem Text="ЭТАП 3: Расследование и закрытие вопросов" Icon="fact_check">
-                        <div class="accordion-content">
-                            <p>Итогом вашей работы является серия ответов на ключевые вопросы аналитиков ИАО.</p>
-                            <ul>
-                                <li>Формат ответов может варьироваться: от ввода конкретного хэша вредоноса или IP-адреса атакующего до выбора правильного вектора закрепления в системе.</li>
-                                <li>Пока на все обязательные вопросы внутри сценария не даны ответы, расследование не может считаться завершенным.</li>
-                            </ul>
-                        </div>
-                    </RadzenAccordionItem>
-                </Items>
-            </RadzenAccordion>
-        </div>
-
-        <div class="col-lg-4">
-            <div class="rules-card p-4">
-                <div class="d-flex align-items-center gap-2 mb-3 text-warning-cyber">
-                    <RadzenIcon Icon="gavel" Style="font-size: 1.3rem;" />
-                    <h3 class="rules-title m-0">Правила начисления XP</h3>
-                </div>
-
-                <p class="text-muted" style="font-size: 0.9rem;">
-                    Обратите внимание, что на полигоне действует динамическая система оценки, параметры которой задаются администратором индивидуально для каждого сценария.
-                </p>
-
-                <hr class="cyber-hr" />
-
-                <div class="d-flex flex-column gap-3">
-                    <div class="d-flex align-items-start gap-2">
-                        <RadzenIcon Icon="add_circle_outline" Style="color: #28a745; font-size: 1.1rem; margin-top: 3px;" />
-                        <div>
-                            <span class="d-block text-white font-weight-bold" style="font-size: 0.85rem;">Успешное выполнение</span>
-                            <small class="text-muted">За каждый правильный ответ вам начисляются баллы опыта (XP), установленные автором вопроса.</small>
-                        </div>
-                    </div>
-
-                    <div class="d-flex align-items-start gap-2">
-                        <RadzenIcon Icon="remove_circle_outline" Style="color: #ff4444; font-size: 1.1rem; margin-top: 3px;" />
-                        <div>
-                            <span class="d-block text-white font-weight-bold" style="font-size: 0.85rem;">Штрафные санкции</span>
-                            <small class="text-muted">Ошибочные попытки ввода ответа могут списывать XP (значение штрафа также динамически настраивается администратором).</small>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="alert-zone mt-4 p-3 border border-warning rounded">
-                    <div class="d-flex gap-2">
-                        <RadzenIcon Icon="warning" Style="color: #ffb703;" />
-                        <span style="font-size: 0.8rem; font-family: monospace; color: #ffb703; text-transform: uppercase;">Внимание оператора</span>
-                    </div>
-                    <p class="m-0 mt-2 text-muted" style="font-size: 0.75rem; line-height: 1.4;">
-                        Не угадывайте ответы вслепую. Серия неверных сабмитов способна полностью обнулить ваш итоговый рейтинг за сценарий. Опирайтесь только на факты из логов ВМ.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+<PageTitle>Руководство оператора | Киберполигон</PageTitle>
 
 <style>
+    :root {
+        --bg-dark: #0d1117;
+        --bg-card: #161b22;
+        --accent-blue: #00e5ff;
+        --accent-purple: #b388ff;
+        --border-color: #30363d;
+        --text-main: #ffffff; /* Убеждаемся, что основной текст чисто белый */
+        --text-muted: #8b949e;
+    }
+
     .instruction-container {
-        background-color: #0d1117;
+        background-color: var(--bg-dark);
         min-height: 100vh;
-        color: #e6edf3 !important; /* Сделали основной текст контрастным */
+        color: var(--text-main);
+        font-family: 'Courier New', Courier, monospace;
+    }
+
+        /* Принудительно делаем текст светлым во всех базовых элементах */
+        .instruction-container p,
+        .instruction-container span,
+        .instruction-container div,
+        .instruction-container label {
+            color: var(--text-main);
+        }
+
+    .text-muted {
+        color: var(--text-muted) !important;
     }
 
     .header-block {
-        border-bottom: 1px solid #21262d;
+        border-bottom: 1px solid var(--border-color);
     }
 
     .page-title {
         font-family: monospace;
-        color: #ffffff !important; /* Яркий белый заголовок */
-        font-size: 1.5rem;
-        text-transform: uppercase;
+        font-weight: bold;
         letter-spacing: 1px;
+        color: var(--text-main) !important;
     }
 
-    /* Кастомизация аккордеона Radzen под кибер-стиль */
     .cyber-accordion {
-        background: transparent !important;
+        background-color: transparent !important;
         border: none !important;
     }
 
     ::deep .rz-accordion-header {
-        background-color: #161b22 !important;
-        border: 1px solid #30363d !important;
+        background-color: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
+        color: var(--text-main) !important;
         margin-bottom: 8px;
-        border-radius: 4px !important;
-        transition: all 0.2s ease;
+        border-radius: 4px;
+        font-family: monospace;
     }
 
-        /* Текст внутри заголовков аккордеона */
-        ::deep .rz-accordion-header a {
-            color: #ffffff !important;
-            font-family: monospace;
-            font-weight: bold;
+        ::deep .rz-accordion-header .rz-accordion-header-text,
+        ::deep .rz-accordion-header .rz-accordion-toggle {
+            color: var(--text-main) !important;
         }
 
-        ::deep .rz-accordion-header:hover {
-            border-color: #00e5ff !important;
-            box-shadow: 0 0 8px rgba(0, 229, 255, 0.15);
-        }
-
-    /* Внутренний блок раскрытого аккордеона */
     ::deep .rz-accordion-content {
-        background-color: #161b22 !important; /* Сделали чуть светлее фона, чтобы читалcя текст */
-        border: 1px solid #30363d !important;
+        background-color: #161b22 !important;
+        border: 1px solid var(--border-color) !important;
         border-top: none !important;
-        color: #e6edf3 !important; /* Контрастный текст внутри контента */
+        color: #ffffff !important;
         padding: 20px !important;
         margin-top: -9px;
         margin-bottom: 15px;
@@ -157,40 +84,49 @@
         border-bottom-right-radius: 4px;
     }
 
-    .accordion-content p {
-        color: #e6edf3 !important;
+    /* Стилизация текстовых полей */
+    ::deep .rz-textbox,
+    ::deep .rz-textarea,
+    ::deep .rz-dropdown {
+        background-color: #0d1117 !important;
+        color: #ffffff !important;
+        border-color: var(--border-color) !important;
     }
 
-    .accordion-content strong {
-        color: #00e5ff !important; /* Выделение важных слов неоновым голубым */
+    ::deep .rz-dropdown-label {
+        color: #ffffff !important;
     }
 
-    .accordion-content ul {
-        padding-left: 20px;
-        margin-top: 10px;
-        color: #e6edf3 !important;
+    .form-control[type="file"] {
+        background-color: #0d1117 !important;
+        color: #ffffff !important;
+        border: 1px solid var(--border-color) !important;
     }
 
-    .accordion-content li {
-        margin-bottom: 8px;
-    }
-
-    /* Модули инструментов внутри этапов */
-    .tool-box {
-        background: #0d1117 !important; /* Внутренний фон блоков делаем темнее */
-        border: 1px dashed #444c56;
-        padding: 15px;
-        border-radius: 4px;
-    }
-
-        .tool-box .text-muted {
-            color: #8b949e !important; /* Читаемый серый для второстепенного описания ПО */
+        .form-control[type="file"]::file-selector-button {
+            background-color: var(--bg-card);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            margin-right: 10px;
+            padding: 4px 12px;
+            border-radius: 4px;
+            cursor: pointer;
         }
 
-    .tool-badge {
+    /* Предотвращение выхода текста за рамки */
+    .instruction-text-content {
+        white-space: pre-wrap;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        font-family: sans-serif;
+        line-height: 1.6;
+        color: #ffffff !important;
+    }
+
+    .badge-cyber {
         font-family: monospace;
         font-size: 0.75rem;
-        padding: 3px 8px;
+        padding: 4px 8px;
         border-radius: 3px;
         font-weight: bold;
         text-transform: uppercase;
@@ -202,47 +138,279 @@
         border: 1px solid rgba(0, 229, 255, 0.3);
     }
 
-    .bg-blue-cyber {
-        background: rgba(88, 166, 255, 0.1);
-        color: #58a6ff !important;
-        border: 1px solid rgba(88, 166, 255, 0.3);
-    }
-
-    /* Боковая карточка правил */
     .rules-card {
         background-color: #161b22;
         border: 1px solid #30363d;
         border-radius: 6px;
-        color: #e6edf3 !important;
+        color: #ffffff !important;
     }
 
-        .rules-card .text-muted {
-            color: #c9d1d9 !important; /* Текст правил делаем светлее обычной заглушки */
-        }
+    .admin-control-panel {
+        background: rgba(179, 136, 255, 0.05);
+        border: 1px dashed var(--accent-purple);
+        border-radius: 6px;
+    }
+</style>
 
-    .rules-title {
-        font-family: monospace;
-        font-size: 1.1rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+<style>
+    .rz-dropdown-panel {
+        background-color: #161b22 !important;
+        border: 1px solid #30363d !important;
     }
 
-    .text-warning-cyber {
-        color: #ffb703 !important;
+    .rz-dropdown-items {
+        background-color: #161b22 !important;
     }
 
-    .cyber-hr {
-        border-top: 1px solid #30363d;
-        margin: 1.5rem 0;
+    .rz-dropdown-item {
+        color: #ffffff !important;
+        background-color: transparent !important;
     }
 
-    .alert-zone {
-        background: rgba(255, 183, 3, 0.02);
-        border-color: rgba(255, 183, 3, 0.3) !important;
-    }
-
-        .alert-zone .text-muted {
-            color: #ffb703 !important; /* Текст предупреждения теперь горит желтым, а не блекнет */
-            opacity: 0.85;
+        .rz-dropdown-item:hover,
+        .rz-dropdown-item.rz-state-highlight {
+            background-color: #30363d !important;
+            color: #00e5ff !important;
         }
 </style>
+
+<div class="instruction-container p-4">
+    <div class="d-flex align-items-center justify-content-between mb-4 header-block pb-3">
+        <div class="d-flex align-items-center gap-3">
+            <RadzenIcon Icon="help_center" Style="color: var(--accent-blue); font-size: 2rem;" />
+            <div>
+                <h1 class="page-title m-0">Руководство оператора киберполигона</h1>
+                <p class="text-muted m-0" style="font-size: 0.85rem; font-family: monospace;">
+                    ИНФОРМАЦИОННО-АНАЛИТИЧЕСКИЙ ДЕПАРТАМЕНТ // ИНСТРУКЦИИ ПО РАБОТЕ С СИСТЕМОЙ
+                </p>
+            </div>
+        </div>
+
+        <AuthorizeView Roles="Admin" Context="authHeaderContext">
+            <RadzenButton Text="@(showAdminPanel ? "Закрыть терминал" : "Терминал управления")"
+                          Icon="@(showAdminPanel ? "close" : "developer_board")"
+                          ButtonStyle="@(showAdminPanel ? ButtonStyle.Secondary : ButtonStyle.Primary)"
+                          Style="font-family: monospace;"
+                          Click="@(() => showAdminPanel = !showAdminPanel)" />
+        </AuthorizeView>
+    </div>
+
+    <AuthorizeView Roles="Admin" Context="authFormContext">
+        @if (showAdminPanel)
+        {
+            <div class="admin-control-panel p-4 mb-4">
+                <h4 class="text-white mb-3" style="font-family: monospace; color: var(--accent-purple) !important;">
+                    <RadzenIcon Icon="add_moderator" class="me-2" /> РЕЖИМ МОДИФИКАЦИИ БАЗЫ ЗНАНИЙ
+                </h4>
+
+                <RadzenTemplateForm TItem="InstructionModel" Data="@newInstruction" Submit="HandleSubmit">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small d-block mb-1">НАЗВАНИЕ ИНСТРУКЦИИ</label>
+                            <RadzenTextBox @bind-Value="@newInstruction.Title" Name="Title" class="w-100" />
+                            <RadzenRequiredValidator Component="Title" Text="Укажите название" Popup="false" Style="color: var(--accent-purple); font-size:0.8rem; font-family: monospace;" />
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small d-block mb-1">СИСТЕМНАЯ ИКОНКА (MATERIAL ICON)</label>
+                            <RadzenDropDown @bind-Value="@newInstruction.IconName" Data="@availableIcons" class="w-100" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="text-muted small d-block mb-1">СОДЕРЖАНИЕ / ИНСТРУКЦИЯ (ПОДДЕРЖИВАЕТСЯ ПЕРЕНОС СТРОК)</label>
+                        <RadzenTextArea @bind-Value="@newInstruction.Description" Name="Description" Rows="4" class="w-100" Style="font-family: monospace;" />
+                        <RadzenRequiredValidator Component="Description" Text="Заполните описание" Popup="false" Style="color: var(--accent-purple); font-size:0.8rem; font-family: monospace;" />
+                    </div>
+
+                    <div class="row align-items-start mb-3">
+                        <div class="col-md-8">
+                            <label class="text-muted small d-block mb-1">ВЛОЖЕНИЯ (МОЖНО ВЫБРАТЬ НЕСКОЛЬКО ФАЙЛОВ)</label>
+                            <InputFile OnChange="LoadFiles" multiple class="form-control" style="font-family: monospace;" />
+
+                            @if (uploadedFiles.Any())
+                            {
+                                <div class="mt-2 p-2" style="background: rgba(22, 27, 34, 0.8); border: 1px dashed var(--border-color); border-radius: 4px;">
+                                    <span class="text-muted small d-block mb-1">Готовы к загрузке (@uploadedFiles.Count):</span>
+                                    <ul class="list-unstyled m-0 small">
+                                        @foreach (var file in uploadedFiles)
+                                        {
+                                            <li class="mb-1" style="color: var(--accent-blue);">
+                                                <RadzenIcon Icon="attach_file" Style="font-size: 1rem; vertical-align: middle;" /> @file.Name
+                                                <span class="text-muted ms-2">(@(file.Size / 1024) KB)</span>
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                            }
+                        </div>
+                        <div class="col-md-4 text-end pt-4">
+                            <RadzenButton ButtonType="ButtonType.Submit" Text="Инициализировать инструкцию" Icon="bolt" ButtonStyle="ButtonStyle.Success" />
+                        </div>
+                    </div>
+                </RadzenTemplateForm>
+            </div>
+        }
+    </AuthorizeView>
+
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            @if (isLoading)
+            {
+                <div class="text-center p-5">
+                    <RadzenProgressBar Mode="ProgressBarMode.Indeterminate" ButtonStyle="ButtonStyle.Info" />
+                    <p class="text-muted mt-2 small">ЧТЕНИЕ ДАННЫХ ИЗ РЕПОЗИТОРИЯ...</p>
+                </div>
+            }
+            else if (!instructions.Any())
+            {
+                <div class="text-center p-5 rules-card">
+                    <RadzenIcon Icon="folder_open" Style="font-size: 3rem; color: var(--text-muted);" />
+                    <p class="text-muted mt-2">База знаний пуста. Добавьте первую инструкцию через терминал управления.</p>
+                </div>
+            }
+            else
+            {
+                <RadzenAccordion Multiple="true" class="cyber-accordion">
+                    <Items>
+                        @foreach (var item in instructions)
+                        {
+                            <RadzenAccordionItem Text="@item.Title" Icon="@item.IconName">
+                                <div class="position-relative">
+                                    <AuthorizeView Roles="Admin" Context="authDeleteContext">
+                                        <div class="position-absolute top-0 end-0">
+                                            <RadzenButton Icon="delete" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Danger"
+                                                          Variant="Variant.Outlined" Tooltip="Удалить инструкцию"
+                                                          Click="@(() => DeleteInstruction(item.Id))" />
+                                        </div>
+                                    </AuthorizeView>
+
+                                    <div class="pe-5">
+                                        <p class="instruction-text-content">
+                                            @item.Description
+                                        </p>
+
+                                        @if (item.Attachments != null && item.Attachments.Any())
+                                        {
+                                            <div class="mt-3 pt-3" style="border-top: 1px dashed var(--border-color);">
+                                                <span class="text-muted small d-block mb-2" style="font-family: monospace;">СВЯЗАННЫЕ ФАЙЛЫ:</span>
+                                                <div class="d-flex flex-wrap gap-2">
+                                                    @foreach (var file in item.Attachments)
+                                                    {
+                                                        <a href="@file.FilePath" download="@file.FileName" class="badge-cyber bg-info-cyber text-decoration-none" style="cursor: pointer;">
+                                                            <RadzenIcon Icon="file_download" Style="font-size: 0.9rem; vertical-align: middle;" class="me-1" />
+                                                            @file.FileName
+                                                        </a>
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </RadzenAccordionItem>
+                        }
+                    </Items>
+                </RadzenAccordion>
+            }
+        </div>
+
+        <div class="col-lg-4">
+            <div class="rules-card p-4">
+                <h5 class="rules-title mb-3" style="color: var(--accent-blue); font-weight: bold; font-family: monospace;">
+                    // ОБЩИЙ РЕГЛАМЕНТ ТЕСТИРОВАНИЯ
+                </h5>
+                <div class="text-muted small" style="font-family: monospace; line-height: 1.5;">
+                    <p>1. Перед началом выполнения сценария убедитесь, что выделенный VPN-туннель стабилен и логи пишутся в SIEM.</p>
+                    <p>2. Любые действия, выходящие за рамки ТЗ сценария (сканирование подсетей департамента, брутфорс смежных узлов), классифицируются как нарушение регламента.</p>
+                    <p>3. Время прохождения попытки фиксируется автоматически. Кнопка «Завершить» отправляет слепок вашей сессии на проверку.</p>
+                    <hr style="border-color: var(--border-color);" />
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge-cyber bg-info-cyber">СТАТУС ИАО.БЕЗ</span>
+                        <span class="text-white">АКТИВЕН</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<InstructionModel> instructions = new();
+    private InstructionModel newInstruction = new();
+    private bool isLoading = true;
+    private bool showAdminPanel = false;
+
+    // ИЗМЕНЕНИЕ: Теперь это список файлов
+    private IReadOnlyList<IBrowserFile> uploadedFiles = new List<IBrowserFile>();
+    private int maxAllowedFiles = 10;
+    private long maxFileSize = 1024 * 1024 * 30; // 30 MB на один файл
+
+    private readonly List<string> availableIcons = new()
+    {
+        "assignment", "terminal", "security", "shield", "bug_report",
+        "lock", "visibility", "help_center", "description", "code", "lan"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        try
+        {
+            instructions = await InstructionService.GetAllAsync();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Ошибка загрузки", ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    // ИЗМЕНЕНИЕ: Обработка нескольких файлов
+    private void LoadFiles(InputFileChangeEventArgs e)
+    {
+        uploadedFiles = e.GetMultipleFiles(maxAllowedFiles);
+    }
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            // Передаем коллекцию файлов в сервис
+            await InstructionService.AddAsync(newInstruction, uploadedFiles);
+
+            NotificationService.Notify(NotificationSeverity.Success, "Система", "Новая инструкция успешно интегрирована.");
+
+            newInstruction = new InstructionModel();
+            uploadedFiles = new List<IBrowserFile>(); // Сбрасываем список
+            showAdminPanel = false;
+
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Критическая ошибка", ex.Message);
+        }
+    }
+
+    private async Task DeleteInstruction(int id)
+    {
+        try
+        {
+            await InstructionService.DeleteAsync(id);
+            NotificationService.Notify(NotificationSeverity.Warning, "Терминал", "Инструкция удалена.");
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Ошибка удаления", ex.Message);
+        }
+    }
+}

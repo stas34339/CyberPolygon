@@ -6,9 +6,121 @@
 @inject NotificationService NotificationService
 @inject ApplicationDbContext DbContext
 
-<head>
-    <link rel="stylesheet" href="@Assets["_content/Radzen.Blazor/css/Standard-Dark.css"]" />
-</head>
+<style>
+    :root {
+        --bg-main: #1e1e1e;
+        --bg-card: #24272c;
+        --text-muted: #8fa0b5;
+        --text-light: #cbe0f5;
+        --accent-cyan: #4ec3d1;
+        --border-color: #343a42;
+    }
+
+    /* ПЕРЕКРАС ДИАЛОГОВОГО ОКНА RADZEN */
+    .rz-dialog-wrapper .rz-dialog,
+    .rz-dialog-content {
+        background-color: var(--bg-main) !important;
+        color: var(--text-muted) !important;
+    }
+
+    .rz-dialog-titlebar {
+        background-color: var(--bg-card) !important;
+        color: var(--text-light) !important;
+        border-bottom: 1px solid var(--border-color) !important;
+    }
+
+    /* Универсальный инпут для редактора */
+    .dark-input,
+    .dark-input input,
+    .rz-textbox,
+    .rz-textarea,
+    .rz-dropdown,
+    .rz-numeric,
+    .rz-numeric-input,
+    .rz-html-editor,
+    .rz-html-editor-content {
+        background-color: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
+        color: var(--text-light) !important;
+    }
+
+    .custom-editor-form {
+        background-color: var(--bg-main);
+        color: var(--text-muted);
+    }
+
+    .cyber-label {
+        color: var(--accent-cyan) !important;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 5px;
+        display: block;
+    }
+
+    .cyber-sub-label {
+        color: var(--text-light) !important;
+        font-size: 0.8rem;
+        margin-bottom: 3px;
+        display: block;
+    }
+
+    .success-border, .success-border input {
+        border-color: #98c379 !important;
+    }
+
+    .question-card {
+        background: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 6px;
+    }
+
+    .border-dashed, .border-dashed input {
+        border-style: dashed !important;
+        border-color: var(--border-color) !important;
+    }
+
+    .custom-tabs .rz-tabview-nav {
+        background: transparent !important;
+        border-bottom: 1px solid var(--border-color) !important;
+    }
+
+        .custom-tabs .rz-tabview-nav li:not(.rz-tabview-selected) a span {
+            color: var(--text-muted) !important;
+        }
+
+        .custom-tabs .rz-tabview-nav li.rz-tabview-selected a span {
+            color: var(--accent-cyan) !important;
+        }
+
+    .rz-dropdown .rz-dropdown-label {
+        color: var(--text-light) !important;
+    }
+
+    /* Окно выпадающего списка (popup) */
+    .rz-dropdown-panel {
+        background-color: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
+    }
+
+    /* Элементы внутри выпадающего списка */
+    .rz-dropdown-item {
+        color: var(--text-muted) !important;
+        background-color: transparent !important;
+    }
+
+        /* Наведение на элемент и выбранный элемент списка */
+        .rz-dropdown-item:hover,
+        .rz-dropdown-item.rz-state-highlight {
+            background-color: var(--bg-main) !important;
+            color: var(--accent-cyan) !important;
+        }
+
+    /* Цвет плейсхолдера */
+    .rz-dropdown-label.rz-placeholder {
+        color: var(--text-muted) !important;
+    }
+</style>
 
 <RadzenTemplateForm TItem="CyberScenario" Data="@Item" Submit="@OnSave">
     <div class="row custom-editor-form" style="padding-right: 10px;">
@@ -55,18 +167,16 @@
         {
             <div class="col-md-8 mb-3">
                 <label class="cyber-label">Выберите учебную группу</label>
-                <RadzenDropDown @bind-Value="@Item.TargetGroupId" TValue="int?" Data="@groups"
-                                ValueProperty="Id" TextProperty="Name"
-                                class="w-100 dark-input" Style="color: var(--rz-text-color-base-200)" Placeholder="Укажите группу из базы..." />
+                <RadzenDropDown @bind-Value="@Item.TargetGroupId" TValue="int?" Data="@groups" ValueProperty="Id" TextProperty="Name"
+                                class="w-100 dark-input" Placeholder="Укажите группу из базы..." />
             </div>
         }
         else if (Item.Scope == VisibilityScope.TeamOnly)
         {
             <div class="col-md-8 mb-3">
                 <label class="cyber-label">Выберите команду</label>
-                <RadzenDropDown @bind-Value="@Item.TargetTeamId" TValue="int?" Data="@teams"
-                                ValueProperty="Id" TextProperty="Name"
-                                class="w-100 dark-input" Style="color: var(--rz-text-color-base-200)" Placeholder="Укажите команду из базы..." />
+                <RadzenDropDown @bind-Value="@Item.TargetTeamId" TValue="int?" Data="@teams" ValueProperty="Id" TextProperty="Name"
+                                class="w-100 dark-input" Placeholder="Укажите команду из базы..." />
             </div>
         }
         else
@@ -81,8 +191,7 @@
 
         <div class="col-md-4 mb-3">
             <label class="cyber-label">Режим выполнения теста</label>
-            <RadzenDropDown @bind-Value="@Item.GameMode" TValue="ScenarioGameMode"
-                            Data="@(Enum.GetValues(typeof(ScenarioGameMode)))" class="w-100 dark-input">
+            <RadzenDropDown @bind-Value="@Item.GameMode" TValue="ScenarioGameMode" Data="@(Enum.GetValues(typeof(ScenarioGameMode)))" class="w-100 dark-input">
                 <Template Context="mode">
                     @if ((ScenarioGameMode)mode == ScenarioGameMode.AllAtOnce)
                     {
@@ -104,12 +213,12 @@
 
         <div class="col-md-4 mb-3">
             <label class="cyber-label">Схема (загрузка файла)</label>
-            <InputFile OnChange="HandleFileUpload" class="form-control bg-dark text-white border-secondary" style="height: 35px; padding: 4px 12px;" />
+            <InputFile OnChange="HandleFileUpload" class="form-control bg-dark text-white border-secondary" style="height: 35px; padding: 4px 12px; background-color: var(--bg-card) !important; border-color: var(--border-color) !important;" />
         </div>
 
         @* ПОЛЕ ЗАГРУЗКИ ДОКУМЕНТАЦИИ *@
         <div class="col-12 mb-3">
-            <RadzenFieldset Text="Прикрепленные документы">
+            <RadzenFieldset Text="Прикрепленные документы" Style="border-color: var(--border-color); color: var(--accent-cyan);">
                 @foreach (var doc in Item.Documents)
                 {
                     <div class="row align-items-center rz-mb-2">
@@ -119,7 +228,7 @@
                         <div class="col-md-6">
                             @if (string.IsNullOrEmpty(doc.FilePath))
                             {
-                                <InputFile OnChange="@(async e => await UploadDocumentAsync(e, doc))" class="form-control bg-dark text-white border-secondary" />
+                                <InputFile OnChange="@(async e => await UploadDocumentAsync(e, doc))" class="form-control text-white" style="background-color: var(--bg-card) !important; border-color: var(--border-color) !important;" />
                             }
                             else
                             {
@@ -136,27 +245,26 @@
                 }
 
                 <RadzenButton Text="Добавить документ" Icon="add" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Flat" Size="ButtonSize.Small" class="rz-mt-3"
-                              Click="@(() => Item.Documents.Add(new ScenarioDocument()))" />
+                              Click="@(() => Item.Documents.Add(new ScenarioDocument()))" Style="background-color: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-light);" />
             </RadzenFieldset>
         </div>
 
         <RadzenTabs class="w-100 mt-3 custom-tabs">
             <Tabs>
                 <RadzenTabsItem Text="Легенда">
-                    <RadzenHtmlEditor @bind-Value="@Item.Legend" style="height: 250px; background: var(--bg-card); color: var(--text-light);" />
+                    <RadzenHtmlEditor @bind-Value="@Item.Legend" style="height: 250px;" class="dark-input" />
                 </RadzenTabsItem>
                 <RadzenTabsItem Text="Задания и Вопросы">
                     <div class="questions-container p-2">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                             <h5 style="color: var(--accent-cyan); margin:0;">Конструктор интерактивного теста</h5>
-                            <RadzenButton Text="Добавить вопрос" Icon="add" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Small"
-                                          Click="@AddQuestion" />
+                            <RadzenButton Text="Добавить вопрос" Icon="add" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Small" Click="@AddQuestion" Style="background-color: var(--accent-blue); color: #1e1e1e;" />
                         </div>
 
                         @if (!Item.Questions.Any())
                         {
                             <div class="text-center p-4 border border-danger border-dashed rounded"
-                                 style="color: #e06c75; background: rgba(224, 108, 117, 0.05); border-color: var(--border-color) !important;">
+                                 style="color: #e06c75; background: rgba(224, 108, 117, 0.05); border-color: #e06c75 !important;">
                                 <RadzenIcon Icon="warning" class="rz-mr-2" />
                                 Внимание: Задания не добавлены. Сохранение сценария заблокировано.
                             </div>
@@ -166,10 +274,9 @@
                         {
                             var index = Item.Questions.IndexOf(q);
                             <div class="question-card mb-3 p-3">
-                                <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-secondary">
+                                <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-secondary" style="border-color: var(--border-color) !important;">
                                     <span style="color: var(--accent-cyan); font-weight:bold;">Вопрос №@(index + 1)</span>
-                                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall" Variant="Variant.Outlined"
-                                                  Click="@(() => RemoveQuestion(q))" />
+                                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall" Variant="Variant.Outlined" Click="@(() => RemoveQuestion(q))" />
                                 </div>
                                 <div class="row">
                                     <div class="col-12 mb-2">
@@ -177,15 +284,15 @@
                                         <RadzenTextBox @bind-Value="@q.Text" Placeholder="Например: Какой порт использует SSH?" class="w-100 dark-input" />
                                     </div>
                                     <div class="col-md-6 mb-2">
-                                        <label class="cyber-sub-label" style="color: #98c379;">Эталонный ответ (Пример ответа)</label>
+                                        <label class="cyber-sub-label" style="color: #98c379 !important;">Эталонный ответ (Пример ответа)</label>
                                         <RadzenTextBox @bind-Value="@q.CorrectAnswer" Placeholder="Например: 22" class="w-100 dark-input success-border" />
                                     </div>
                                     <div class="col-md-3 mb-2">
-                                        <label class="cyber-sub-label" style="color: #e5c07b;">Награда (+ баллы)</label>
+                                        <label class="cyber-sub-label" style="color: #e5c07b !important;">Награда (+ баллы)</label>
                                         <RadzenNumeric @bind-Value="@q.AwardPoints" Min="1" class="w-100 dark-input" />
                                     </div>
                                     <div class="col-md-3 mb-2">
-                                        <label class="cyber-sub-label" style="color: #e06c75;">Штраф (- баллы)</label>
+                                        <label class="cyber-sub-label" style="color: #e06c75 !important;">Штраф (- баллы)</label>
                                         <RadzenNumeric @bind-Value="@q.PenaltyPoints" Min="0" class="w-100 dark-input" />
                                     </div>
                                 </div>
@@ -198,64 +305,9 @@
     </div>
 
     <div class="mt-4 text-right d-flex justify-content-end">
-        <RadzenButton Text="Сохранить изменения" ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Info" class="px-4" />
+        <RadzenButton Text="Сохранить изменения" ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Info" class="px-4" Style="background-color: var(--accent-cyan); color: #1e1e1e; font-weight: bold;" />
     </div>
 </RadzenTemplateForm>
-
-<style>
-    .cyber-label {
-        color: var(--accent-cyan) !important;
-        font-size: 0.9rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 5px;
-        display: block;
-    }
-
-    .cyber-sub-label {
-        color: var(--text-muted);
-        font-size: 0.8rem;
-        margin-bottom: 3px;
-        display: block;
-    }
-
-    .dark-input, .dark-input input {
-        background-color: var(--bg-card) !important;
-        border: 1px solid var(--border-color) !important;
-        color: var(--text-light) !important;
-    }
-
-    .success-border {
-        border: 1px solid #98c379 !important;
-    }
-
-    .question-card {
-        background: var(--bg-card);
-        border: 1px solid var(--border-color);
-        border-radius: 6px;
-    }
-
-    .custom-tabs .rz-tabview-nav li:not(.rz-tabview-selected) a span {
-        color: var(--text-muted) !important;
-    }
-
-    .custom-tabs .rz-tabview-nav li.rz-tabview-selected a span {
-        color: var(--accent-cyan) !important;
-    }
-
-    .rz-button {
-        transition: all 0.2s ease;
-    }
-
-        .rz-button:hover {
-            filter: brightness(1.1);
-            transform: scale(1.02);
-        }
-
-        .rz-button:active {
-            transform: scale(0.98);
-        }
-</style>
 
 @code {
     [Parameter] public CyberScenario Item { get; set; } = new();
@@ -263,7 +315,6 @@
     private bool isUploading = false;
     private IEnumerable<UserGroup> groups = new List<UserGroup>();
     private IEnumerable<UserTeam> teams = new List<UserTeam>();
-
     protected override async Task OnInitializedAsync()
     {
         Item.Questions ??= new List<ScenarioQuestion>();
