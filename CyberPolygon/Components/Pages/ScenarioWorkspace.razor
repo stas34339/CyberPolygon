@@ -10,12 +10,15 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NotificationService NotificationService
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@inject IWebHostEnvironment Env
 
 <PageTitle>Терминал: @(scenario?.Title ?? "Загрузка...")</PageTitle>
 
 <RadzenComponents />
 
 <style>
+    /* ... ТВОИ СУЩЕСТВУЮЩИЕ СТИЛИ ИЗ ПРЕДЫДУЩЕГО КОДА ОСТАЮТСЯ БЕЗ ИЗМЕНЕНИЙ ... */
     :root {
         --bg-main: #1e1e1e;
         --bg-card: #24272c;
@@ -82,7 +85,7 @@
             color: var(--accent-cyan) !important;
         }
 
-    /* Админ таблица */
+    /* Стили для таблицы администратора */
     .rz-datagrid {
         background-color: var(--bg-card) !important;
         border: 1px solid var(--border-color) !important;
@@ -179,22 +182,40 @@
                 @if (!string.IsNullOrEmpty(scenario.SchemaPath))
                 {
                     <RadzenTabsItem Text="Архитектура сети" Icon="hub">
-                        <div class="details-content-box p-4 d-flex flex-column" style="height: 600px;">
+                        <div class="details-content-box p-4 d-flex flex-column" style="height: 650px;">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h4 style="color: var(--text-light); margin: 0;">Топология целевой сети</h4>
-                                <div class="zoom-controls d-flex gap-2">
-                                    <RadzenButton Icon="zoom_in" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Outlined" Size="ButtonSize.Small" Click="ZoomIn" />
-                                    <RadzenButton Icon="zoom_out" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Outlined" Size="ButtonSize.Small" Click="ZoomOut" />
-                                    <RadzenButton Icon="restart_alt" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Outlined" Size="ButtonSize.Small" Click="ResetZoom" />
-                                </div>
+
+                                @* Элементы ручного зума нужны только для обычных картинок *@
+                                @if (!isXmlSchema)
+                                {
+                                    <div class="zoom-controls d-flex gap-2">
+                                        <RadzenButton Icon="zoom_in" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Outlined" Size="ButtonSize.Small" Click="ZoomIn" />
+                                        <RadzenButton Icon="zoom_out" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Outlined" Size="ButtonSize.Small" Click="ZoomOut" />
+                                        <RadzenButton Icon="restart_alt" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Outlined" Size="ButtonSize.Small" Click="ResetZoom" />
+                                    </div>
+                                }
                             </div>
-                            <div style="flex-grow: 1; overflow: auto; border: 1px dashed var(--accent-cyan); background: #0d1117; border-radius: 4px; padding: 20px; display: flex; align-items: flex-start; justify-content: flex-start;">
-                                <img src="@scenario.SchemaPath" style="transform: scale(@schemaZoomLevel); transform-origin: top left; transition: transform 0.2s ease; border: 1px solid var(--border-color); max-width: none;" />
+
+                            <div style="flex-grow: 1; height: 100%; min-height: 550px; border: 1px dashed var(--accent-cyan); background: #0d1117; border-radius: 4px; padding: 0; overflow: hidden;">
+                                @if (isXmlSchema)
+                                {
+                                    @* Изолированный интерактивный фрейм под управлением нашей JS-функции *@
+                                    <iframe id="drawio-workspace-iframe" style="width: 100%; height: 100%; border: none; background: #0d1117;"></iframe>
+                                }
+                                else
+                                {
+                                    @* Обычная картинка (PNG/JPG) с кастомным зумом *@
+                                    <div style="overflow: auto; width: 100%; height: 100%; padding: 10px;">
+                                        <img src="@scenario.SchemaPath" style="transform: scale(@schemaZoomLevel); transform-origin: top left; transition: transform 0.2s ease; border: 1px solid var(--border-color); max-width: none;" />
+                                    </div>
+                                }
                             </div>
                         </div>
                     </RadzenTabsItem>
                 }
 
+                @* ТУТ НАЧИНАЕТСЯ ВКЛАДКА "ЗАДАНИЯ". ВЕСЬ КОД ДО КОНЦА ФАЙЛА ИЗ ТВОЕГО ПРЕДЫДУЩЕГО ВАРИАНТА *@
                 <RadzenTabsItem Text="Задания" Icon="terminal">
                     <div class="details-content-box p-4">
                         @if (currentUserProgress.Status == AttemptStatus.NotStarted)
@@ -322,7 +343,6 @@
                                                         @if (data.IsTeamAttempt)
                                                         {
                                                             <span style="color: var(--text-light); font-weight: bold;">Команда: @data.TeamName</span>
-                                                            <span class="badge mt-1" style="width: fit-content; background: rgba(91, 163, 227, 0.2); color: var(--accent-blue); border: 1px solid var(--accent-blue);">КОМАНДНЫЙ ЗАБЕГ</span>
                                                         }
                                                         else
                                                         {
@@ -357,8 +377,7 @@
                                             </RadzenDataGridColumn>
                                             <RadzenDataGridColumn TItem="UserScenarioProgressDto" Title="Действия" Width="100px" TextAlign="TextAlign.Center">
                                                 <Template Context="data">
-                                                    <RadzenButton Icon="restart_alt" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.ExtraSmall" Variant="Variant.Outlined"
-                                                                  Click="@(async () => await ResetSessionById(data.Id))" />
+                                                    <RadzenButton Icon="restart_alt" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.ExtraSmall" Variant="Variant.Outlined" Click="@(async () => await ResetSessionById(data.Id))" />
                                                 </Template>
                                             </RadzenDataGridColumn>
                                         </Columns>
@@ -385,7 +404,12 @@
     private TimeSpan timeLeft = TimeSpan.Zero;
     private int totalScore = 0;
 
-    // Свойства для масштабирования схемы
+    // --- ЛОГИКА ДЛЯ XML СХЕМЫ ---
+    private bool isXmlSchema = false;
+    private string schemaXmlContent = string.Empty;
+    private bool isViewerLoaded = false;
+
+    // Свойства для масштабирования картинок
     private double schemaZoomLevel = 1.0;
     private void ZoomIn() => schemaZoomLevel += 0.2;
     private void ZoomOut() { if (schemaZoomLevel > 0.4) schemaZoomLevel -= 0.2; }
@@ -399,7 +423,6 @@
         public string FeedbackMessage { get; set; } = string.Empty;
         public int FailedAttempts { get; set; } = 0;
 
-        // Потенциальная награда (не может быть ниже нуля)
         public int CurrentAward => Math.Max(0, Question.AwardPoints - (FailedAttempts * Question.PenaltyPoints));
     }
 
@@ -428,15 +451,22 @@
         SessionManager.TeamProgressChanged += OnTeamProgressChanged;
     }
 
-    private async void OnTeamProgressChanged(int teamId)
+    // --- ОТРИСОВКА JS ДЛЯ XML ---
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (scenario?.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId == teamId)
+        // Вызываем новый безопасный инициализатор iframe
+        if (isXmlSchema && !string.IsNullOrEmpty(schemaXmlContent) && !isViewerLoaded)
         {
-            await InvokeAsync(async () =>
+            try
             {
-                await LoadUserState();
-                StateHasChanged();
-            });
+                // Передаем ID фрейма "drawio-workspace-iframe" вместо старого контейнера
+                await JSRuntime.InvokeVoidAsync("setupDrawIoViewer", "drawio-workspace-iframe", schemaXmlContent);
+                isViewerLoaded = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка инициализации Draw.io: {ex.Message}");
+            }
         }
     }
 
@@ -446,6 +476,25 @@
                               ?? new UserScenarioProgress { Status = AttemptStatus.NotStarted };
 
         totalScore = currentUserProgress.Score;
+
+        // --- ИСПРАВЛЕННОЕ ЧТЕНИЕ ФАЙЛА С ДИСКА СЕРВЕРА ---
+        if (!string.IsNullOrEmpty(scenario.SchemaPath) &&
+           (scenario.SchemaPath.EndsWith(".xml", StringComparison.OrdinalIgnoreCase) ||
+            scenario.SchemaPath.EndsWith(".drawio", StringComparison.OrdinalIgnoreCase) ||
+            scenario.SchemaPath.EndsWith(".drawioa", StringComparison.OrdinalIgnoreCase)))
+        {
+            isXmlSchema = true;
+            try
+            {
+                var filePath = Path.Combine(Env.WebRootPath, scenario.SchemaPath.TrimStart('/'));
+                if (System.IO.File.Exists(filePath))
+                {
+                    schemaXmlContent = await System.IO.File.ReadAllTextAsync(filePath);
+                }
+            }
+            catch { /* Игнорируем ошибку чтения */ }
+        }
+
         if (scenario.Questions != null && questionStates.Count == 0)
         {
             questionStates = scenario.Questions.Select(q => new UserQuestionState { Question = q }).ToList();
@@ -453,7 +502,6 @@
 
         if (currentUserProgress.Id != 0)
         {
-            // Подтягиваем из БД статус решения и количество ошибок
             var statesDb = await ScenarioService.GetUserQuestionStatesAsync(currentUserProgress.Id);
             foreach (var qState in questionStates)
             {
@@ -469,6 +517,20 @@
         {
             CheckTime();
             StartTimer();
+        }
+    }
+
+    /* ... ОСТАЛЬНЫЕ МЕТОДЫ (StartScenario, CheckAnswer, CompleteScenario и т.д.) ОСТАВЛЯЕМ БЕЗ ИЗМЕНЕНИЙ ИЗ ТВОЕГО КОДА ... */
+
+    private async void OnTeamProgressChanged(int teamId)
+    {
+        if (scenario?.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId == teamId)
+        {
+            await InvokeAsync(async () =>
+            {
+                await LoadUserState();
+                StateHasChanged();
+            });
         }
     }
 

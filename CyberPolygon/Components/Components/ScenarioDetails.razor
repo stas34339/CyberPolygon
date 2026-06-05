@@ -3,106 +3,8 @@
 @inject ScenarioService ScenarioService
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NotificationService NotificationService
-
-<style>
-    :root {
-        --bg-main: #1e1e1e;
-        --bg-card: #24272c;
-        --text-muted: #8fa0b5;
-        --text-light: #cbe0f5;
-        --accent-cyan: #4ec3d1;
-        --border-color: #343a42;
-    }
-
-    /* ПЕРЕКРАШИВАЕМ ФОН ДИАЛОГОВОГО ОКНА RADZEN */
-    .rz-dialog-wrapper .rz-dialog,
-    .rz-dialog-content {
-        background-color: var(--bg-main) !important;
-        color: var(--text-muted) !important;
-    }
-
-    .rz-dialog-titlebar {
-        background-color: var(--bg-card) !important;
-        color: var(--text-light) !important;
-        border-bottom: 1px solid var(--border-color) !important;
-    }
-
-    .scenario-details-wrapper {
-        background-color: var(--bg-main);
-        color: var(--text-muted);
-        padding: 10px;
-    }
-
-    .details-header-wrapper {
-        margin-bottom: 20px;
-        padding-bottom: 10px;
-        border-bottom: 1px solid var(--border-color);
-    }
-
-    .details-main-title {
-        font-size: 2.2rem;
-        font-weight: bold;
-        color: var(--text-light);
-        word-break: break-all;
-    }
-
-    .details-subtitle {
-        color: var(--accent-cyan);
-    }
-
-    .details-content-box {
-        padding: 20px;
-        min-height: 400px;
-        background: var(--bg-card);
-        border-radius: 8px;
-        border: 1px solid var(--border-color);
-    }
-
-    .rich-text-area {
-        color: var(--text-light) !important;
-    }
-
-    /* Настройка табов */
-    .custom-tabs .rz-tabview-nav {
-        background: transparent !important;
-        border-bottom: 1px solid var(--border-color);
-    }
-
-        .custom-tabs .rz-tabview-nav li:not(.rz-tabview-selected) a span {
-            color: var(--text-muted) !important;
-        }
-
-        .custom-tabs .rz-tabview-nav li.rz-tabview-selected a span {
-            color: var(--accent-cyan) !important;
-        }
-
-    /* Таблица админа внутри деталей */
-    .rz-datagrid {
-        background-color: transparent !important;
-        border: none !important;
-    }
-
-    .rz-grid-table thead th {
-        background-color: rgba(0,0,0,0.2) !important;
-        color: var(--accent-cyan) !important;
-        border-bottom: 1px solid var(--border-color) !important;
-    }
-
-    .rz-grid-table tbody tr {
-        background-color: transparent !important;
-    }
-
-    .rz-grid-table td {
-        border-bottom: 1px solid var(--border-color) !important;
-        color: var(--text-muted) !important;
-    }
-
-    .rz-pager {
-        background-color: transparent !important;
-        border-top: 1px solid var(--border-color) !important;
-        color: var(--text-muted) !important;
-    }
-</style>
+@inject IJSRuntime JSRuntime
+@inject IWebHostEnvironment Env
 
 <div class="scenario-details-wrapper">
     <div class="details-header-wrapper d-flex justify-content-between align-items-center">
@@ -126,86 +28,45 @@
             @if (!string.IsNullOrEmpty(Item.SchemaPath))
             {
                 <RadzenTabsItem Text="Схема" Icon="hub">
-                    <div class="details-content-box text-center">
-                        <h4 class="details-subtitle">Архитектура сети</h4>
-                        <div class="schema-container">
-                            <img src="@Item.SchemaPath" alt="Схема сети" class="img-fluid rounded shadow-lg"
-                                 style="border: 1px solid var(--accent-cyan); max-height: 400px;" />
+                    <div class="details-content-box text-center" style="height: 500px; display: flex; flex-direction: column;">
+                        <h4 class="details-subtitle mb-3">Архитектура сети</h4>
+                        <div class="schema-container" style="flex-grow: 1; height: 420px; border: 1px dashed var(--accent-cyan); background: #0d1117; overflow: hidden; padding: 0;">
+                            @if (isXmlSchema)
+                            {
+                                @* Фрейм для превью *@
+                                <iframe id="drawio-details-iframe" style="width: 100%; height: 100%; border: none; background: #0d1117;"></iframe>
+                            }
+                            else
+                            {
+                                <div style="overflow: auto; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+                                    <img src="@Item.SchemaPath" alt="Схема сети" class="img-fluid rounded shadow-lg" style="border: 1px solid var(--accent-cyan); max-height: 380px;" />
+                                </div>
+                            }
                         </div>
                     </div>
                 </RadzenTabsItem>
             }
 
-            <AuthorizeView Roles="Admin">
-                <Authorized>
-                    <RadzenTabsItem Text="Управление (Админ)" Icon="admin_panel_settings">
-                        <div class="details-content-box" style="border: 1px solid var(--border-color);">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h4 class="details-subtitle mb-0" style="color: #e06c75;">Статистика прохождений</h4>
-                                <RadzenButton Text="Сбросить ВСЕ" Icon="delete_forever" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" Click="@ResetProgress" />
-                            </div>
-
-                            @if (completedUsers == null || !completedUsers.Any())
-                            {
-                                <div style="color: var(--text-muted);">Пока никто не прошёл этот сценарий.</div>
-                            }
-                            else
-                            {
-                                <RadzenDataGrid Data="@completedUsers" TItem="UserScenarioProgressDto" AllowPaging="true" PageSize="5">
-                                    <Columns>
-                                        <RadzenDataGridColumn TItem="UserScenarioProgressDto" Title="Пользователь">
-                                            <Template Context="data">
-                                                <div class="d-flex flex-column">
-                                                    <span style="color: var(--text-light); font-weight: 500;">@data.UserName</span>
-                                                    <span style="color: var(--text-muted); font-size: 0.8rem;">@data.Email</span>
-                                                </div>
-                                            </Template>
-                                        </RadzenDataGridColumn>
-
-                                        <RadzenDataGridColumn TItem="UserScenarioProgressDto" Property="Score" Title="Баллы" Width="100px" TextAlign="TextAlign.Center">
-                                            <Template Context="data">
-                                                <b style="color: var(--accent-cyan);">@data.Score XP</b>
-                                            </Template>
-                                        </RadzenDataGridColumn>
-
-                                        <RadzenDataGridColumn TItem="UserScenarioProgressDto" Title="Статус" Width="120px" TextAlign="TextAlign.Center">
-                                            <Template Context="data">
-                                                @if (data.Status == AttemptStatus.Completed)
-                                                {
-                                                    <span style="color: #98c379;">Завершён</span>
-                                                }
-                                                else if (data.Status == AttemptStatus.InProgress)
-                                                {
-                                                    <span style="color: var(--accent-cyan);">В процессе</span>
-                                                }
-                                                else if (data.Status == AttemptStatus.Failed)
-                                                {
-                                                    <span style="color: #e06c75;">Провален</span>
-                                                }
-                                            </Template>
-                                        </RadzenDataGridColumn>
-
-                                        <RadzenDataGridColumn TItem="UserScenarioProgressDto" Title="Действия" Width="100px" TextAlign="TextAlign.Center">
-                                            <Template Context="data">
-                                                <RadzenButton Icon="restart_alt" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.ExtraSmall"
-                                                              Click="@(async () => await ResetSingleUser(data.UserId))" />
-                                            </Template>
-                                        </RadzenDataGridColumn>
-                                    </Columns>
-                                </RadzenDataGrid>
-                            }
-                        </div>
-                    </RadzenTabsItem>
-                </Authorized>
-            </AuthorizeView>
         </Tabs>
     </RadzenTabs>
 </div>
 
 @code {
     [Parameter] public CyberScenario Item { get; set; } = new();
+
+    // Базовые переменные из твоего старого кода
     private List<UserScenarioProgressDto> completedUsers = new();
     private bool isAdmin = false;
+    private string currentUserId = string.Empty;
+    private bool isAlreadyCompleted = false;
+    private int savedScore = 0;
+    private int totalScore = 0;
+
+    // --- ПЕРЕМЕННЫЕ ДЛЯ ИНТЕРАКТИВНОЙ СХЕМЫ ---
+    private bool isXmlSchema = false;
+    private string schemaXmlContent = string.Empty;
+    private bool isViewerLoaded = false;
+
     public class UserQuestionState
     {
         public ScenarioQuestion Question { get; set; } = new();
@@ -215,11 +76,7 @@
     }
 
     private List<UserQuestionState> questionStates = new();
-    private int totalScore = 0;
 
-    private string currentUserId = string.Empty;
-    private bool isAlreadyCompleted = false;
-    private int savedScore = 0;
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
@@ -241,13 +98,44 @@
                 isAlreadyCompleted = true;
                 savedScore = progress.Score;
                 totalScore = savedScore;
-                return;
             }
         }
 
-        if (Item?.Questions != null)
+        if (Item?.Questions != null && questionStates.Count == 0)
         {
             questionStates = Item.Questions.Select(q => new UserQuestionState { Question = q }).ToList();
+        }
+
+        // Чтение файла схемы (с учетом .xml, .drawio и .drawioa)
+        if (!string.IsNullOrEmpty(Item.SchemaPath) &&
+           (Item.SchemaPath.EndsWith(".xml", StringComparison.OrdinalIgnoreCase) ||
+            Item.SchemaPath.EndsWith(".drawio", StringComparison.OrdinalIgnoreCase) ||
+            Item.SchemaPath.EndsWith(".drawioa", StringComparison.OrdinalIgnoreCase)))
+        {
+            isXmlSchema = true;
+            try
+            {
+                var filePath = Path.Combine(Env.WebRootPath, Item.SchemaPath.TrimStart('/'));
+                if (System.IO.File.Exists(filePath))
+                {
+                    schemaXmlContent = await System.IO.File.ReadAllTextAsync(filePath);
+                }
+            }
+            catch { /* Игнорируем ошибку */ }
+        }
+    }
+
+    // Отрисовка схемы через iframe
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (isXmlSchema && !string.IsNullOrEmpty(schemaXmlContent) && !isViewerLoaded)
+        {
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("setupDrawIoViewer", "drawio-details-iframe", schemaXmlContent);
+                isViewerLoaded = true;
+            }
+            catch { }
         }
     }
 
