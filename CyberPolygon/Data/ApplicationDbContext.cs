@@ -16,6 +16,7 @@ namespace CyberPolygon.Data
         // Добавь это свойство к остальным DbSet
         public DbSet<UserAnswerProgress> UserAnswerProgresses { get; set; }
         public DbSet<InstructionModel> Instructions { get; set; }
+        
 
 
 
@@ -43,6 +44,9 @@ namespace CyberPolygon.Data
             public int Id { get; set; }
             public int UserScenarioProgressId { get; set; } // Привязка к командной сессии
             public int QuestionId { get; set; }             // Привязка к конкретному вопросу
+
+            public bool IsCorrect { get; set; } = false;
+            public int FailedAttempts { get; set; } = 0;
         }
 
     }

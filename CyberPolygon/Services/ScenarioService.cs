@@ -326,48 +326,63 @@ public class ScenarioService
             await context.SaveChangesAsync();
         }
     }
-    public async Task<(bool Success, bool AlreadySolved, int NewScore)> ProcessTeamAnswerAsync(int progressId, int questionId, bool isCorrect, int awardPoints, int penaltyPoints)
+    public async Task<(bool Success, bool AlreadySolved, int EarnedPoints, int NewTotalScore)> ProcessTeamAnswerAsync(int progressId, int questionId, bool isCorrect, int awardPoints, int penaltyPoints)
     {
         using var context = await _contextFactory.CreateDbContextAsync();
         var progress = await context.UserProgresses.FindAsync(progressId);
 
         if (progress == null || progress.Status != AttemptStatus.InProgress)
-            return (false, false, 0);
+            return (false, false, 0, 0);
 
-        // Проверяем, не решил ли этот вопрос кто-то другой из команды миллисекунду назад
-        bool alreadySolved = await context.UserAnswerProgresses
-            .AnyAsync(a => a.UserScenarioProgressId == progressId && a.QuestionId == questionId);
+        // Ищем запись о попытках для данного вопроса
+        var answerRecord = await context.UserAnswerProgresses
+            .FirstOrDefaultAsync(a => a.UserScenarioProgressId == progressId && a.QuestionId == questionId);
 
-        if (alreadySolved)
-            return (false, true, progress.Score); // Вопрос уже решен, очки не начисляем
+        if (answerRecord != null && answerRecord.IsCorrect)
+            return (false, true, 0, progress.Score); // Вопрос уже решен
+
+        // Если записи нет, создаем ее
+        if (answerRecord == null)
+        {
+            answerRecord = new UserAnswerProgress
+            {
+                UserScenarioProgressId = progressId,
+                QuestionId = questionId,
+                FailedAttempts = 0,
+                IsCorrect = false
+            };
+            context.UserAnswerProgresses.Add(answerRecord);
+        }
+
+        int earnedPoints = 0;
 
         if (isCorrect)
         {
-            context.UserAnswerProgresses.Add(new UserAnswerProgress
-            {
-                UserScenarioProgressId = progressId,
-                QuestionId = questionId
-            });
-            progress.Score += awardPoints;
+            answerRecord.IsCorrect = true;
+            // Баллы не могут уйти в минус: Награда минус (Кол-во ошибок * Штраф)
+            earnedPoints = Math.Max(0, awardPoints - (answerRecord.FailedAttempts * penaltyPoints));
+            progress.Score += earnedPoints;
         }
         else
         {
-            progress.Score -= penaltyPoints;
-            // Опционально: if (progress.Score < 0) progress.Score = 0; // Не даем уйти в минус
+            // Увеличиваем счетчик ошибок, но не отнимаем от общего счета
+            answerRecord.FailedAttempts++;
         }
 
         await context.SaveChangesAsync();
-        return (true, false, progress.Score);
+        return (true, false, earnedPoints, progress.Score);
     }
 
     // 2. Получение списка решенных задач для подсветки зеленым в UI
-    public async Task<List<int>> GetCompletedQuestionsAsync(int progressId)
+    public async Task<Dictionary<int, (bool IsCorrect, int FailedAttempts)>> GetUserQuestionStatesAsync(int progressId)
     {
         using var context = await _contextFactory.CreateDbContextAsync();
-        return await context.UserAnswerProgresses
+        var records = await context.UserAnswerProgresses
             .Where(a => a.UserScenarioProgressId == progressId)
-            .Select(a => a.QuestionId)
+            .Select(a => new { a.QuestionId, a.IsCorrect, a.FailedAttempts })
             .ToListAsync();
+
+        return records.ToDictionary(r => r.QuestionId, r => (r.IsCorrect, r.FailedAttempts));
     }
 
     // 3. Командное завершение сценария (работает по ID сессии, а не ID юзера)
