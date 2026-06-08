@@ -3,293 +3,415 @@
 @using Microsoft.EntityFrameworkCore
 @using Radzen
 @using Radzen.Blazor
-
-@* СЮДА МЫ ДОБАВИМ ИНЖЕКТ ТВОЕГО СЕРВИСА ЧУТЬ ПОЗЖЕ *@
+@using System.Security.Claims
 @inject AuthenticationStateProvider AuthProvider
 @inject NavigationManager NavigationManager
+@inject IDbContextFactory<ApplicationDbContext> ContextFactory
+@rendermode InteractiveServer
 
-<PageTitle>КИБЕРПОЛИГОН - Главный терминал</PageTitle>
+<PageTitle>Главный терминал | Киберполигон</PageTitle>
 
-<div class="dashboard-wrapper rz-p-3 rz-p-md-5">
+<style>
+    :root {
+        --bg-main: #1e1e1e;
+        --bg-card: #24272c;
+        --bg-card-hover: #2a2e36;
+        --text-muted: #8fa0b5; /* Мягкий серо-голубой тон для обычного текста */
+        --text-light: #cbe0f5; /* Светло-голубой оттенок для заголовков */
+        --accent-blue: #5ba3e3; /* Ненавязчивый синий акцент */
+        --accent-cyan: #4ec3d1; /* Спокойный циан для иконок и ключевых элементов */
+        --border-color: #343a42;
+    }
 
-    @* БЛОК 1: ПРИВЕТСТВИЕ И МИССИЯ (COMPACT HERO) *@
-    <div class="hero-section rz-p-4 rz-mb-5">
-        <RadzenStack Gap="1rem">
-            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                <RadzenIcon Icon="terminal" class="text-cyan" Style="font-size: 2rem;" />
-                <RadzenText TextStyle="TextStyle.H4" class="rz-m-0 text-cyan" Style="font-weight: 700; letter-spacing: 1px;">
-                    ПЛАТФОРМА «КИБЕРПОЛИГОН»
-                </RadzenText>
-            </RadzenStack>
+    .home-wrapper {
+        background-color: var(--bg-main);
+        color: var(--text-muted);
+        min-height: 100vh;
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
 
-            <RadzenText TextStyle="TextStyle.Body2" Style="max-width: 1000px; line-height: 1.5; font-size: 0.95rem;">
-                Добро пожаловать в главный терминал управления, <strong class="text-green">@UserDisplayName</strong>.
-                Вы находитесь в изолированном цифровом пространстве для отработки навыков информационной безопасности.
-                Здесь теория превращается в практику: исследуйте уязвимости, анализируйте инциденты и повышайте квалификацию без риска для реальной инфраструктуры.
-            </RadzenText>
+    /* БЛОК 1: Приветственный блок */
+    .hero-section {
+        text-align: center;
+        padding: 5rem 1rem 6rem 1rem;
+        border-bottom: 1px solid var(--border-color);
+        background: linear-gradient(180deg, #181a1e 0%, var(--bg-main) 100%);
+    }
 
-            @* Исправленные кнопки (убрали багованую иконку, сделали ровный flex) *@
-            <div style="display: flex; gap: 1rem; align-items: center; margin-top: 5px;">
-                <a href="scenario/28/workspace" class="cyber-btn-main">
-                    <RadzenIcon Icon="play_arrow" class="rz-mr-1" /> ОЗНАКОМИТЕЛЬНЫЙ СЦЕНАРИЙ
-                </a>
-                <a href="scenario" class="cyber-btn-secondary">
-                    <RadzenIcon Icon="list" class="rz-mr-1" /> ВСЕ СЦЕНАРИИ
-                </a>
-            </div>
-        </RadzenStack>
+    .hero-title {
+        color: var(--text-light);
+        font-size: 2.6rem;
+        font-weight: 800;
+        letter-spacing: 2px;
+        margin: 1.5rem 0 1rem 0;
+        text-transform: uppercase;
+    }
+
+    .hero-subtitle {
+        color: var(--text-muted);
+        font-size: 1.15rem;
+        max-width: 850px;
+        margin: 0 auto;
+        line-height: 1.6;
+    }
+
+    /* Общие стили кибер-карточек */
+    .cyber-card {
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 1.75rem;
+        height: 100%;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        flex-direction: column;
+    }
+
+        .cyber-card:hover {
+            background-color: var(--bg-card-hover);
+            border-color: var(--accent-blue);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(91, 163, 227, 0.08);
+        }
+
+    /* БЛОК 2: Информация по сотруднику */
+    .user-panel {
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-left: 4px solid var(--accent-cyan);
+        border-radius: 6px;
+        padding: 2rem;
+        margin-top: -3.5rem;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .user-info-title {
+        color: var(--text-light);
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .user-meta-label {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-muted);
+        opacity: 0.7;
+    }
+
+    .user-meta-value {
+        font-size: 1.05rem;
+        color: var(--text-light);
+        font-weight: 500;
+    }
+
+    /* БЛОК 3: Интерактивные блоки */
+    .interactive-card {
+        cursor: pointer;
+        border: 1px solid var(--border-color);
+    }
+
+        .interactive-card.active {
+            border-color: var(--accent-cyan);
+            background-color: var(--bg-card-hover);
+            box-shadow: inset 0 0 10px rgba(78, 195, 209, 0.05), 0 4px 15px rgba(78, 195, 209, 0.1);
+        }
+
+    .interactive-detail {
+        font-size: 0.9rem;
+        color: var(--accent-cyan);
+        border-top: 1px dashed var(--border-color);
+        padding-top: 0.75rem;
+        margin-top: 0.75rem;
+        animation: fadeIn 0.3s ease;
+    }
+
+    /* Заголовки секций */
+    .section-header {
+        color: var(--text-light);
+        font-size: 1.75rem;
+        font-weight: 700;
+        text-align: center;
+        margin: 5rem 0 2.5rem 0;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+    }
+
+    /* БЛОК 6: Шаги выполнения */
+    .step-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background-color: rgba(91, 163, 227, 0.15);
+        color: var(--accent-blue);
+        border: 1px solid var(--accent-blue);
+        padding: 0.25rem 0.75rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-bottom: 1rem;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(5px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+
+<div class="home-wrapper">
+
+    <div class="hero-section">
+        <RadzenIcon Icon="shield_lock" Style="font-size: 4.5rem; color: var(--accent-cyan);" />
+        <h1 class="hero-title">ПЛАТФОРМА "КИБЕРПОЛИГОН"</h1>
+        <p class="hero-subtitle">
+            Практическое обучение сотрудников отдела обеспечения информационной безопасности на реалистичных симуляциях кибератак, рассмотрение и разбор инцидентов информационной безопасности.
+        </p>
     </div>
 
-    @* БЛОК 2: ГЛОБАЛЬНАЯ СТАТИСТИКА (2 КАРТОЧКИ) *@
-    <RadzenRow class="rz-mb-5">
-        <RadzenColumn Size="12">
-            <RadzenCard class="cyber-card" Style="padding: 1.2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                <RadzenStack Gap="0">
-                    <RadzenText TextStyle="TextStyle.Subtitle2" class="text-muted rz-m-0" Style="letter-spacing: 1px;">ДОСТУПНО СЦЕНАРИЕВ ДЛЯ ЗАПУСКА</RadzenText>
-                    <RadzenText TextStyle="TextStyle.Caption" class="text-cyan rz-m-0" Style="opacity: 0.7;">Все модули синхронизированы с центральной базой данных</RadzenText>
-                </RadzenStack>
-                <RadzenText TextStyle="TextStyle.H4" class="text-cyan rz-m-0" Style="font-weight: bold; font-family: monospace;">
-                    @totalScenarios <span style="font-size: 1rem; color: var(--text-muted); font-weight: normal;">/ модулей</span>
-                </RadzenText>
-            </RadzenCard>
-        </RadzenColumn>
-    </RadzenRow>
+    <div class="container pb-5">
 
-    @* БЛОК 3: ЗАДАЧИ ПРОЕКТА *@
-    <RadzenText TextStyle="TextStyle.H5" class="rz-mb-4" Style="font-weight: bold; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
-        Основные задачи платформы
-    </RadzenText>
-
-    <RadzenRow Gap="1rem" class="rz-mb-6">
-        <RadzenColumn Size="12" SizeMD="4">
-            <RadzenCard class="cyber-card" Style="height: 100%;">
-                <RadzenStack Gap="1rem">
-                    <RadzenIcon Icon="psychology" class="task-icon" />
-                    <RadzenText TextStyle="TextStyle.H6" class="text-cyan">Практическое обучение</RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body2" class="text-muted">
-                        Повышение квалификации специалистов через симуляцию реальных угроз. Закрепление теоретических знаний архитектуры сетей и уязвимостей на практике.
-                    </RadzenText>
-                </RadzenStack>
-            </RadzenCard>
-        </RadzenColumn>
-
-        <RadzenColumn Size="12" SizeMD="4">
-            <RadzenCard class="cyber-card" Style="height: 100%;">
-                <RadzenStack Gap="1rem">
-                    <RadzenIcon Icon="gavel" class="task-icon" />
-                    <RadzenText TextStyle="TextStyle.H6" class="text-cyan">Симуляция атак (CTF)</RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body2" class="text-muted">
-                        Воссоздание актуальных векторов компьютерных атак (от веб-уязвимостей до компрометации доменов) в контролируемой песочнице без риска для реальной инфраструктуры.
-                    </RadzenText>
-                </RadzenStack>
-            </RadzenCard>
-        </RadzenColumn>
-
-        <RadzenColumn Size="12" SizeMD="4">
-            <RadzenCard class="cyber-card" Style="height: 100%;">
-                <RadzenStack Gap="1rem">
-                    <RadzenIcon Icon="analytics" class="task-icon" />
-                    <RadzenText TextStyle="TextStyle.H6" class="text-cyan">Анализ и расследование</RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body2" class="text-muted">
-                        Отработка навыков мониторинга, обнаружения следов компрометации (Форензика) и анализа системных логов для оперативного реагирования на инциденты.
-                    </RadzenText>
-                </RadzenStack>
-            </RadzenCard>
-        </RadzenColumn>
-    </RadzenRow>
-
-    @* БЛОК 4: КАК ЭТО РАБОТАЕТ *@
-    <RadzenRow>
-        <RadzenColumn Size="12">
-            <RadzenCard class="cyber-card">
-                <RadzenText TextStyle="TextStyle.H6" class="rz-mb-4 text-cyan" Style="font-weight: bold;">
-                    Порядок прохождения тренировки
-                </RadzenText>
-
-                <RadzenStack Gap="1.5rem">
-                    <div style="display: flex; align-items: start; gap: 1rem;">
-                        <span style="background: #2d2d30; color: var(--accent-blue); padding: 6px 14px; border-radius: 4px; font-weight: bold;">1</span>
-                        <div>
-                            <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-m-0" Style="font-weight: 600;">Выбор сценария</RadzenText>
-                            <RadzenText TextStyle="TextStyle.Body2" class="text-muted rz-mt-1">
-                                В разделе «Сценарии» выберите интересующее вас направление исследования в зависимости от вашего уровня подготовки.
-                            </RadzenText>
+        @if (isLoaded)
+        {
+            <div class="user-panel mb-5">
+                <RadzenRow AlignItems="AlignItems.Center" Gap="1.5rem">
+                    <RadzenColumn Size="12" SizeMD="8">
+                        <div class="d-flex align-items-center gap-3">
+                            <RadzenIcon Icon="admin_panel_settings" Style="font-size: 3.5rem; color: var(--accent-cyan);" />
+                            <div>
+                                <h3 class="user-info-title">@UserDisplayName</h3>
+                                <div class="mt-3 d-flex flex-wrap gap-4">
+                                    <div>
+                                        <div class="user-meta-label">Подразделение</div>
+                                        <div class="user-meta-value">@(dbUser?.Group?.Name ?? "Не назначено")</div>
+                                    </div>
+                                    <div>
+                                        <div class="user-meta-label">Боевая команда</div>
+                                        <div class="user-meta-value">
+                                            @if (dbUser?.Teams != null && dbUser.Teams.Any())
+                                            {
+                                                @string.Join(", ", dbUser.Teams.Select(t => t.Name))
+                                            }
+                                            else
+                                            {
+                                                <span>Личное участие</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="4" class="text-md-end d-flex flex-column gap-2">
+                        <RadzenButton Text="Ознакомительный сценарий" Icon="help_outline" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Outlined" Style="border-color: var(--border-color); color: var(--text-light);" Click="@(() => NavigationManager.NavigateTo("/scenario/28/workspace"))" />
+                        <RadzenButton Text="Все сценарии" Icon="launch" ButtonStyle="ButtonStyle.Info" Style="background-color: var(--accent-blue); color: #1e1e1e;" Click="@(() => NavigationManager.NavigateTo("/scenario"))" />
+                    </RadzenColumn>
+                </RadzenRow>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-5">
+                <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" Style="background-color: var(--border-color);" />
+            </div>
+        }
 
-                    <div style="display: flex; align-items: start; gap: 1rem;">
-                        <span style="background: #2d2d30; color: var(--accent-blue); padding: 6px 14px; border-radius: 4px; font-weight: bold;">2</span>
-                        <div>
-                            <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-m-0" Style="font-weight: 600;">Изучение документации</RadzenText>
-                            <RadzenText TextStyle="TextStyle.Body2" class="text-muted rz-mt-1">
-                                Ознакомьтесь с целями и правилами. Перед стартом настоятельно рекомендуем изучить
-                                <a href="docs/manual" class="cyber-text-link">Общую инструкцию платформы</a> для понимания принципов работы песочницы.
-                            </RadzenText>
-                        </div>
+        <RadzenRow Gap="1.25rem" class="mb-5">
+            <RadzenColumn Size="12" SizeMD="4">
+                <div class="cyber-card interactive-card @(activeCard == 1 ? "active" : "")" @onclick="() => ToggleCard(1)">
+                    <div class="d-flex align-items-center gap-3 mb-2">
+                        <RadzenIcon Icon="layers" Style="font-size: 2rem; color: var(--accent-cyan);" />
+                        <h4 class="m-0" style="color: var(--text-light); font-size: 1.1rem; font-weight: 600;">Проработанные сценарии кибератак</h4>
                     </div>
+                    <p class="m-0" style="font-size: 0.9rem; cubic-bezier(0.4, 0, 0.2, 1)">Инфраструктурные модели различной сложности для верификации навыков защиты.</p>
+                    @if (activeCard == 1)
+                    {
+                        <div class="interactive-detail">
+                            <RadzenIcon Icon="done" Style="font-size: 1rem;" /> Доступно: 12 актуальных векторов APT и симуляций.
+                        </div>
+                    }
+                </div>
+            </RadzenColumn>
 
-                    <div style="display: flex; align-items: start; gap: 1rem;">
-                        <span style="background: #2d2d30; color: var(--accent-blue); padding: 6px 14px; border-radius: 4px; font-weight: bold;">3</span>
-                        <div>
-                            <RadzenText TextStyle="TextStyle.Subtitle1" class="rz-m-0" Style="font-weight: 600;">Фиксация прогресса</RadzenText>
-                            <RadzenText TextStyle="TextStyle.Body2" class="text-muted rz-mt-1">
-                                Выполняйте пошаговые задачи и захватывайте флаги (Flags). Система автоматически зафиксирует ваши успехи и начислит XP в личном профиле.
-                            </RadzenText>
-                        </div>
+            <RadzenColumn Size="12" SizeMD="4">
+                <div class="cyber-card interactive-card @(activeCard == 2 ? "active" : "")" @onclick="() => ToggleCard(2)">
+                    <div class="d-flex align-items-center gap-3 mb-2">
+                        <RadzenIcon Icon="groups" Style="font-size: 2rem; color: var(--accent-cyan);" />
+                        <h4 class="m-0" style="color: var(--text-light); font-size: 1.1rem; font-weight: 600;">Командные и одиночные режимы</h4>
                     </div>
-                </RadzenStack>
-            </RadzenCard>
-        </RadzenColumn>
-    </RadzenRow>
+                    <p class="m-0" style="font-size: 0.9rem;">Синхронное прохождение симуляций подразделением или точечная личная тренировка.</p>
+                    @if (activeCard == 2)
+                    {
+                        <div class="interactive-detail">
+                            <RadzenIcon Icon="sync" Style="font-size: 1rem;" /> Механизм реального времени: общий таймер и баланс очков сессии.
+                        </div>
+                    }
+                </div>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="4">
+                <div class="cyber-card interactive-card @(activeCard == 3 ? "active" : "")" @onclick="() => ToggleCard(3)">
+                    <div class="d-flex align-items-center gap-3 mb-2">
+                        <RadzenIcon Icon="insights" Style="font-size: 2rem; color: var(--accent-cyan);" />
+                        <h4 class="m-0" style="color: var(--text-light); font-size: 1.1rem; font-weight: 600;">Система рейтинга и XP</h4>
+                    </div>
+                    <p class="m-0" style="font-size: 0.9rem;">Прозрачная оценка эффективности специалистов с учетом штрафов за ложные срабатывания.</p>
+                    @if (activeCard == 3)
+                    {
+                        <div class="interactive-detail">
+                            <RadzenIcon Icon="military_tech" Style="font-size: 1rem;" /> Обновление таблицы лидеров происходит автоматически при фиксации флага.
+                        </div>
+                    }
+                </div>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <h2 class="section-header">Возможности платформы</h2>
+        <RadzenRow Gap="1.5rem" class="mb-5">
+            <RadzenColumn Size="12" SizeMD="6">
+                <div class="cyber-card">
+                    <h4 style="color: var(--text-light); font-weight: 600;" class="mb-2">Реалистичные симуляции</h4>
+                    <p class="m-0" style="font-size: 0.95rem; line-height: 1.5;">Сетевые атаки, веб-уязвимости, APT-сценарии и цифровая криминалистика - сотрудники работают в условиях, максимально приближенных к реальным инцидентам.</p>
+                </div>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <div class="cyber-card">
+                    <h4 style="color: var(--text-light); font-weight: 600;" class="mb-2">Командная работа</h4>
+                    <p class="m-0" style="font-size: 0.95rem; line-height: 1.5;">Гибкая структура: пользователь - подразделение - команда. Одиночные тренировки для отработки личных навыков и командные учения для синхронизации действий отдела.</p>
+                </div>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <div class="cyber-card">
+                    <h4 style="color: var(--text-light); font-weight: 600;" class="mb-2">Интеграция с инфраструктурой</h4>
+                    <p class="m-0" style="font-size: 0.95rem; line-height: 1.5;">SIEM, KES, DLP, Active Directory, VMware и другие средства защиты — обучение проходит на тех же инструментах, с которыми сотрудники работают ежедневно.</p>
+                </div>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <div class="cyber-card">
+                    <h4 style="color: var(--text-light); font-weight: 600;" class="mb-2">Оценка эффективности</h4>
+                    <p class="m-0" style="font-size: 0.95rem; line-height: 1.5;">Система XP, рейтинг сотрудников, архив завершённых симуляций и детальная аналитика для руководителей подразделений.</p>
+                </div>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <h2 class="section-header">Какие угрозы отрабатываем</h2>
+        <RadzenRow Gap="1.5rem" class="mb-5">
+            <RadzenColumn Size="12" SizeMD="4">
+                <div class="cyber-card text-center" style="border-top: 3px solid #e06c75;">
+                    <RadzenIcon Icon="lan" Style="font-size: 2.2rem; color: #e06c75;" class="mb-2" />
+                    <h4 style="color: var(--text-light); font-weight: 600;" class="mb-2">Сетевые атаки</h4>
+                    <p class="m-0" style="font-size: 0.9rem; line-height: 1.5;">Защита периметра, обнаружение вторжений, противодействие сканированию и эксплуатации сетевых уязвимостей.</p>
+                </div>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="4">
+                <div class="cyber-card text-center" style="border-top: 3px solid #e5c07b;">
+                    <RadzenIcon Icon="code" Style="font-size: 2.2rem; color: #e5c07b;" class="mb-2" />
+                    <h4 style="color: var(--text-light); font-weight: 600;" class="mb-2">Веб-уязвимости</h4>
+                    <p class="m-0" style="font-size: 0.9rem; line-height: 1.5;">OAuth-атаки, XSS/CSRF, SQL-инъекции, SSRF — практическая отработка защиты веб-приложений.</p>
+                </div>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="4">
+                <div class="cyber-card text-center" style="border-top: 3px solid #98c379;">
+                    <RadzenIcon Icon="find_in_page" Style="font-size: 2.2rem; color: #98c379;" class="mb-2" />
+                    <h4 style="color: var(--text-light); font-weight: 600;" class="mb-2">Расследования инцидентов</h4>
+                    <p class="m-0" style="font-size: 0.9rem; line-height: 1.5;">Цифровая криминалистика, анализ логов, восстановление цепочки атаки и подготовка отчётов.</p>
+                </div>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <h2 class="section-header mb-1">Первые шаги в Киберполигоне</h2>
+        <p class="text-center mb-5" style="color: var(--accent-blue); font-size: 1rem;">Три простых действия — и вы на пути к кибериммунитету</p>
+
+        <RadzenRow Gap="1.5rem">
+            <RadzenColumn Size="12" SizeMD="4">
+                <div class="cyber-card">
+                    <div>
+                        <span class="step-badge">Шаг 1</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <RadzenIcon Icon="badge" Style="color: var(--accent-cyan); font-size: 1.5rem;" />
+                        <h4 style="color: var(--text-light); font-weight: 600; margin: 0;">Перейдите в профиль</h4>
+                    </div>
+                    <p class="m-0" style="font-size: 0.9rem; line-height: 1.5;">Откройте личный кабинет и проверьте свою учётную запись. Узнайте, к какому подразделению вы прикреплены и входите ли в боевую команду. Это определит, какие сценарии вам доступны — одиночные или командные.</p>
+                </div>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="4">
+                <div class="cyber-card">
+                    <div>
+                        <span class="step-badge">Шаг 2</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <RadzenIcon Icon="menu_book" Style="color: var(--accent-cyan); font-size: 1.5rem;" />
+                        <h4 style="color: var(--text-light); font-weight: 600; margin: 0;">Перейдите в инструкции</h4>
+                    </div>
+                    <p class="m-0" style="font-size: 0.9rem; line-height: 1.5;">Ознакомьтесь с документацией платформы: как устроены симуляции, какие инструменты защиты интегрированы, как начисляются XP и формируется рейтинг. Понимание механики — залог успешного прохождения сценариев.</p>
+                </div>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="4">
+                <div class="cyber-card">
+                    <div>
+                        <span class="step-badge">Шаг 3</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <RadzenIcon Icon="crisis_alert" Style="color: var(--accent-cyan); font-size: 1.5rem;" />
+                        <h4 style="color: var(--text-light); font-weight: 600; margin: 0;">Выберите сценарий</h4>
+                    </div>
+                    <p class="m-0" style="font-size: 0.9rem; line-height: 1.5;">Перейдите в каталог симуляций. Доступны одиночные миссии для отработки личных навыков и командные операции для совместного отражения атак. Выбирайте сценарий под свою специализацию и начинайте тренировку.</p>
+                </div>
+            </RadzenColumn>
+        </RadzenRow>
+
+    </div>
 </div>
 
 @code {
-    private string UserDisplayName => user?.UserName ?? "Агент";
-    private ApplicationUser? user;
+    private bool isLoaded = false;
+    private string UserDisplayName = string.Empty;
+    private ApplicationUser? dbUser;
 
-    // Переменная для вывода на экран
-    private int totalScenarios = 0;
-
-    [Inject] private IDbContextFactory<ApplicationDbContext> ContextFactory { get; set; }
+    // Переменная для хранения состояния интерактивных карточек (Блок 3)
+    private int activeCard = 1;
 
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthProvider.GetAuthenticationStateAsync();
-        var userId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        var userClaims = authState.User;
 
-        using (var context = await ContextFactory.CreateDbContextAsync())
+        if (userClaims.Identity?.IsAuthenticated == true)
         {
-            // 1. Получение данных пользователя
-            if (userId != null)
-            {
-                user = await context.Set<ApplicationUser>().FirstOrDefaultAsync(u => u.Id == userId);
-            }
+            var userId = userClaims.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            // 2. ДИНАМИЧЕСКИЙ ПОДСЧЕТ СЦЕНАРИЕВ С УЧЕТОМ ОДОБРЕНИЯ АДМИНИСТРАТОРА
-            if (authState.User.IsInRole("Admin"))
+            if (!string.IsNullOrEmpty(userId))
             {
-                // Администратор видит полную статистику по всем модулям базы
-                totalScenarios = await context.Set<CyberScenario>().CountAsync();
-            }
-            else
-            {
-                // Курсанты видят на счетчике только те сценарии, где IsVisible == true
-                totalScenarios = await context.Set<CyberScenario>().CountAsync(s => s.IsVisible);
+                using var context = await ContextFactory.CreateDbContextAsync();
+                dbUser = await context.Set<ApplicationUser>()
+                    .Include(u => u.Group)
+                    .Include(u => u.Teams)
+                    .FirstOrDefaultAsync(u => u.Id == userId);
+
+                UserDisplayName = dbUser?.Email ?? userClaims.Identity.Name ?? "Оперативник";
             }
         }
+        else
+        {
+            UserDisplayName = "Гость полигона";
+        }
+
+        isLoaded = true;
+    }
+
+    private void ToggleCard(int cardId)
+    {
+        activeCard = cardId;
     }
 }
-
-<style>
-    :root {
-        --bg-dark: #1e1e1e;
-        --bg-card: #252526;
-        --accent-blue: #00d4ff;
-        --accent-green: #39ff14;
-        --border-color: #333333;
-        --text-main: #e1e1e1;
-        --text-muted: #9da5b4;
-    }
-
-    .dashboard-wrapper {
-        background-color: var(--bg-dark);
-        min-height: calc(100vh - 60px);
-        color: var(--text-main);
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-
-    .cyber-card {
-        background-color: var(--bg-card) !important;
-        border: 1px solid var(--border-color) !important;
-        border-radius: 4px !important;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-        transition: border-color 0.3s ease;
-    }
-
-        .cyber-card:hover {
-            border-color: #444 !important;
-        }
-
-    .hero-section {
-        background: linear-gradient(135deg, #252526 0%, #1a1a1c 100%);
-        border: 1px solid var(--border-color);
-        border-left: 4px solid var(--accent-blue);
-        border-radius: 4px;
-        box-shadow: 0 8px 16px rgba(0,0,0,0.3);
-    }
-
-    .text-cyan {
-        color: var(--accent-blue) !important;
-    }
-
-    .text-green {
-        color: var(--accent-green) !important;
-        text-shadow: 0 0 5px rgba(57, 255, 20, 0.3);
-    }
-
-    .text-muted {
-        color: var(--text-muted) !important;
-    }
-
-    .task-icon {
-        font-size: 2.5rem;
-        color: var(--accent-blue);
-        margin-bottom: 0.5rem;
-    }
-
-    /* --- КНОПКИ --- */
-    .cyber-btn-main, .cyber-btn-secondary {
-        display: inline-flex;
-        align-items: center;
-        padding: 12px 24px;
-        font-family: 'Courier New', Courier, monospace;
-        text-transform: uppercase;
-        text-decoration: none !important;
-        font-weight: bold;
-        border-radius: 4px;
-        transition: all 0.3s ease;
-        cursor: pointer;
-    }
-
-    /* Главная кнопка (Ознакомительный сценарий) - с заливкой */
-    .cyber-btn-main {
-        border: 1px solid var(--accent-blue);
-        background-color: rgba(0, 212, 255, 0.15);
-        color: var(--accent-blue);
-        box-shadow: 0 0 8px rgba(0, 212, 255, 0.2);
-    }
-
-        .cyber-btn-main:hover {
-            background-color: var(--accent-blue);
-            box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
-            color: #000 !important;
-        }
-
-    /* Второстепенная кнопка (Все сценарии) - строгий контур */
-    .cyber-btn-secondary {
-        border: 1px solid var(--text-muted);
-        background-color: transparent;
-        color: var(--text-main);
-    }
-
-        .cyber-btn-secondary:hover {
-            border-color: var(--accent-blue);
-            color: var(--accent-blue);
-            background-color: rgba(0, 212, 255, 0.05);
-        }
-
-    /* --- ТЕКСТОВЫЕ ССЫЛКИ --- */
-    .cyber-text-link {
-        color: var(--accent-blue);
-        text-decoration: none;
-        border-bottom: 1px dashed var(--accent-blue);
-        transition: all 0.2s ease;
-        font-weight: 600;
-    }
-
-        .cyber-text-link:hover {
-            color: #fff;
-            border-bottom-style: solid;
-            text-shadow: 0 0 8px var(--accent-blue);
-        }
-</style>

@@ -1,7 +1,6 @@
-using Microsoft.AspNetCore.Identity;
+using CyberPolygon.Data.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
 
 
 namespace CyberPolygon.Data
@@ -11,15 +10,44 @@ namespace CyberPolygon.Data
         // Строка должна быть ЗДЕСЬ (внутри класса)
         public DbSet<CyberScenario> Scenarios { get; set; }
         public DbSet<ScenarioQuestion> ScenarioQuestions { get; set; }
-
         public DbSet<UserScenarioProgress> UserProgresses { get; set; }
+        public DbSet<UserGroup> UserGroups { get; set; }
+        public DbSet<UserTeam> UserTeams { get; set; }
+        // Добавь это свойство к остальным DbSet
+        public DbSet<UserAnswerProgress> UserAnswerProgresses { get; set; }
+        public DbSet<InstructionModel> Instructions { get; set; }
+        
+
+
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
 
-            // Здесь можно настроить таблицу, если нужно, например:
             builder.Entity<CyberScenario>().ToTable("Scenarios");
+
+            // Настройка связи "Один ко многим" для Группы и Пользователей
+            builder.Entity<ApplicationUser>()
+                .HasOne(u => u.Group)
+                .WithMany(g => g.Users)
+                .HasForeignKey(u => u.GroupId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Настройка связи "Многие ко многим" для Команд и Пользователей через авто-таблицу
+            builder.Entity<UserTeam>()
+                .HasMany(t => t.Users)
+                .WithMany(u => u.Teams)
+                .UsingEntity(j => j.ToTable("UserTeamMappings"));
         }
+        public class UserAnswerProgress
+        {
+            public int Id { get; set; }
+            public int UserScenarioProgressId { get; set; } // Привязка к командной сессии
+            public int QuestionId { get; set; }             // Привязка к конкретному вопросу
+
+            public bool IsCorrect { get; set; } = false;
+            public int FailedAttempts { get; set; } = 0;
+        }
+
     }
 }

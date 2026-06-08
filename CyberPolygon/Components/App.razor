@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]" />
     <link rel="stylesheet" href="@Assets["app.css"]" />
     <link rel="stylesheet" href="@Assets["CyberPolygon.styles.css"]" 
-    <link rel="stylesheet" href="@Assets["_content/Radzen.Blazor/css/Material.css"]" />
+    <link rel="stylesheet" href="@Assets["_content/Radzen.Blazor/css/Material-Dark.css"]" />
     <ImportMap />
     <link rel="icon" type="image/png" href="favicon.png" />
     <HeadOutlet />
@@ -22,6 +22,38 @@
     <script src="@Assets["_content/Radzen.Blazor/Radzen.Blazor.js"]"></script>
     <script src="@Assets["Components/Account/Shared/PasskeySubmit.razor.js"]" type="module"></script>
     <script src="@Assets["_framework/blazor.web.js"]"></script>
+    <script>
+        window.setupDrawIoViewer = function (iframeId, xmlContent) {
+        var iframe = document.getElementById(iframeId);
+        if (!iframe) return;
+
+        // Создаем безопасный слушатель ответов от Draw.io
+        var handleMessage = function (e) {
+        if (e.source === iframe.contentWindow) {
+        try {
+        var data = JSON.parse(e.data);
+        // Когда iframe загрузился и готов ("init"), передаем ему наш XML код
+        if (data.event === 'init') {
+        iframe.contentWindow.postMessage(JSON.stringify({
+        action: 'load',
+        xml: xmlContent
+        }), '*');
+
+        // Удаляем слушатель, чтобы не вешать память браузера
+        window.removeEventListener('message', handleMessage);
+        }
+        } catch (err) {
+        // Игнорируем не-JSON сообщения
+        }
+        }
+        };
+
+        window.addEventListener('message', handleMessage);
+
+        // Загружаем официальный темный плеер Draw.io со спиннером загрузки
+        iframe.src = "https://viewer.diagrams.net/?embed=1&ui=dark&spin=1&proto=json&nav=1";
+        };
+    </script>
 </body>
 
 </html>

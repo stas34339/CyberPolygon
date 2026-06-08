@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <Folder Include="wwwroot\files_instruction\" />
+    <Folder Include="wwwroot\uploads\instruction\" />
   </ItemGroup>
 
 </Project>

@@ -3,6 +3,7 @@ using System;
 using CyberPolygon.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CyberPolygon.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260521080950_AddScenarioTimer")]
+    partial class AddScenarioTimer
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,46 +24,6 @@ namespace CyberPolygon.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("ApplicationUserUserTeam", b =>
-                {
-                    b.Property<int>("TeamsId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("UsersId")
-                        .HasColumnType("text");
-
-                    b.HasKey("TeamsId", "UsersId");
-
-                    b.HasIndex("UsersId");
-
-                    b.ToTable("UserTeamMappings", (string)null);
-                });
-
-            modelBuilder.Entity("CyberPolygon.Data.ApplicationDbContext+UserAnswerProgress", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("FailedAttempts")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("IsCorrect")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("QuestionId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("UserScenarioProgressId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("UserAnswerProgresses");
-                });
 
             modelBuilder.Entity("CyberPolygon.Data.ApplicationUser", b =>
                 {
@@ -80,9 +43,6 @@ namespace CyberPolygon.Migrations
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("boolean");
-
-                    b.Property<int?>("GroupId")
-                        .HasColumnType("integer");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("boolean");
@@ -119,8 +79,6 @@ namespace CyberPolygon.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("GroupId");
-
                     b.HasIndex("NormalizedEmail")
                         .HasDatabaseName("EmailIndex");
 
@@ -129,61 +87,6 @@ namespace CyberPolygon.Migrations
                         .HasDatabaseName("UserNameIndex");
 
                     b.ToTable("AspNetUsers", (string)null);
-                });
-
-            modelBuilder.Entity("CyberPolygon.Data.Models.InstructionAttachment", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("FilePath")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("InstructionId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("InstructionId");
-
-                    b.ToTable("InstructionAttachment");
-                });
-
-            modelBuilder.Entity("CyberPolygon.Data.Models.InstructionModel", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("IconName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Instructions");
                 });
 
             modelBuilder.Entity("CyberScenario", b =>
@@ -219,15 +122,6 @@ namespace CyberPolygon.Migrations
 
                     b.Property<string>("SchemaPath")
                         .HasColumnType("text");
-
-                    b.Property<int>("Scope")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("TargetGroupId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("TargetTeamId")
-                        .HasColumnType("integer");
 
                     b.Property<string>("Task")
                         .IsRequired()
@@ -432,23 +326,6 @@ namespace CyberPolygon.Migrations
                     b.ToTable("ScenarioQuestions");
                 });
 
-            modelBuilder.Entity("UserGroup", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("UserGroups");
-                });
-
             modelBuilder.Entity("UserScenarioProgress", b =>
                 {
                     b.Property<int>("Id")
@@ -463,9 +340,6 @@ namespace CyberPolygon.Migrations
                     b.Property<int>("CyberScenarioId")
                         .HasColumnType("integer");
 
-                    b.Property<bool>("IsTeamAttempt")
-                        .HasColumnType("boolean");
-
                     b.Property<int>("Score")
                         .HasColumnType("integer");
 
@@ -478,13 +352,11 @@ namespace CyberPolygon.Migrations
                     b.Property<DateTime?>("TargetEndTime")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int?>("TeamId")
-                        .HasColumnType("integer");
-
                     b.Property<TimeSpan?>("TimeSpent")
                         .HasColumnType("interval");
 
                     b.Property<string>("UserId")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -492,64 +364,6 @@ namespace CyberPolygon.Migrations
                     b.HasIndex("CyberScenarioId");
 
                     b.ToTable("UserProgresses");
-                });
-
-            modelBuilder.Entity("UserTeam", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("GroupId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GroupId");
-
-                    b.ToTable("UserTeams");
-                });
-
-            modelBuilder.Entity("ApplicationUserUserTeam", b =>
-                {
-                    b.HasOne("UserTeam", null)
-                        .WithMany()
-                        .HasForeignKey("TeamsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("CyberPolygon.Data.ApplicationUser", null)
-                        .WithMany()
-                        .HasForeignKey("UsersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("CyberPolygon.Data.ApplicationUser", b =>
-                {
-                    b.HasOne("UserGroup", "Group")
-                        .WithMany("Users")
-                        .HasForeignKey("GroupId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("Group");
-                });
-
-            modelBuilder.Entity("CyberPolygon.Data.Models.InstructionAttachment", b =>
-                {
-                    b.HasOne("CyberPolygon.Data.Models.InstructionModel", "Instruction")
-                        .WithMany("Attachments")
-                        .HasForeignKey("InstructionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Instruction");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -634,34 +448,11 @@ namespace CyberPolygon.Migrations
                     b.Navigation("Scenario");
                 });
 
-            modelBuilder.Entity("UserTeam", b =>
-                {
-                    b.HasOne("UserGroup", "Group")
-                        .WithMany("Teams")
-                        .HasForeignKey("GroupId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Group");
-                });
-
-            modelBuilder.Entity("CyberPolygon.Data.Models.InstructionModel", b =>
-                {
-                    b.Navigation("Attachments");
-                });
-
             modelBuilder.Entity("CyberScenario", b =>
                 {
                     b.Navigation("Documents");
 
                     b.Navigation("Questions");
-                });
-
-            modelBuilder.Entity("UserGroup", b =>
-                {
-                    b.Navigation("Teams");
-
-                    b.Navigation("Users");
                 });
 #pragma warning restore 612, 618
         }

@@ -11,90 +11,219 @@
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 
-<PageTitle>Log in</PageTitle>
+<PageTitle>Авторизация | КиберПолигон</PageTitle>
 
+<style>
+    :root {
+        --bg-main: #0d1117;
+        --bg-card: #161b22;
+        --accent-cyan: #00e5ff;
+        --border-color: #30363d;
+        --text-light: #ffffff;
+        --text-muted: #8b949e;
+    }
 
-<RadzenRow Gap="0" class="rz-my-12 rz-mx-auto rz-border-radius-6 rz-shadow-10" Style="width: 100%; max-width: 1200px; height:100%; max-height:800px; overflow: hidden;">
+    /* Обертка на весь экран */
+    .cyber-login-wrapper {
+        background-color: var(--bg-main);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        font-family: sans-serif;
+    }
 
-    @*Левая часть Авторизации*@
+    /* Основной контейнер авторизации */
+    .cyber-login-container {
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+        overflow: hidden;
+        width: 100%;
+        max-width: 1000px;
+        min-height: 550px;
+    }
 
-    <RadzenColumn Size="12" SizeMD="6" Style="width:50%;">
-        <RadzenCard class="rz-shadow-0 rz-border-radius-0 rz-text-align-center rz-p-12"
-                    Style="height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            background: #575454 no-repeat center/cover;">
-            <div style="position: relative; top: -50px; right:180px;">
-                <img src="images/logo.png"
-                     alt="Logo"
-                     style="max-width: 320px; height: auto;" />
+    /* Левая панель с логотипом */
+    .cyber-left-panel {
+        background: linear-gradient(135deg, #090c10 0%, #161b22 100%);
+        border-right: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 40px;
+        position: relative;
+        text-align: center;
+    }
+
+    .cyber-title {
+        font-family: 'Courier New', Courier, monospace;
+        color: var(--text-light);
+        font-weight: bold;
+        letter-spacing: 1px;
+    }
+
+    /* Правая панель с формой */
+    .cyber-right-panel {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 40px 10%;
+        background-color: var(--bg-card);
+    }
+
+    .form-header {
+        font-family: 'Courier New', Courier, monospace;
+        color: var(--accent-cyan);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    /* Стилизация полей ввода (переопределение Bootstrap) */
+    .form-floating > .form-control.cyber-input {
+        background-color: var(--bg-main);
+        border: 1px solid var(--border-color);
+        color: var(--text-light);
+        border-radius: 4px;
+        transition: all 0.3s ease;
+    }
+
+        .form-floating > .form-control.cyber-input:focus {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 8px rgba(0, 229, 255, 0.15);
+        }
+
+    .form-floating > label {
+        color: var(--text-muted);
+    }
+
+    .form-floating > .form-control.cyber-input:focus ~ label,
+    .form-floating > .form-control.cyber-input:not(:placeholder-shown) ~ label {
+        color: var(--accent-cyan);
+        opacity: 0.9;
+    }
+
+    /* Автозаполнение браузера (чтобы не ломало темную тему) */
+    .form-floating > .form-control.cyber-input:-webkit-autofill {
+        -webkit-box-shadow: 0 0 0 1000px var(--bg-main) inset !important;
+        -webkit-text-fill-color: var(--text-light) !important;
+        transition: background-color 5000s ease-in-out 0s;
+    }
+
+    /* Чекбокс */
+    .cyber-checkbox {
+        background-color: var(--bg-main);
+        border: 1px solid var(--border-color);
+        cursor: pointer;
+    }
+
+        .cyber-checkbox:checked {
+            background-color: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+        }
+
+    .checkbox-label {
+        color: var(--text-muted);
+        cursor: pointer;
+        user-select: none;
+    }
+
+    /* Кнопка входа */
+    .btn-cyber {
+        background-color: rgba(0, 229, 255, 0.05);
+        border: 1px solid var(--accent-cyan);
+        color: var(--accent-cyan);
+        font-family: 'Courier New', Courier, monospace;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        border-radius: 4px;
+        padding: 12px;
+        transition: all 0.3s ease;
+    }
+
+        .btn-cyber:hover {
+            background-color: var(--accent-cyan);
+            color: #0d1117;
+            box-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
+        }
+
+    .cyber-hr {
+        border-top: 1px dashed var(--border-color);
+        margin: 20px 0;
+    }
+</style>
+
+<div class="cyber-login-wrapper">
+    <RadzenRow Gap="0" class="cyber-login-container">
+
+        @* Левая часть (Брендирование) *@
+        <RadzenColumn Size="12" SizeMD="6" class="cyber-left-panel">
+            <div class="mb-4">
+                <img src="images/logo.png" alt="Logo" style="max-width: 280px; height: auto;" />
             </div>
-            <RadzenText TextStyle="TextStyle.DisplayH3"
-                        TagName="TagName.H2"
-                        Style="color: white; font-size: 3.2rem; text-align:left;">
-                Добро пожаловать!
-            </RadzenText>
 
-            <RadzenText TextStyle="TextStyle.H6"
-                        Style="color: rgba(255,255,255,0.9); font-size: 2.2rem; text-align:left;">
-                В КиберПолигон
-            </RadzenText>
+            <h2 class="cyber-title mb-2" style="font-size: 2.2rem;">Добро пожаловать!</h2>
+            <h3 class="cyber-title mb-4" style="font-size: 1.5rem; color: var(--text-muted);">В КиберПолигон</h3>
 
-            <RadzenText TextStyle="TextStyle.Body2"
-                        Style="color: rgba(255,255,255,0.8); font-size: 1.2rem; text-align:left;">
-                Введите свои учетные данные для входа
-            </RadzenText>
+            <p style="color: var(--text-muted); font-size: 0.95rem; font-family: monospace;">
+                СИСТЕМА АВТОРИЗАЦИИ // ИАО<br />
+                Введите свои учетные данные для доступа к инфраструктуре.
+            </p>
+        </RadzenColumn>
 
-        </RadzenCard>
-    </RadzenColumn>
-
-    @*Правая часть авторизации*@
-
-    <RadzenColumn Size="12" SizeMD="6" Style="width:50%;">
-        <RadzenCard class="rz-shadow-0 rz-border-radius-0 rz-p-12" Style="height:100%;">
-            <EditForm EditContext="editContext" method="post" OnSubmit="LoginUser" FormName="login" style="margin-top:70px">
+        @* Правая часть (Форма авторизации) *@
+        <RadzenColumn Size="12" SizeMD="6" class="cyber-right-panel">
+            <EditForm EditContext="editContext" method="post" OnSubmit="LoginUser" FormName="login">
                 <DataAnnotationsValidator />
-                <h2><RadzenIcon Icon="lock" />Форма входа</h2>
-                <hr />
-                <ValidationSummary class="text-danger" role="alert" />
-                <div class="form-floating mb-3">
-                    <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="username webauthn" aria-required="true" placeholder="name@example.com" />
-                    <label for="Input.Email" class="form-label">Логин</label>
-                    <ValidationMessage For="() => Input.Email" class="text-danger" />
+
+                <h3 class="form-header">
+                    <RadzenIcon Icon="lock" Style="font-size: 1.8rem;" /> ТЕРМИНАЛ ДОСТУПА
+                </h3>
+
+                <hr class="cyber-hr" />
+
+                <ValidationSummary class="text-danger mb-3" style="font-family: monospace; font-size: 0.85rem;" role="alert" />
+
+                <div class="form-floating mb-4">
+                    <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control cyber-input" autocomplete="username webauthn" aria-required="true" placeholder="name@example.com" />
+                    <label for="Input.Email">Логин (Идентификатор)</label>
+                    <ValidationMessage For="() => Input.Email" class="text-danger" style="font-size: 0.8rem; margin-top: 5px;" />
                 </div>
-                <div class="form-floating mb-3">
-                    <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="пароль" />
-                    <label for="Input.Password" class="form-label">Пароль</label>
-                    <ValidationMessage For="() => Input.Password" class="text-danger" />
+
+                <div class="form-floating mb-4">
+                    <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control cyber-input" autocomplete="current-password" aria-required="true" placeholder="пароль" />
+                    <label for="Input.Password">Ключ доступа (Пароль)</label>
+                    <ValidationMessage For="() => Input.Password" class="text-danger" style="font-size: 0.8rem; margin-top: 5px;" />
                 </div>
-                <div class="checkbox mb-3">
-                    <label class="form-label">
-                        <InputCheckbox @bind-Value="Input.RememberMe" class="darker-border-checkbox form-check-input" />
-                        Запомнить пароль
+
+                <div class="checkbox mb-4 d-flex align-items-center gap-2">
+                    <InputCheckbox @bind-Value="Input.RememberMe" id="Input.RememberMe" class="form-check-input cyber-checkbox m-0" />
+                    <label class="checkbox-label m-0" for="Input.RememberMe">
+                        Сохранить сессию
                     </label>
                 </div>
-                <div>
-                    <button type="submit" class="w-100 btn btn-lg btn-primary" style="background: #1DB4D3; color:white;">Войти</button>
-                </div>
-                @*Кнопки забытия пароля, регистарции пользователя, подтверздения почты. На будущее может пригодиться
 
-                 <div>
-                    <p>
-                        <a href="Account/ForgotPassword">Forgot your password?</a>
-                    </p>
-                    <p>
-                        <a href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))">Register as a new user</a>
-                    </p>
-                    <p>
-                        <a href="Account/ResendEmailConfirmation">Resend email confirmation</a>
-                    </p>
+                <div class="mt-2">
+                    <button type="submit" class="w-100 btn btn-cyber">Инициализировать соединение</button>
                 </div>
+
+                @* Закомментированный блок ссылок (адаптирован под стилистику на будущее)
+                 <div class="mt-4 text-center" style="font-family: monospace; font-size: 0.85rem;">
+                    <p class="mb-1"><a href="Account/ForgotPassword" style="color: var(--text-muted); text-decoration: none;">Забыли пароль?</a></p>
+                    <p class="mb-1"><a href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))" style="color: var(--accent-cyan); text-decoration: none;">Регистрация агента</a></p>
+                 </div>
                 *@
             </EditForm>
-        </RadzenCard>
-    </RadzenColumn>
-</RadzenRow>
+        </RadzenColumn>
+
+    </RadzenRow>
+</div>
 
 @code {
     private string? errorMessage;
@@ -112,7 +241,6 @@
     protected override async Task OnInitializedAsync()
     {
         Input ??= new();
-
         editContext = new EditContext(Input);
 
         if (HttpMethods.IsGet(HttpContext.Request.Method))
@@ -131,6 +259,7 @@
         }
 
         SignInResult result;
+
         if (!string.IsNullOrEmpty(Input.Passkey?.CredentialJson))
         {
             // When performing passkey sign-in, don't perform form validation.
@@ -173,11 +302,11 @@
 
     private sealed class InputModel
     {
-        [Required]
-        [EmailAddress]
+        [Required(ErrorMessage = "Поле Логин обязательно для заполнения.")]
+        [EmailAddress(ErrorMessage = "Некорректный формат адреса.")]
         public string Email { get; set; } = "";
 
-        [Required]
+        [Required(ErrorMessage = "Поле Пароль обязательно для заполнения.")]
         [DataType(DataType.Password)]
         public string Password { get; set; } = "";
 
