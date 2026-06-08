@@ -94,39 +94,96 @@ app.MapRazorComponents<App>()
 app.MapAdditionalIdentityEndpoints();
 
 
-// АВТОМАТИЧЕСКОЕ СОЗДАНИЕ ПОЛЬЗОВАТЕЛЯ ПРИ СТАРТЕ
-
 using (var scope = app.Services.CreateScope())
 {
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
-    // Ищем по email, так надежнее
-    var existingUser = await userManager.FindByEmailAsync("user@cyberpolygon.ru");
+    // 1. ПРОВЕРКА И СОЗДАНИЕ РОЛИ АДМИНА
+    string adminRoleName = "Admin";
+    if (!await roleManager.RoleExistsAsync(adminRoleName))
+    {
+        var roleResult = await roleManager.CreateAsync(new IdentityRole(adminRoleName));
+        if (roleResult.Succeeded)
+        {
+            Console.WriteLine($"====== [УСПЕХ] Роль '{adminRoleName}' успешно создана в БД! ======");
+        }
+    }
+
+    // 2. СОЗДАНИЕ ПЕРВОГО АДМИНИСТРАТОРА (stas34339)
+    string adminEmail1 = "stas34339@gmail.COM";
+    var existingAdmin1 = await userManager.FindByEmailAsync(adminEmail1);
+    if (existingAdmin1 == null)
+    {
+        var newAdmin1 = new ApplicationUser
+        {
+            UserName = adminEmail1,
+            Email = adminEmail1,
+            EmailConfirmed = true
+        };
+
+        var adminResult1 = await userManager.CreateAsync(newAdmin1, adminEmail1);
+
+        if (adminResult1.Succeeded)
+        {
+            await userManager.AddToRoleAsync(newAdmin1, adminRoleName);
+            Console.WriteLine($"====== [УСПЕХ] Администратор '{adminEmail1}' создан и получил роль '{adminRoleName}'! ======");
+        }
+        else
+        {
+            Console.WriteLine($"====== [ОШИБКА] Не удалось создать администратора '{adminEmail1}': ======");
+            foreach (var error in adminResult1.Errors) Console.WriteLine($"- {error.Description}");
+        }
+    }
+
+    // 3. СОЗДАНИЕ ВТОРОГО АДМИНИСТРАТОРА (skakalinma)
+    string adminEmail2 = "skakalinma1@gmail.COM";
+    var existingAdmin2 = await userManager.FindByEmailAsync(adminEmail2);
+    if (existingAdmin2 == null)
+    {
+        var newAdmin2 = new ApplicationUser
+        {
+            UserName = adminEmail2,
+            Email = adminEmail2,
+            EmailConfirmed = true
+        };
+
+        var adminResult2 = await userManager.CreateAsync(newAdmin2, adminEmail2);
+
+        if (adminResult2.Succeeded)
+        {
+            await userManager.AddToRoleAsync(newAdmin2, adminRoleName);
+            Console.WriteLine($"====== [УСПЕХ] Администратор '{adminEmail2}' создан и получил роль '{adminRoleName}'! ======");
+        }
+        else
+        {
+            Console.WriteLine($"====== [ОШИБКА] Не удалось создать администратора '{adminEmail2}': ======");
+            foreach (var error in adminResult2.Errors) Console.WriteLine($"- {error.Description}");
+        }
+    }
+
+    // 4. СОЗДАНИЕ ОБЫЧНОГО ПОЛЬЗОВАТЕЛЯ
+    string userEmail = "user@gmail.COM";
+    var existingUser = await userManager.FindByEmailAsync(userEmail);
     if (existingUser == null)
     {
         var newUser = new ApplicationUser
         {
-            UserName = "user1@cyberpolygon.RU", // Делаем UserName таким же как Email
-            Email = "user1@cyberpolygon.RU",
-            EmailConfirmed = true,
-            NormalizedUserName = "USER1@CYBERPOLYGON.RU", // Принудительно заполняем регистр
-            NormalizedEmail = "USER1@CYBERPOLYGON.RU"
+            UserName = userEmail,
+            Email = userEmail,
+            EmailConfirmed = true
         };
 
-        // Создаем пользователя с простым паролем
-        var result = await userManager.CreateAsync(newUser, "user1@cyberpolygon.RU");
+        var userResult = await userManager.CreateAsync(newUser, userEmail);
 
-        if (result.Succeeded)
+        if (userResult.Succeeded)
         {
-            Console.WriteLine("====== [УСПЕХ] Тестовый пользователь 'user@cyberpolygon.ru' с паролем 'user123' создан! ======");
+            Console.WriteLine($"====== [УСПЕХ] Обычный пользователь '{userEmail}' успешно создан! ======");
         }
         else
         {
-            Console.WriteLine("====== [ОШИБКА] Не удалось создать пользователя: ======");
-            foreach (var error in result.Errors)
-            {
-                Console.WriteLine($"- {error.Description}");
-            }
+            Console.WriteLine($"====== [ОШИБКА] Не удалось создать пользователя '{userEmail}': ======");
+            foreach (var error in userResult.Errors) Console.WriteLine($"- {error.Description}");
         }
     }
 }
