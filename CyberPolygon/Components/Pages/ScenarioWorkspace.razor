@@ -14,81 +14,136 @@
 @inject IWebHostEnvironment Env
 
 <PageTitle>Терминал: @(scenario?.Title ?? "Загрузка...")</PageTitle>
-
 <RadzenComponents />
 
 <style>
-    /* ... ТВОИ СУЩЕСТВУЮЩИЕ СТИЛИ ИЗ ПРЕДЫДУЩЕГО КОДА ОСТАЮТСЯ БЕЗ ИЗМЕНЕНИЙ ... */
     :root {
         --bg-main: #1e1e1e;
-        --bg-card: #24272c;
-        --bg-card-hover: #2a2e36;
-        --text-muted: #8fa0b5;
+        --bg-card: #1a2332;
+        --border-color: #2a3a4a;
         --text-light: #cbe0f5;
-        --accent-blue: #5ba3e3;
         --accent-cyan: #4ec3d1;
-        --border-color: #343a42;
+        --success-color: #98c379;
+        --danger-color: #e06c75;
     }
 
-    .workspace-wrapper {
+    .workspace-container {
         background-color: var(--bg-main);
         min-height: 100vh;
-        color: var(--text-muted);
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: var(--text-light);
     }
 
-    .terminal-header {
-        color: var(--accent-cyan);
-        margin: 0;
-        font-weight: bold;
-        font-family: 'Courier New', Courier, monospace;
-    }
-
-    .details-content-box {
+    .panel-box {
         background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 25px;
+    }
+
+    .schema-box {
+        background: #0d1117;
+        border: 1px dashed var(--accent-cyan);
+        border-radius: 8px;
+        padding: 15px;
+        text-align: center;
+        margin-bottom: 30px;
+        position: relative;
+    }
+
+    .flag-block {
+        background: rgba(0, 0, 0, 0.2);
         border: 1px solid var(--border-color);
         border-radius: 6px;
-        min-height: 450px;
+        padding: 20px;
+        margin-bottom: 20px;
     }
 
-    .task-block {
-        background: var(--bg-card-hover);
-        border-radius: 4px;
+    .f-correct {
+        border-color: var(--success-color) !important;
+        background: rgba(152, 195, 121, 0.05);
     }
 
-    .custom-input {
-        background: var(--bg-main) !important;
+    .dark-input {
+        background: #131924 !important;
         border: 1px solid var(--border-color) !important;
         color: var(--text-light) !important;
-        font-family: 'Courier New', Courier, monospace;
+        width: 100%;
+        border-radius: 6px;
     }
 
-    .score-badge {
-        color: var(--text-light);
-        font-size: 1.1rem;
-        background: var(--bg-card);
-        padding: 8px 15px;
-        border-radius: 4px;
+        .dark-input:focus {
+            border-color: var(--accent-cyan) !important;
+        }
+
+    /* Блюр зона */
+    .blur-zone-wrapper {
+        position: relative;
         border: 1px solid var(--border-color);
+        border-radius: 8px;
+        overflow: hidden;
+        background: #131924;
+        min-height: 600px;
     }
 
-    .custom-tabs .rz-tabview-nav {
-        background: transparent !important;
-        border-bottom: 1px solid var(--border-color);
+    .blur-overlay-content {
+        filter: blur(8px);
+        opacity: 0.3;
+        user-select: none;
+        pointer-events: none;
+        padding: 30px;
     }
 
-        .custom-tabs .rz-tabview-nav li:not(.rz-tabview-selected) a span {
-            color: var(--text-muted) !important;
+    .lock-center-panel {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 5;
+        background: rgba(26, 35, 50, 0.6);
+        text-align: center;
+    }
+
+    .btn-action {
+        background: linear-gradient(135deg, #4ec3d1 0%, #5ba3e3 100%);
+        color: #1a1d21;
+        font-weight: bold;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+        .btn-action:hover {
+            box-shadow: 0 4px 15px rgba(78, 195, 209, 0.4);
         }
 
-        .custom-tabs .rz-tabview-nav li.rz-tabview-selected a span {
-            color: var(--accent-cyan) !important;
+    .btn-zoom {
+        background: transparent;
+        border: 1px solid var(--border-color);
+        color: #8fa0b5;
+        border-radius: 6px;
+        padding: 6px 10px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+        .btn-zoom:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
         }
 
-    /* Стили для таблицы администратора */
+    /* Таблица админа */
     .rz-datagrid {
         background-color: var(--bg-card) !important;
         border: 1px solid var(--border-color) !important;
+        border-radius: 8px !important;
     }
 
     .rz-grid-table thead th {
@@ -100,295 +155,252 @@
 
     .rz-grid-table tbody tr {
         background-color: var(--bg-card) !important;
-        color: var(--text-muted) !important;
+        color: #8fa0b5 !important;
     }
 
         .rz-grid-table tbody tr:hover {
-            background-color: var(--bg-card-hover) !important;
+            background-color: #1e2d3d !important;
         }
 
     .rz-grid-table td {
-        background-color: transparent !important;
         border-bottom: 1px solid var(--border-color) !important;
         border-right: 1px solid var(--border-color) !important;
-    }
-
-    .rz-cell-data {
-        color: var(--text-light) !important;
     }
 
     .rz-pager {
         background-color: #1a1d21 !important;
         border-top: 1px solid var(--border-color) !important;
-        color: var(--text-muted) !important;
+        color: #8fa0b5 !important;
     }
 
     .rz-pager-button {
-        color: var(--text-muted) !important;
         background: transparent !important;
+        color: #8fa0b5 !important;
     }
 
         .rz-pager-button.rz-state-active {
             background-color: var(--accent-cyan) !important;
             color: #1e1e1e !important;
-            border-radius: 4px;
         }
 </style>
 
-<div class="workspace-wrapper rz-p-4">
+<div class="workspace-container p-4">
     @if (scenario == null || currentUserProgress == null)
     {
-        <div class="text-center p-5">
-            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" Style="background-color: var(--border-color);" />
-            <p class="mt-3 text-muted">Синхронизация с виртуальным полигоном...</p>
-        </div>
+        <div class="text-center p-5"><RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" Style="background-color: var(--border-color);" /></div>
     }
     else
     {
-        <div class="d-flex justify-content-between align-items-center mb-4 pb-3 top-bar" style="border-bottom: 1px solid var(--border-color);">
-            <div class="d-flex align-items-center gap-3">
-                <RadzenButton Text="НАЗАД" Icon="arrow_back" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Outlined"
-                              Click="@(() => NavigationManager.NavigateTo("scenario"))" Style="color: var(--text-muted); border-color: var(--border-color);" />
-                <h2 class="terminal-header">[АРЕНА]: @scenario.Title</h2>
-            </div>
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="panel-box" style="position: sticky; top: 20px;">
+                    <RadzenButton Icon="arrow_back" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Outlined" class="mb-4" Click="@(() => NavigationManager.NavigateTo("scenario"))" Style="color: #8fa0b5; border-color: var(--border-color);" />
 
-            <div class="d-flex gap-3 align-items-center">
-                @if (currentUserProgress.Status == AttemptStatus.InProgress && scenario.DurationInMinutes > 0)
-                {
-                    <div class="timer-badge" style="font-size: 1.2rem; font-family: monospace; padding: 5px 15px; border-radius: 4px; border: 1px solid var(--accent-cyan); color: var(--accent-cyan);">
-                        <RadzenIcon Icon="timer" Style="vertical-align: middle; margin-right: 5px;" />
-                        @timeLeft.ToString(@"hh\:mm\:ss")
-                    </div>
-                }
+                    <h3 style="color: var(--accent-cyan); font-weight: bold; margin-bottom: 15px;">@scenario.Title</h3>
 
-                <div class="score-badge">
-                    Текущий счет: <span style="color: var(--accent-cyan); font-weight: bold;">@totalScore</span> XP
+                    @if (currentUserProgress.Status == AttemptStatus.InProgress && scenario.DurationInMinutes > 0)
+                    {
+                        <div class="p-3 mb-4 text-center rounded" style="border: 1px solid var(--accent-cyan); color: var(--accent-cyan); font-family: monospace; font-size: 1.5rem; background: rgba(78,195,209,0.05);">
+                            <RadzenIcon Icon="timer" Style="vertical-align: middle; margin-right: 5px;" /> @timeLeft.ToString(@"hh\:mm\:ss")
+                        </div>
+                    }
+
+                    <div style="font-size: 0.95rem; color: #8fa0b5; margin-bottom: 25px; line-height: 1.6;">@((MarkupString)scenario.Legend)</div>
+
+                    @if (scenario.Documents != null && scenario.Documents.Any())
+                    {
+                        <div style="font-size: 0.85rem; text-transform: uppercase; color: var(--accent-cyan); font-weight: bold; margin-bottom: 10px;">Материалы:</div>
+                        <ul class="mb-4" style="padding-left: 20px; color: #5ba3e3;">
+                            @foreach (var doc in scenario.Documents)
+                            {
+                                <li class="mb-2"><a href="@doc.FilePath" target="_blank" style="color: inherit; text-decoration: none;"><RadzenIcon Icon="description" Style="font-size:1rem; vertical-align:middle;" /> @doc.Title</a></li>
+                            }
+                        </ul>
+                    }
+
+                    @if (currentUserProgress.Status == AttemptStatus.NotStarted)
+                    {
+                        <button class="btn-action w-100 py-3" @onclick="StartScenario">НАЧАТЬ СИМУЛЯЦИЮ</button>
+                    }
+                    else if (currentUserProgress.Status == AttemptStatus.InProgress)
+                    {
+                        <div class="p-3 mb-3 rounded text-center" style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color);">Текущий счет: <b style="color: var(--accent-cyan); font-size: 1.2rem;">@totalScore XP</b></div>
+                        <RadzenButton Text="ЗАВЕРШИТЬ И ОТПРАВИТЬ ОТЧЕТ" class="w-100 py-2" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Outlined" Click="CompleteScenario" />
+                    }
+                    else if (currentUserProgress.Status == AttemptStatus.Completed)
+                    {
+                        <div class="p-4 text-center rounded" style="border: 1px solid var(--success-color); background: rgba(152,195,121,0.1);">
+                            <h4 style="color: var(--success-color); font-weight: bold; margin-bottom: 5px;">СЦЕНАРИЙ УСПЕШНО ЗАВЕРШЕН</h4>
+                            <p style="margin: 0; color: #cbe0f5;">Итоговый счет: <b style="font-size: 1.2rem;">@currentUserProgress.Score XP</b></p>
+                        </div>
+                    }
+                    else if (currentUserProgress.Status == AttemptStatus.Failed)
+                    {
+                        <div class="p-4 text-center rounded" style="border: 1px solid var(--danger-color); background: rgba(224,108,117,0.1);">
+                            <h4 style="color: var(--danger-color); font-weight: bold; margin-bottom: 5px;">МИССИЯ ПРОВАЛЕНА</h4>
+                            <p style="margin: 0; color: #cbe0f5; margin-bottom: 15px;">Время истекло.</p>
+                            <button class="btn-action w-100" style="background: var(--danger-color); color: white;" @onclick="RestartScenario">ПОПРОБОВАТЬ СНОВА</button>
+                        </div>
+                    }
                 </div>
             </div>
-        </div>
 
-        <RadzenTabs RenderMode="TabRenderMode.Client" class="custom-tabs">
-            <Tabs>
-                <RadzenTabsItem Text="Информация" Icon="info">
-                    <div class="details-content-box p-4">
-                        <h4 style="color: var(--text-light);">Добро пожаловать в терминал</h4>
-                        <p>Ознакомьтесь с условиями. Лимит времени: <b>@(scenario.DurationInMinutes > 0 ? $"{scenario.DurationInMinutes} мин." : "Без ограничений")</b>.</p>
-                        <div style="color: var(--text-light);">
-                            @((MarkupString)scenario.Legend)
+            <div class="col-md-8">
+                @if (currentUserProgress.Status == AttemptStatus.NotStarted)
+                {
+                    <div class="blur-zone-wrapper shadow-lg">
+                        <div class="lock-center-panel">
+                            <RadzenIcon Icon="lock" Style="font-size: 4rem; color: var(--accent-cyan); margin-bottom: 15px;" />
+                            <h5 style="color: white; font-weight: bold; text-transform: uppercase;">Система заблокирована</h5>
+                            <p style="color: #8fa0b5; font-size: 0.95rem; max-width: 70%;">Запустите сценарий на левой панели управления для получения доступа к сетевой инфраструктуре и полям ввода.</p>
+                        </div>
+                        <div class="blur-overlay-content">
+                            <div class="schema-box" style="height: 250px;"></div>
+                            <div class="flag-block"><div style="width: 60%; height: 20px; background: #343a42; margin-bottom:15px;"></div><div style="width: 100%; height: 40px; background: #131924;"></div></div>
                         </div>
                     </div>
-                </RadzenTabsItem>
-
-                @if (!string.IsNullOrEmpty(scenario.SchemaPath))
-                {
-                    <RadzenTabsItem Text="Архитектура сети" Icon="hub">
-                        <div class="details-content-box p-4 d-flex flex-column" style="height: 650px;">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h4 style="color: var(--text-light); margin: 0;">Топология целевой сети</h4>
-
-                                @* Элементы ручного зума нужны только для обычных картинок *@
-                                @if (!isXmlSchema)
-                                {
-                                    <div class="zoom-controls d-flex gap-2">
-                                        <RadzenButton Icon="zoom_in" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Outlined" Size="ButtonSize.Small" Click="ZoomIn" />
-                                        <RadzenButton Icon="zoom_out" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Outlined" Size="ButtonSize.Small" Click="ZoomOut" />
-                                        <RadzenButton Icon="restart_alt" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Outlined" Size="ButtonSize.Small" Click="ResetZoom" />
-                                    </div>
-                                }
-                            </div>
-
-                            <div style="flex-grow: 1; height: 100%; min-height: 550px; border: 1px dashed var(--accent-cyan); background: #0d1117; border-radius: 4px; padding: 0; overflow: hidden;">
-                                @if (isXmlSchema)
-                                {
-                                    @* Изолированный интерактивный фрейм под управлением нашей JS-функции *@
-                                    <iframe id="drawio-workspace-iframe" style="width: 100%; height: 100%; border: none; background: #0d1117;"></iframe>
-                                }
-                                else
-                                {
-                                    @* Обычная картинка (PNG/JPG) с кастомным зумом *@
-                                    <div style="overflow: auto; width: 100%; height: 100%; padding: 10px;">
-                                        <img src="@scenario.SchemaPath" style="transform: scale(@schemaZoomLevel); transform-origin: top left; transition: transform 0.2s ease; border: 1px solid var(--border-color); max-width: none;" />
-                                    </div>
-                                }
-                            </div>
-                        </div>
-                    </RadzenTabsItem>
                 }
-
-                @* ТУТ НАЧИНАЕТСЯ ВКЛАДКА "ЗАДАНИЯ". ВЕСЬ КОД ДО КОНЦА ФАЙЛА ИЗ ТВОЕГО ПРЕДЫДУЩЕГО ВАРИАНТА *@
-                <RadzenTabsItem Text="Задания" Icon="terminal">
-                    <div class="details-content-box p-4">
-                        @if (currentUserProgress.Status == AttemptStatus.NotStarted)
+                else
+                {
+                    <div class="panel-box" style="min-height: 600px;">
+                        @if (!string.IsNullOrEmpty(scenario.SchemaPath))
                         {
-                            <div class="text-center p-5 mt-5">
-                                <RadzenIcon Icon="rocket_launch" Style="font-size: 5rem; color: var(--accent-cyan); margin-bottom: 20px;" />
-                                <h3 style="color: var(--text-light);">Сценарий готов к запуску</h3>
-                                <p>Как только вы нажмете кнопку, запустится таймер на @scenario.DurationInMinutes минут.</p>
-                                <RadzenButton Text="НАЧАТЬ СИМУЛЯЦИЮ" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Large"
-                                              class="mt-4 px-5 py-3" Style="background-color: var(--accent-cyan); color: #1e1e1e; font-weight: bold;"
-                                              Click="StartScenario" />
-                            </div>
-                        }
-                        else if (currentUserProgress.Status == AttemptStatus.Completed)
-                        {
-                            <div class="p-5 text-center rounded mt-4" style="background: rgba(152, 195, 121, 0.05); border: 1px solid #98c379;">
-                                <RadzenIcon Icon="workspace_premium" Style="font-size: 4rem; color: #98c379;" />
-                                <h3 style="color: #98c379;" class="mt-3">Сценарий успешно завершен!</h3>
-                                <p class="text-white mb-0" style="font-size: 1.1rem; color: var(--text-light) !important;">Итоговый счет: <b>@currentUserProgress.Score XP</b></p>
-                                <p class="mt-2" style="color: var(--text-muted);">Время выполнения: @(currentUserProgress.TimeSpent?.ToString(@"hh\:mm\:ss") ?? "Н/Д")</p>
-                            </div>
-                        }
-                        else if (currentUserProgress.Status == AttemptStatus.Failed)
-                        {
-                            <div class="p-5 text-center rounded mt-4" style="background: rgba(224, 108, 117, 0.05); border: 1px solid #e06c75;">
-                                <RadzenIcon Icon="timer_off" Style="font-size: 4rem; color: #e06c75;" />
-                                <h3 style="color: #e06c75;" class="mt-3">Миссия провалена</h3>
-                                <p class="mb-0" style="font-size: 1.1rem; color: var(--text-light);">Время, отведенное на выполнение сценария, истекло.</p>
-                                <RadzenButton Text="ПОПРОБОВАТЬ СНОВА" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Medium"
-                                              class="mt-4" Click="RestartScenario" Style="background-color: #e06c75; color: #1e1e1e; font-weight: bold;" />
-                            </div>
-                        }
-                        else if (currentUserProgress.Status == AttemptStatus.InProgress)
-                        {
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h4 style="color: var(--text-light); margin:0;">Терминал проверки флагов</h4>
-                                <span class="badge" style="background: rgba(78,195,209,0.1); border: 1px solid var(--accent-cyan); color: var(--accent-cyan);">
-                                    Режим контроля: @(scenario.GameMode == ScenarioGameMode.AllAtOnce ? "Свободный" : "Последовательный")
-                                </span>
-                            </div>
-
-                            <div class="interactive-test-zone">
-                                @foreach (var qState in questionStates)
-                                {
-                                    var index = questionStates.IndexOf(qState);
-                                    @if (scenario.GameMode == ScenarioGameMode.AllAtOnce || index == 0 || questionStates[index - 1].IsCorrect)
+                            <div class="schema-box" style="height: 400px; display: flex; flex-direction: column;">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 style="color: #cbe0f5; font-weight: bold; margin: 0;">Архитектура сети</h5>
+                                    @if (!isXmlSchema)
                                     {
-                                        <div class="task-block mb-4 p-3" style="border: 1px solid @(qState.IsCorrect ? "#98c379" : "var(--border-color)");">
-                                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                                <span style="color: var(--accent-blue); font-weight: bold; font-size: 0.85rem;">ВОПРОС №@(index + 1)</span>
-                                                <div class="points-info" style="font-size: 0.85rem; font-family: monospace;">
-                                                    <span style="color: #98c379;">Доступно: +@qState.CurrentAward XP</span> |
-                                                    <span style="color: #e06c75;">Штраф за ошибку: -@qState.Question.PenaltyPoints XP</span>
-                                                </div>
-                                            </div>
-
-                                            <p style="color: var(--text-light); font-weight: 500;">@qState.Question.Text</p>
-
-                                            <div class="d-flex gap-2">
-                                                <RadzenTextBox @bind-Value="@qState.UserAnswer"
-                                                               Disabled="@qState.IsCorrect"
-                                                               Placeholder="@(qState.IsCorrect ? "Ответ принят" : "Введите ваш ответ или флаг...")"
-                                                               class="w-100 custom-input"
-                                                               @onkeypress="@(async (e) => await HandleKeyPress(e, qState))" />
-
-                                                @if (!qState.IsCorrect)
-                                                {
-                                                    <RadzenButton Text="Проверить" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Small"
-                                                                  Click="@(async () => await CheckAnswer(qState))" Style="background-color: var(--accent-cyan); color: #1e1e1e;" />
-                                                }
-                                                else
-                                                {
-                                                    <RadzenIcon Icon="check_circle" Style="color: #98c379; font-size: 2rem;" />
-                                                }
-                                            </div>
-
-                                            @if (!string.IsNullOrEmpty(qState.FeedbackMessage))
-                                            {
-                                                <div class="mt-2" style="font-size: 0.9rem; font-family: monospace; color: @(qState.IsCorrect ? "#98c379" : "#e06c75");">
-                                                    @qState.FeedbackMessage
-                                                </div>
-                                            }
+                                        <div style="display: flex; gap: 8px;">
+                                            <button class="btn-zoom" @onclick="ZoomIn"><RadzenIcon Icon="zoom_in" /></button>
+                                            <button class="btn-zoom" @onclick="ZoomOut"><RadzenIcon Icon="zoom_out" /></button>
+                                            <button class="btn-zoom" @onclick="ResetZoom"><RadzenIcon Icon="restart_alt" /></button>
                                         </div>
                                     }
-                                }
-                            </div>
+                                </div>
 
-                            <hr style="border-color: var(--border-color);" class="my-4" />
-
-                            <div class="text-center mt-4">
-                                <p style="color: var(--text-muted);" class="mb-3">Завершение сценария зафиксирует текущий счет и остановит таймер команды.</p>
-                                <RadzenButton Text="ЗАВЕРШИТЬ СЦЕНАРИЙ И ОТПРАВИТЬ ОТЧЕТ" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Large"
-                                              class="w-100 py-3" Style="background-color: #98c379; color: #1e1e1e; font-weight: bold; letter-spacing: 1px;"
-                                              Click="CompleteScenario" />
+                                <div style="flex-grow: 1; border-radius: 4px; overflow: hidden; background: #0d1117;">
+                                    @if (isXmlSchema)
+                                    {
+                                        <iframe id="drawio-workspace-iframe" style="width: 100%; height: 100%; border: none; background: #0d1117;"></iframe>
+                                    }
+                                    else
+                                    {
+                                        <div style="overflow: auto; width: 100%; height: 100%; padding: 10px;">
+                                            <img src="@scenario.SchemaPath" style="transform: scale(@schemaZoomLevel); transform-origin: top left; transition: transform 0.2s ease; max-width: none;" />
+                                        </div>
+                                    }
+                                </div>
                             </div>
                         }
-                    </div>
-                </RadzenTabsItem>
 
-                <AuthorizeView Roles="Admin">
-                    <Authorized>
-                        <RadzenTabsItem Text="Управление (Админ)" Icon="admin_panel_settings">
-                            <div class="details-content-box p-4" style="background: rgba(224, 108, 117, 0.02); border-color: rgba(224, 108, 117, 0.2);">
-                                <div class="d-flex justify-content-between align-items-center mb-4 pb-3" style="border-bottom: 1px solid rgba(224, 108, 117, 0.15);">
-                                    <h4 class="mb-0" style="color: #e06c75; font-weight: bold;">
-                                        <RadzenIcon Icon="monitor_heart" Style="vertical-align: middle; margin-right: 8px;" /> Мониторинг прохождений
-                                    </h4>
-                                    <RadzenButton Text="Сбросить ВСЕ" Icon="delete_forever" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
-                                                  Click="@ResetAllProgress" Style="background-color: #e06c75; color: #1e1e1e;" />
-                                </div>
-                                @if (completedUsers == null || !completedUsers.Any())
-                                {
-                                    <div class="text-center py-5" style="color: var(--text-muted);">
-                                        <RadzenIcon Icon="cloud_off" Style="font-size: 2.5rem; color: var(--border-color);" /><br />
-                                        Активных прохождений или логов не обнаружено
+                        <div class="d-flex justify-content-between align-items-center mb-4 mt-2">
+                            <h5 style="color: var(--accent-light-blue); font-weight: bold; margin: 0;">Терминал проверки</h5>
+                            <span class="badge" style="background: rgba(78,195,209,0.1); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); padding: 5px 12px;">Режим: @(scenario.GameMode == ScenarioGameMode.AllAtOnce ? "Свободный" : "Последовательный")</span>
+                        </div>
+
+                        @foreach (var qState in questionStates)
+                        {
+                            var index = questionStates.IndexOf(qState);
+                            @if (scenario.GameMode == ScenarioGameMode.AllAtOnce || index == 0 || questionStates[index - 1].IsCorrect)
+                            {
+                                <div class="flag-block @(qState.IsCorrect ? "f-correct" : "")">
+                                    <div class="d-flex justify-content-between mb-3">
+                                        <span style="color: var(--accent-blue); font-weight: bold;">ЗАДАНИЕ №@(index + 1)</span>
+                                        <div style="font-family: monospace; font-size: 0.85rem;">
+                                            <span style="color: var(--success-color);">+@qState.CurrentAward XP</span> | <span style="color: var(--danger-color);">-@qState.Question.PenaltyPoints XP</span>
+                                        </div>
                                     </div>
-                                }
-                                else
-                                {
-                                    <RadzenDataGrid Data="@completedUsers" TItem="UserScenarioProgressDto" AllowPaging="true" PageSize="10" Density="Density.Compact">
-                                        <Columns>
-                                            <RadzenDataGridColumn TItem="UserScenarioProgressDto" Title="Агент / Команда">
-                                                <Template Context="data">
-                                                    <div class="d-flex flex-column">
-                                                        @if (data.IsTeamAttempt)
-                                                        {
-                                                            <span style="color: var(--text-light); font-weight: bold;">Команда: @data.TeamName</span>
-                                                        }
-                                                        else
-                                                        {
-                                                            <span style="color: var(--text-light); font-weight: bold;">@data.UserName</span>
-                                                            <span style="color: var(--text-muted); font-size: 0.75rem;">@data.Email</span>
-                                                        }
-                                                    </div>
-                                                </Template>
-                                            </RadzenDataGridColumn>
-                                            <RadzenDataGridColumn TItem="UserScenarioProgressDto" Title="Статус" Width="140px" TextAlign="TextAlign.Center">
-                                                <Template Context="data">
-                                                    @if (data.Status == AttemptStatus.InProgress)
-                                                    {
-                                                        <span class="badge px-2 py-1" style="background: rgba(78,195,209,0.1); color: var(--accent-cyan); border: 1px solid var(--accent-cyan);">В ПРОЦЕССЕ</span>
-                                                    }
-                                                    else if (data.Status == AttemptStatus.Completed)
-                                                    {
 
-                                                        <span class="badge px-2 py-1" style="background: rgba(152,195,121,0.1); color: #98c379; border: 1px solid #98c379;">УСПЕХ</span>
-                                                    }
-                                                    else if (data.Status == AttemptStatus.Failed)
-                                                    {
+                                    <p style="font-size: 1rem; margin-bottom: 15px; color: #cbe0f5;">@qState.Question.Text</p>
 
-                                                        <span class="badge px-2 py-1" style="background: rgba(224,108,117,0.1); color: #e06c75; border: 1px solid #e06c75;">ПРОВАЛ</span>
-                                                    }
-                                                </Template>
-                                            </RadzenDataGridColumn>
-                                            <RadzenDataGridColumn TItem="UserScenarioProgressDto" Property="Score" Title="Баллы" Width="110px" TextAlign="TextAlign.Center">
-                                                <Template Context="data">
-                                                    <span style="color: var(--accent-cyan); font-weight: bold;">@data.Score XP</span>
-                                                </Template>
-                                            </RadzenDataGridColumn>
-                                            <RadzenDataGridColumn TItem="UserScenarioProgressDto" Title="Действия" Width="100px" TextAlign="TextAlign.Center">
-                                                <Template Context="data">
-                                                    <RadzenButton Icon="restart_alt" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.ExtraSmall" Variant="Variant.Outlined" Click="@(async () => await ResetSessionById(data.Id))" />
-                                                </Template>
-                                            </RadzenDataGridColumn>
-                                        </Columns>
-                                    </RadzenDataGrid>
-                                }
-                            </div>
-                        </RadzenTabsItem>
-                    </Authorized>
-                </AuthorizeView>
-            </Tabs>
-        </RadzenTabs>
+                                    <div class="d-flex gap-2 align-items-center">
+                                        <RadzenTextBox @bind-Value="@qState.UserAnswer" Disabled="@qState.IsCorrect" Placeholder="@(qState.IsCorrect ? "Ответ принят" : "Введите ваш ответ или флаг...")" class="w-100 dark-input" @onkeypress="@(async (e) => await HandleKeyPress(e, qState))" />
+                                        @if (!qState.IsCorrect)
+                                        {
+                                            <button class="btn-action" style="padding: 8px 16px; font-size: 0.85rem;" @onclick="@(async () => await CheckAnswer(qState))">ПРОВЕРИТЬ</button>
+                                        }
+                                        else
+                                        {
+                                            <RadzenIcon Icon="check_circle" Style="color: var(--success-color); font-size: 2rem;" />
+                                        }
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(qState.FeedbackMessage))
+                                    {
+                                        <div style="margin-top: 10px; font-size: 0.9rem; font-family: monospace; color: @(qState.IsCorrect ? "var(--success-color)" : "var(--danger-color)");">@qState.FeedbackMessage</div>
+                                    }
+                                </div>
+                            }
+                        }
+
+                        @* БЛОК АДМИНА НИЖЕ ЗАДАНИЙ *@
+                        <AuthorizeView Roles="Admin">
+                            <Authorized>
+                                <div class="mt-5 p-4" style="background: rgba(224, 108, 117, 0.02); border: 1px solid rgba(224, 108, 117, 0.2); border-radius: 8px;">
+                                    <div class="d-flex justify-content-between align-items-center mb-4">
+                                        <h5 style="color: var(--danger-color); font-weight: bold; margin: 0;"><RadzenIcon Icon="monitor_heart" Style="vertical-align: middle; margin-right: 8px;" /> Мониторинг прохождений</h5>
+                                        <button class="btn-action" style="background: var(--danger-color); color: white; padding: 6px 16px; font-size: 0.8rem;" @onclick="ResetAllProgress">Сбросить ВСЕ</button>
+                                    </div>
+
+                                    @if (completedUsers == null || !completedUsers.Any())
+                                    {
+                                        <div class="text-center py-4" style="color: #8fa0b5;"><RadzenIcon Icon="cloud_off" Style="font-size: 2rem; color: var(--border-color);" /><br />Активных прохождений не обнаружено</div>
+                                    }
+                                    else
+                                    {
+                                        <RadzenDataGrid Data="@completedUsers" TItem="UserScenarioProgressDto" AllowPaging="true" PageSize="10" Density="Density.Compact">
+                                            <Columns>
+                                                <RadzenDataGridColumn TItem="UserScenarioProgressDto" Title="Агент / Команда">
+                                                    <Template Context="data">
+                                                        <div class="d-flex flex-column">
+                                                            @if (data.IsTeamAttempt)
+                                                            {
+                                                                <span style="color: #cbe0f5; font-weight: bold;">Команда: @data.TeamName</span>
+                                                            }
+                                                            else
+                                                            {
+
+                                                                <span style="color: #cbe0f5; font-weight: bold;">@data.UserName</span> <span style="color: #8fa0b5; font-size: 0.75rem;">@data.Email</span>
+                                                            }
+                                                        </div>
+                                                    </Template>
+                                                </RadzenDataGridColumn>
+                                                <RadzenDataGridColumn TItem="UserScenarioProgressDto" Title="Статус" Width="140px" TextAlign="TextAlign.Center">
+                                                    <Template Context="data">
+                                                        @if (data.Status == AttemptStatus.InProgress)
+                                                        {
+                                                            <span style="color: var(--accent-cyan); font-weight: bold;">В ПРОЦЕССЕ</span>
+                                                        }
+                                                        else if (data.Status == AttemptStatus.Completed)
+                                                        {
+
+                                                            <span style="color: var(--success-color); font-weight: bold;">УСПЕХ</span>
+                                                        }
+                                                        else if (data.Status == AttemptStatus.Failed)
+                                                        {
+
+                                                            <span style="color: var(--danger-color); font-weight: bold;">ПРОВАЛ</span>
+                                                        }
+                                                    </Template>
+                                                </RadzenDataGridColumn>
+                                                <RadzenDataGridColumn TItem="UserScenarioProgressDto" Property="Score" Title="Баллы" Width="110px" TextAlign="TextAlign.Center">
+                                                    <Template Context="data"><span style="color: var(--accent-cyan); font-weight: bold;">@data.Score XP</span></Template>
+                                                </RadzenDataGridColumn>
+                                                <RadzenDataGridColumn TItem="UserScenarioProgressDto" Title="Действия" Width="80px" TextAlign="TextAlign.Center">
+                                                    <Template Context="data">
+                                                        <button class="btn-zoom" style="color: #e5c07b; border-color: rgba(229, 192, 123, 0.3);" @onclick="@(async () => await ResetSessionById(data.Id))"><RadzenIcon Icon="restart_alt" /></button>
+                                                    </Template>
+                                                </RadzenDataGridColumn>
+                                            </Columns>
+                                        </RadzenDataGrid>
+                                    }
+                                </div>
+                            </Authorized>
+                        </AuthorizeView>
+
+                    </div>
+                }
+            </div>
+        </div>
     }
 </div>
 
@@ -399,21 +411,13 @@
     private List<UserScenarioProgressDto> completedUsers = new();
     private bool isAdmin = false;
     private string currentUserId = string.Empty;
-
     private Timer? _timer;
     private TimeSpan timeLeft = TimeSpan.Zero;
     private int totalScore = 0;
-
-    // --- ЛОГИКА ДЛЯ XML СХЕМЫ ---
     private bool isXmlSchema = false;
     private string schemaXmlContent = string.Empty;
     private bool isViewerLoaded = false;
-
-    // Свойства для масштабирования картинок
     private double schemaZoomLevel = 1.0;
-    private void ZoomIn() => schemaZoomLevel += 0.2;
-    private void ZoomOut() { if (schemaZoomLevel > 0.4) schemaZoomLevel -= 0.2; }
-    private void ResetZoom() => schemaZoomLevel = 1.0;
 
     public class UserQuestionState
     {
@@ -422,271 +426,105 @@
         public bool IsCorrect { get; set; } = false;
         public string FeedbackMessage { get; set; } = string.Empty;
         public int FailedAttempts { get; set; } = 0;
-
         public int CurrentAward => Math.Max(0, Question.AwardPoints - (FailedAttempts * Question.PenaltyPoints));
     }
 
     private List<UserQuestionState> questionStates = new();
 
+    private void ZoomIn() => schemaZoomLevel += 0.2;
+    private void ZoomOut() { if (schemaZoomLevel > 0.4) schemaZoomLevel -= 0.2; }
+    private void ResetZoom() => schemaZoomLevel = 1.0;
+
     protected override async Task OnInitializedAsync()
     {
         scenario = await ScenarioService.GetByIdAsync(Id);
-        if (scenario == null)
-        {
-            NavigationManager.NavigateTo("scenario");
-            return;
-        }
-
+        if (scenario == null) { NavigationManager.NavigateTo("/scenario"); return; }
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
         if (user.Identity?.IsAuthenticated == true)
         {
             currentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
             isAdmin = user.IsInRole("Admin");
-
             await LoadUserState();
             if (isAdmin) await LoadAdminData();
         }
-
         SessionManager.TeamProgressChanged += OnTeamProgressChanged;
     }
 
-    // --- ОТРИСОВКА JS ДЛЯ XML ---
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // Вызываем новый безопасный инициализатор iframe
         if (isXmlSchema && !string.IsNullOrEmpty(schemaXmlContent) && !isViewerLoaded)
         {
-            try
-            {
-                // Передаем ID фрейма "drawio-workspace-iframe" вместо старого контейнера
-                await JSRuntime.InvokeVoidAsync("setupDrawIoViewer", "drawio-workspace-iframe", schemaXmlContent);
-                isViewerLoaded = true;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Ошибка инициализации Draw.io: {ex.Message}");
-            }
+            try { await JSRuntime.InvokeVoidAsync("setupDrawIoViewer", "drawio-workspace-iframe", schemaXmlContent); isViewerLoaded = true; }
+            catch (Exception ex) { Console.WriteLine($"Ошибка инициализации Draw.io: {ex.Message}"); }
         }
     }
 
     private async Task LoadUserState()
     {
-        currentUserProgress = await ScenarioService.GetUserProgressAsync(currentUserId, scenario!.Id)
-                              ?? new UserScenarioProgress { Status = AttemptStatus.NotStarted };
-
+        currentUserProgress = await ScenarioService.GetUserProgressAsync(currentUserId, scenario!.Id) ?? new UserScenarioProgress { Status = AttemptStatus.NotStarted };
         totalScore = currentUserProgress.Score;
 
-        // --- ИСПРАВЛЕННОЕ ЧТЕНИЕ ФАЙЛА С ДИСКА СЕРВЕРА ---
-        if (!string.IsNullOrEmpty(scenario.SchemaPath) &&
-           (scenario.SchemaPath.EndsWith(".xml", StringComparison.OrdinalIgnoreCase) ||
-            scenario.SchemaPath.EndsWith(".drawio", StringComparison.OrdinalIgnoreCase) ||
-            scenario.SchemaPath.EndsWith(".drawioa", StringComparison.OrdinalIgnoreCase)))
+        if (!string.IsNullOrEmpty(scenario.SchemaPath) && (scenario.SchemaPath.EndsWith(".xml", StringComparison.OrdinalIgnoreCase) || scenario.SchemaPath.EndsWith(".drawio", StringComparison.OrdinalIgnoreCase) || scenario.SchemaPath.EndsWith(".drawioa", StringComparison.OrdinalIgnoreCase)))
         {
             isXmlSchema = true;
-            try
-            {
-                var filePath = Path.Combine(Env.WebRootPath, scenario.SchemaPath.TrimStart('/'));
-                if (System.IO.File.Exists(filePath))
-                {
-                    schemaXmlContent = await System.IO.File.ReadAllTextAsync(filePath);
-                }
-            }
-            catch { /* Игнорируем ошибку чтения */ }
+            try { var filePath = Path.Combine(Env.WebRootPath, scenario.SchemaPath.TrimStart('/')); if (System.IO.File.Exists(filePath)) schemaXmlContent = await System.IO.File.ReadAllTextAsync(filePath); }
+            catch { }
         }
-
-        if (scenario.Questions != null && questionStates.Count == 0)
-        {
-            questionStates = scenario.Questions.Select(q => new UserQuestionState { Question = q }).ToList();
-        }
+        if (scenario.Questions != null && questionStates.Count == 0) questionStates = scenario.Questions.Select(q => new UserQuestionState { Question = q }).ToList();
 
         if (currentUserProgress.Id != 0)
         {
             var statesDb = await ScenarioService.GetUserQuestionStatesAsync(currentUserProgress.Id);
-            foreach (var qState in questionStates)
-            {
-                if (statesDb.TryGetValue(qState.Question.Id, out var dbInfo))
-                {
-                    qState.IsCorrect = dbInfo.IsCorrect;
-                    qState.FailedAttempts = dbInfo.FailedAttempts;
-                }
-            }
+            foreach (var qState in questionStates) { if (statesDb.TryGetValue(qState.Question.Id, out var dbInfo)) { qState.IsCorrect = dbInfo.IsCorrect; qState.FailedAttempts = dbInfo.FailedAttempts; } }
         }
-
-        if (currentUserProgress.Status == AttemptStatus.InProgress)
-        {
-            CheckTime();
-            StartTimer();
-        }
+        if (currentUserProgress.Status == AttemptStatus.InProgress) { CheckTime(); StartTimer(); }
     }
 
-    /* ... ОСТАЛЬНЫЕ МЕТОДЫ (StartScenario, CheckAnswer, CompleteScenario и т.д.) ОСТАВЛЯЕМ БЕЗ ИЗМЕНЕНИЙ ИЗ ТВОЕГО КОДА ... */
+    private async void OnTeamProgressChanged(int teamId) { if (scenario?.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId == teamId) { await InvokeAsync(async () => { await LoadUserState(); StateHasChanged(); }); } }
 
-    private async void OnTeamProgressChanged(int teamId)
-    {
-        if (scenario?.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId == teamId)
-        {
-            await InvokeAsync(async () =>
-            {
-                await LoadUserState();
-                StateHasChanged();
-            });
-        }
-    }
-
-    private async Task StartScenario()
-    {
-        await ScenarioService.StartScenarioAsync(currentUserId, scenario!.Id, scenario.DurationInMinutes);
-        await LoadUserState();
-
-        if (scenario!.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId.HasValue)
-        {
-            SessionManager.NotifyTeamUpdate(scenario.TargetTeamId.Value);
-        }
-    }
+    private async Task StartScenario() { await ScenarioService.StartScenarioAsync(currentUserId, scenario!.Id, scenario.DurationInMinutes); await LoadUserState(); if (scenario!.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId.HasValue) SessionManager.NotifyTeamUpdate(scenario.TargetTeamId.Value); }
 
     private async Task CheckAnswer(UserQuestionState state)
     {
         if (string.IsNullOrWhiteSpace(state.UserAnswer) || currentUserProgress?.Status != AttemptStatus.InProgress) return;
         bool isRight = string.Equals(state.UserAnswer.Trim(), state.Question.CorrectAnswer.Trim(), StringComparison.OrdinalIgnoreCase);
+        var result = await ScenarioService.ProcessTeamAnswerAsync(currentUserProgress.Id, state.Question.Id, isRight, state.Question.AwardPoints, state.Question.PenaltyPoints);
 
-        var result = await ScenarioService.ProcessTeamAnswerAsync(
-            currentUserProgress.Id,
-            state.Question.Id,
-            isRight,
-            state.Question.AwardPoints,
-            state.Question.PenaltyPoints
-        );
-
-        if (!result.Success)
-        {
-            if (result.AlreadySolved)
-            {
-                state.FeedbackMessage = "Задание уже было решено!";
-                state.IsCorrect = true;
-            }
-            return;
-        }
-
+        if (!result.Success) { if (result.AlreadySolved) { state.FeedbackMessage = "Задание уже было решено!"; state.IsCorrect = true; } return; }
         totalScore = result.NewTotalScore;
+        if (isRight) { state.IsCorrect = true; state.FeedbackMessage = $"✓ Ответ принят! Начислено: +{result.EarnedPoints} XP."; }
+        else { state.FailedAttempts++; state.FeedbackMessage = $"❌ Отказ системы. Потенциальная награда за вопрос снижена."; }
 
-        if (isRight)
-        {
-            state.IsCorrect = true;
-            state.FeedbackMessage = $"✓ Флаг принят! Начислено: +{result.EarnedPoints} XP.";
-        }
-        else
-        {
-            state.FailedAttempts++;
-            state.FeedbackMessage = $"❌ Отказ системы. Потенциальная награда за вопрос снижена.";
-        }
-
-        if (scenario!.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId.HasValue)
-        {
-            SessionManager.NotifyTeamUpdate(scenario.TargetTeamId.Value);
-        }
+        if (scenario!.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId.HasValue) SessionManager.NotifyTeamUpdate(scenario.TargetTeamId.Value);
     }
 
-    private async Task CompleteScenario()
-    {
-        StopTimer();
-        if (currentUserProgress != null)
-        {
-            await ScenarioService.CompleteProgressByIdAsync(currentUserProgress.Id);
-        }
+    private async Task CompleteScenario() { StopTimer(); if (currentUserProgress != null) await ScenarioService.CompleteProgressByIdAsync(currentUserProgress.Id); await LoadUserState(); NotificationService.Notify(NotificationSeverity.Success, "Успех", $"Сценарий завершен. Итоговый счет: {totalScore}"); if (scenario!.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId.HasValue) SessionManager.NotifyTeamUpdate(scenario.TargetTeamId.Value); }
 
-        await LoadUserState();
-        NotificationService.Notify(NotificationSeverity.Success, "Успех", $"Сценарий завершен. Итоговый счет: {totalScore}");
-        if (scenario!.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId.HasValue)
-        {
-            SessionManager.NotifyTeamUpdate(scenario.TargetTeamId.Value);
-        }
-    }
-
-    private async Task HandleKeyPress(KeyboardEventArgs e, UserQuestionState state)
-    {
-        if (e.Key == "Enter") await CheckAnswer(state);
-    }
+    private async Task HandleKeyPress(KeyboardEventArgs e, UserQuestionState state) { if (e.Key == "Enter") await CheckAnswer(state); }
 
     private async void TimerTick(object? state)
     {
         if (currentUserProgress?.TargetEndTime != null)
         {
             timeLeft = currentUserProgress.TargetEndTime.Value - DateTime.UtcNow;
-            if (timeLeft.TotalSeconds <= 0)
-            {
-                StopTimer();
-                await ScenarioService.FailUserProgressAsync(currentUserId, scenario!.Id);
-                await InvokeAsync(LoadUserState);
-                await InvokeAsync(StateHasChanged);
-
-                if (scenario!.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId.HasValue)
-                {
-                    SessionManager.NotifyTeamUpdate(scenario.TargetTeamId.Value);
-                }
-            }
-            else
-            {
-                await InvokeAsync(StateHasChanged);
-            }
+            if (timeLeft.TotalSeconds <= 0) { StopTimer(); await ScenarioService.FailUserProgressAsync(currentUserId, scenario!.Id); await InvokeAsync(LoadUserState); await InvokeAsync(StateHasChanged); if (scenario!.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId.HasValue) SessionManager.NotifyTeamUpdate(scenario.TargetTeamId.Value); }
+            else await InvokeAsync(StateHasChanged);
         }
     }
 
-    private void StartTimer()
-    {
-        if (scenario!.DurationInMinutes > 0 && currentUserProgress?.TargetEndTime != null)
-        {
-            _timer?.Dispose();
-            _timer = new Timer(TimerTick, null, 0, 1000);
-        }
-    }
-
+    private void StartTimer() { if (scenario!.DurationInMinutes > 0 && currentUserProgress?.TargetEndTime != null) { _timer?.Dispose(); _timer = new Timer(TimerTick, null, 0, 1000); } }
     private void StopTimer() => _timer?.Dispose();
 
-    private void CheckTime()
-    {
-        if (currentUserProgress?.TargetEndTime != null && DateTime.UtcNow >= currentUserProgress.TargetEndTime.Value)
-        {
-            _ = ScenarioService.FailUserProgressAsync(currentUserId, scenario!.Id);
-            currentUserProgress.Status = AttemptStatus.Failed;
-        }
-    }
+    private void CheckTime() { if (currentUserProgress?.TargetEndTime != null && DateTime.UtcNow >= currentUserProgress.TargetEndTime.Value) { _ = ScenarioService.FailUserProgressAsync(currentUserId, scenario!.Id); currentUserProgress.Status = AttemptStatus.Failed; } }
 
-    private async Task RestartScenario()
-    {
-        await ScenarioService.ResetUserProgressAsync(currentUserId, scenario!.Id);
-        questionStates.ForEach(q => { q.IsCorrect = false; q.UserAnswer = ""; q.FeedbackMessage = ""; q.FailedAttempts = 0; });
-        await LoadUserState();
-        if (scenario!.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId.HasValue)
-        {
-            SessionManager.NotifyTeamUpdate(scenario.TargetTeamId.Value);
-        }
-    }
+    private async Task RestartScenario() { await ScenarioService.ResetUserProgressAsync(currentUserId, scenario!.Id); questionStates.ForEach(q => { q.IsCorrect = false; q.UserAnswer = ""; q.FeedbackMessage = ""; q.FailedAttempts = 0; }); await LoadUserState(); if (scenario!.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId.HasValue) SessionManager.NotifyTeamUpdate(scenario.TargetTeamId.Value); }
 
     private async Task LoadAdminData() => completedUsers = await ScenarioService.GetAllProgressForScenarioAsync(scenario!.Id);
 
-    private async Task ResetAllProgress()
-    {
-        await ScenarioService.ResetAllProgressForScenarioAsync(scenario!.Id);
-        await LoadAdminData();
-        if (!isAdmin) await LoadUserState();
-    }
+    private async Task ResetAllProgress() { await ScenarioService.ResetAllProgressForScenarioAsync(scenario!.Id); await LoadAdminData(); if (!isAdmin) await LoadUserState(); }
 
-    private async Task ResetSessionById(int progressId)
-    {
-        await ScenarioService.ResetProgressByIdAsync(progressId);
-        await LoadAdminData();
+    private async Task ResetSessionById(int progressId) { await ScenarioService.ResetProgressByIdAsync(progressId); await LoadAdminData(); if (currentUserProgress != null && currentUserProgress.Id == progressId) { StopTimer(); await LoadUserState(); } }
 
-        if (currentUserProgress != null && currentUserProgress.Id == progressId)
-        {
-            StopTimer();
-            await LoadUserState();
-        }
-    }
-
-    public void Dispose()
-    {
-        StopTimer();
-        SessionManager.TeamProgressChanged -= OnTeamProgressChanged;
-    }
+    public void Dispose() { StopTimer(); SessionManager.TeamProgressChanged -= OnTeamProgressChanged; }
 }

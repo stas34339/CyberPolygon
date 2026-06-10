@@ -21,6 +21,8 @@ builder.Services.AddScoped<TooltipService>();
 builder.Services.AddSingleton<ScenarioSessionManager>();
 builder.Services.AddScoped<ContextMenuService>();
 builder.Services.AddScoped<InstructionService>();
+builder.Services.AddScoped<TestService>();
+
 builder.Services.AddRadzenCookieThemeService(options =>
 {
     options.Name = "ApplicationTheme";
@@ -163,7 +165,7 @@ using (var scope = app.Services.CreateScope())
     }
 
     // 4. СОЗДАНИЕ ОБЫЧНОГО ПОЛЬЗОВАТЕЛЯ
-    string userEmail = "user@gmail.COM";
+    string userEmail = "user1@gmail.COM";
     var existingUser = await userManager.FindByEmailAsync(userEmail);
     if (existingUser == null)
     {

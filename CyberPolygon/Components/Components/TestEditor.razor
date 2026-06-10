@@ -1,0 +1,621 @@
+﻿@using CyberPolygon.Data
+@using Microsoft.EntityFrameworkCore
+@inject TestService TestService
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+@inject ApplicationDbContext DbContext
+
+<style>
+    :root {
+        --bg-main: #1e1e1e;
+        --bg-card: #1a2332;
+        --bg-input: #1a2332;
+        --text-muted: #8fa0b5;
+        --text-light: #cbe0f5;
+        --accent-blue: #5ba3e3;
+        --accent-cyan: #4ec3d1;
+        --accent-light-blue: #7ec8f8;
+        --border-color: #2a3a4a;
+        --success-color: #98c379;
+        --warning-color: #e5c07b;
+        --danger-color: #e06c75;
+    }
+
+    .editor-container {
+        background-color: var(--bg-main);
+        min-height: 100%;
+        color: var(--text-light);
+        padding: 20px;
+    }
+
+    /* Инпуты */
+    .dark-input,
+    .dark-input input,
+    .rz-textbox,
+    .rz-textbox input,
+    .rz-textarea,
+    .rz-textarea textarea,
+    .rz-dropdown,
+    .rz-dropdown input,
+    .rz-numeric,
+    .rz-numeric input,
+    .rz-html-editor,
+    .rz-html-editor-content {
+        background-color: var(--bg-input) !important;
+        border: 1px solid var(--border-color) !important;
+        color: var(--text-light) !important;
+        border-radius: 6px !important;
+    }
+
+        .dark-input:focus,
+        .rz-textbox:focus-within,
+        .rz-textarea:focus-within,
+        .rz-dropdown:focus-within,
+        .rz-numeric:focus-within {
+            border-color: var(--accent-cyan) !important;
+            box-shadow: 0 0 10px rgba(78, 195, 209, 0.15) !important;
+        }
+
+    /* Плейсхолдеры */
+    .rz-dropdown-label.rz-placeholder {
+        color: var(--text-muted) !important;
+    }
+
+    /* Выпадающий список */
+    .rz-dropdown-panel {
+        background-color: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 6px !important;
+    }
+
+    .rz-dropdown-items-wrapper {
+        background-color: var(--bg-card) !important;
+    }
+
+    .rz-dropdown-item {
+        color: var(--text-light) !important;
+    }
+
+        .rz-dropdown-item:hover,
+        .rz-dropdown-item.rz-state-highlight {
+            background-color: rgba(78, 195, 209, 0.1) !important;
+            color: var(--accent-cyan) !important;
+        }
+
+    /* Метки */
+    .cyber-label {
+        color: var(--accent-cyan) !important;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 6px;
+        display: block;
+        font-weight: 600;
+    }
+
+    .cyber-sub-label {
+        color: var(--accent-light-blue) !important;
+        font-size: 0.78rem;
+        margin-bottom: 4px;
+        display: block;
+        letter-spacing: 0.5px;
+    }
+
+    /* Переключатель */
+    .rz-switch {
+        background-color: var(--border-color) !important;
+    }
+
+    .rz-switch-checked {
+        background-color: var(--accent-cyan) !important;
+    }
+
+    /* Карточка вопроса */
+    .question-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 18px;
+        transition: all 0.2s;
+    }
+
+        .question-card:hover {
+            border-color: rgba(78, 195, 209, 0.3);
+        }
+
+    /* Табы */
+    .custom-tabs .rz-tabview-nav {
+        background: transparent !important;
+        border-bottom: 2px solid var(--border-color) !important;
+    }
+
+        .custom-tabs .rz-tabview-nav li.rz-tabview-selected a span {
+            color: var(--accent-cyan) !important;
+        }
+
+        .custom-tabs .rz-tabview-nav li:not(.rz-tabview-selected) a span {
+            color: var(--text-muted) !important;
+        }
+
+        .custom-tabs .rz-tabview-nav li a {
+            border-bottom: 2px solid transparent !important;
+        }
+
+        .custom-tabs .rz-tabview-nav li.rz-tabview-selected a {
+            border-bottom: 2px solid var(--accent-cyan) !important;
+        }
+
+    /* Бейджи */
+    .badge-info {
+        background: rgba(78, 195, 209, 0.1);
+        color: var(--accent-cyan);
+        border: 1px solid rgba(78, 195, 209, 0.3);
+        border-radius: 6px;
+        padding: 5px 12px;
+        font-size: 0.8rem;
+        margin-top: 20px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    /* Кнопки */
+    .btn-primary-gradient {
+        background: linear-gradient(135deg, #4ec3d1 0%, #5ba3e3 100%);
+        color: #1a1d21;
+        font-weight: bold;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-size: 0.9rem;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 15px rgba(78, 195, 209, 0.2);
+    }
+
+        .btn-primary-gradient:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 25px rgba(78, 195, 209, 0.4);
+            background: linear-gradient(135deg, #5fd4e0 0%, #6fb3f0 100%);
+        }
+
+    .btn-outline-light {
+        background: transparent;
+        color: var(--text-light);
+        border: 1px solid var(--border-color);
+        padding: 10px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+        .btn-outline-light:hover {
+            border-color: var(--text-muted);
+            background: rgba(143, 160, 181, 0.1);
+        }
+
+    .btn-add {
+        background: rgba(91, 163, 227, 0.15);
+        color: var(--accent-blue);
+        border: 1px solid rgba(91, 163, 227, 0.3);
+        padding: 8px 18px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+        .btn-add:hover {
+            background: rgba(91, 163, 227, 0.25);
+            border-color: var(--accent-blue);
+        }
+
+    .btn-delete-icon {
+        background: transparent;
+        color: var(--danger-color);
+        border: 1px solid rgba(224, 108, 117, 0.3);
+        border-radius: 6px;
+        padding: 5px 10px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+        .btn-delete-icon:hover {
+            background: rgba(224, 108, 117, 0.1);
+            border-color: var(--danger-color);
+        }
+
+    .btn-option-delete {
+        background: transparent;
+        color: var(--danger-color);
+        border: 1px solid rgba(224, 108, 117, 0.2);
+        border-radius: 4px;
+        padding: 4px 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.8rem;
+    }
+
+        .btn-option-delete:hover {
+            background: rgba(224, 108, 117, 0.1);
+            border-color: rgba(224, 108, 117, 0.4);
+        }
+
+    /* Разделители */
+    .divider {
+        border-color: var(--border-color) !important;
+    }
+
+    /* Блок с dashed border */
+    .dashed-block {
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px dashed var(--border-color);
+        border-radius: 6px;
+        padding: 18px;
+    }
+
+    /* Блок предупреждения */
+    .warning-block {
+        border: 2px dashed rgba(224, 108, 117, 0.4);
+        border-radius: 8px;
+        background: rgba(224, 108, 117, 0.05);
+        text-align: center;
+        padding: 30px 20px;
+    }
+
+    /* Файловый инпут */
+    .file-input {
+        background-color: var(--bg-input) !important;
+        border: 1px solid var(--border-color) !important;
+        color: var(--text-light) !important;
+        border-radius: 6px !important;
+        padding: 6px 12px;
+        height: 37px;
+    }
+
+    .success-border {
+        border-color: var(--success-color) !important;
+    }
+
+    /* Скроллбар */
+    ::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: var(--bg-main);
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 3px;
+    }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+</style>
+
+<div class="editor-container">
+    <RadzenTemplateForm TItem="CyberTest" Data="@Item" Submit="@OnSave">
+        <RadzenTabs class="w-100 custom-tabs">
+            <Tabs>
+                <RadzenTabsItem Text="Основная информация" Icon="settings">
+                    <div class="row" style="padding-right: 10px;">
+                        <div class="col-md-9 mb-3">
+                            <label class="cyber-label">Название теста</label>
+                            <RadzenTextBox @bind-Value="@Item.Title" class="w-100 dark-input" Placeholder="Введите название теста..." />
+                        </div>
+                        <div class="col-md-3 mb-3 d-flex flex-column justify-content-end">
+                            <label class="cyber-label">Опубликован</label>
+                            <div class="d-flex align-items-center" style="height: 37px;">
+                                <RadzenSwitch @bind-Value="@Item.IsVisible" />
+                            </div>
+                        </div>
+
+                        <div class="col-12 mb-3">
+                            <label class="cyber-label">Краткое описание (для карточки)</label>
+                            <RadzenTextArea @bind-Value="@Item.ShortDescription" class="w-100 dark-input" Rows="2" Placeholder="Краткое описание теста..." />
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label class="cyber-label">Сложность</label>
+                            <RadzenDropDown @bind-Value="@Item.Difficulty" TValue="TestDifficulty" Data="@(Enum.GetValues(typeof(TestDifficulty)))" class="w-100 dark-input">
+                                <Template Context="diff">
+                                    @{
+                                        var difficulty = (TestDifficulty)diff;
+                                        switch (difficulty)
+                                        {
+                                            case TestDifficulty.Easy:
+                                                <span style="color: #7ec8f8;">Легкий</span>
+                                                break;
+                                            case TestDifficulty.Medium:
+                                                <span style="color: #5ba3e3;">Средний</span>
+                                                break;
+                                            case TestDifficulty.Hard:
+                                                <span style="color: #4ec3d1;">Сложный</span>
+                                                break;
+                                            default:
+                                                <span>@difficulty.ToString()</span>
+                                                break;
+                                        }
+                                    }
+                                </Template>
+                            </RadzenDropDown>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="cyber-label">Лимит времени (мин)</label>
+                            <RadzenNumeric @bind-Value="@Item.DurationInMinutes" Min="0" Max="360" class="w-100 dark-input" Placeholder="0" />
+                            <span style="font-size: 0.7rem; color: var(--text-muted); display: block; margin-top: 3px;">0 — без ограничений</span>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="cyber-label">Доступ</label>
+                            <RadzenDropDown @bind-Value="@Item.Scope" TValue="VisibilityScope" Data="@(Enum.GetValues(typeof(VisibilityScope)))" class="w-100 dark-input" Change="@OnScopeChanged">
+                                <Template Context="scope">
+                                    @{
+                                        var visibility = (VisibilityScope)scope;
+                                        switch (visibility)
+                                        {
+                                            case VisibilityScope.Public:
+                                                <span style="color: #98c379;">Всем (Публично)</span>
+                                                break;
+                                            case VisibilityScope.GroupOnly:
+                                                <span style="color: #4ec3d1;">Только группе</span>
+                                                break;
+                                            case VisibilityScope.TeamOnly:
+                                                <span style="color: #e5c07b;">Только команде</span>
+                                                break;
+                                            default:
+                                                <span>@visibility.ToString()</span>
+                                                break;
+                                        }
+                                    }
+                                </Template>
+                            </RadzenDropDown>
+                        </div>
+
+                        @if (Item.Scope == VisibilityScope.GroupOnly)
+                        {
+                            <div class="col-12 mb-3">
+                                <label class="cyber-label">Выберите учебную группу</label>
+                                <RadzenDropDown @bind-Value="@Item.TargetGroupId" TValue="int?" Data="@groups" ValueProperty="Id" TextProperty="Name"
+                                                class="w-100 dark-input" Placeholder="Укажите группу из базы..." />
+                            </div>
+                        }
+                        else if (Item.Scope == VisibilityScope.TeamOnly)
+                        {
+                            <div class="col-12 mb-3">
+                                <label class="cyber-label">Выберите команду</label>
+                                <RadzenDropDown @bind-Value="@Item.TargetTeamId" TValue="int?" Data="@teams" ValueProperty="Id" TextProperty="Name"
+                                                class="w-100 dark-input" Placeholder="Укажите команду из базы..." />
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="col-12 mb-3">
+                                <div class="badge-info">
+                                    <RadzenIcon Icon="info" style="font-size: 1rem;" />
+                                    Тест будет доступен в общем списке для всех пользователей.
+                                </div>
+                            </div>
+                        }
+
+                        <div class="col-12 mb-3">
+                            <label class="cyber-label">Полное описание</label>
+                            <RadzenHtmlEditor @bind-Value="@Item.FullDescription" style="height: 220px;" class="dark-input" />
+                        </div>
+                    </div>
+                </RadzenTabsItem>
+
+                <RadzenTabsItem Text="Вопросы" Icon="quiz">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 style="color: var(--accent-cyan); margin:0; font-weight: 600; letter-spacing: 1px;">Задания</h5>
+                        <button type="button" class="btn-add" @onclick="AddQuestion">
+                            <RadzenIcon Icon="add" /> Добавить вопрос
+                        </button>
+                    </div>
+
+                    @if (!Item.Questions.Any())
+                    {
+                        <div class="warning-block">
+                            <RadzenIcon Icon="warning" style="color: #e06c75; font-size: 2.5rem; margin-bottom: 12px;" />
+                            <p style="color: #e06c75; margin: 0; font-size: 1rem; font-weight: 600;">
+                                Внимание: Не добавлено ни одного вопроса.
+                            </p>
+                            <p style="color: var(--text-muted); margin: 8px 0 0 0; font-size: 0.85rem;">
+                                Сохранение теста заблокировано до добавления минимум одного задания.
+                            </p>
+                        </div>
+                    }
+
+                    @foreach (var q in Item.Questions)
+                    {
+                        var qIndex = Item.Questions.IndexOf(q);
+                        <div class="question-card">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span style="color: var(--accent-cyan); font-weight: bold; font-size: 0.95rem; letter-spacing: 0.5px;">ВОПРОС №@(qIndex + 1)</span>
+                                <button type="button" class="btn-delete-icon" @onclick="@(() => Item.Questions.Remove(q))">
+                                    <RadzenIcon Icon="delete" />
+                                </button>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-9">
+                                    <label class="cyber-sub-label">Текст вопроса</label>
+                                    <RadzenTextBox @bind-Value="@q.Text" class="w-100 dark-input" Placeholder="Введите текст вопроса..." />
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="cyber-sub-label">Тип</label>
+                                    <RadzenDropDown @bind-Value="@q.Type" TValue="QuestionType" Data="@(Enum.GetValues(typeof(QuestionType)))" class="w-100 dark-input">
+                                        <Template Context="type">
+                                            @{
+                                                var questionType = (QuestionType)type;
+                                                switch (questionType)
+                                                {
+                                                    case QuestionType.ManualText:
+                                                        <span style="color: #98c379;">Ручной ввод</span>
+                                                        break;
+                                                    case QuestionType.MultipleChoice:
+                                                        <span style="color: #7ec8f8;">Множественный выбор</span>
+                                                        break;
+                                                    case QuestionType.SingleChoice:
+                                                        <span style="color: #e5c07b;">Одиночный выбор</span>
+                                                        break;
+                                                    default:
+                                                        <span>@questionType.ToString()</span>
+                                                        break;
+                                                }
+                                            }
+                                        </Template>
+                                    </RadzenDropDown>
+                                </div>
+                            </div>
+
+                            <div class="dashed-block">
+                                @if (q.Type == QuestionType.ManualText)
+                                {
+                                    <label class="cyber-label" style="font-size:0.75rem; color: var(--success-color) !important;">Правильный ответ (Флаг)</label>
+                                    <RadzenTextBox @bind-Value="@q.CorrectTextAnswer" class="w-100 dark-input success-border" Placeholder="Введите правильный ответ..." />
+                                }
+                                else
+                                {
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <span style="font-size: 0.8rem; color: var(--text-muted);">Варианты ответов:</span>
+                                        <button type="button" class="btn-add" style="font-size: 0.75rem; padding: 4px 12px;" @onclick="@(() => q.Options.Add(new TestOption()))">
+                                            <RadzenIcon Icon="add" /> Вариант
+                                        </button>
+                                    </div>
+                                    @foreach (var opt in q.Options)
+                                    {
+                                        <div class="d-flex align-items-center gap-2 mb-2">
+                                            <RadzenCheckBox @bind-Value="@opt.IsCorrect" TValue="bool" />
+                                            <RadzenTextBox @bind-Value="@opt.Text" class="w-100 dark-input" Placeholder="Текст варианта..." />
+                                            <button type="button" class="btn-option-delete" @onclick="@(() => q.Options.Remove(opt))">
+                                                <RadzenIcon Icon="close" />
+                                            </button>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    }
+                </RadzenTabsItem>
+
+                <RadzenTabsItem Text="Документы" Icon="description">
+                    <div class="mb-3">
+                        <button type="button" class="btn-add" @onclick="@(() => Item.Documents.Add(new TestDocument()))">
+                            <RadzenIcon Icon="add" /> Добавить инструкцию
+                        </button>
+                    </div>
+
+                    @foreach (var doc in Item.Documents)
+                    {
+                        <div class="d-flex gap-3 mb-3 p-3 align-items-center" style="border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-card);">
+                            <RadzenTextBox @bind-Value="@doc.Title" Placeholder="Название файла" class="dark-input" style="flex: 1;" />
+                            <InputFile OnChange="@(async e => await UploadDocAsync(e, doc))" class="file-input" style="flex: 1;" />
+                            <button type="button" class="btn-delete-icon" @onclick="@(() => Item.Documents.Remove(doc))">
+                                <RadzenIcon Icon="delete" />
+                            </button>
+                        </div>
+                    }
+                </RadzenTabsItem>
+            </Tabs>
+        </RadzenTabs>
+
+        <div class="mt-4 d-flex justify-content-end gap-3 pt-3 divider" style="border-top: 1px solid var(--border-color);">
+            <button type="button" class="btn-outline-light" @onclick="@(() => DialogService.Close(false))">Отмена</button>
+            <button type="submit" class="btn-primary-gradient">Сохранить тест</button>
+        </div>
+    </RadzenTemplateForm>
+</div>
+
+@code {
+    [Parameter] public CyberTest Item { get; set; } = new();
+
+    private IEnumerable<UserGroup> groups = new List<UserGroup>();
+    private IEnumerable<UserTeam> teams = new List<UserTeam>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Item.Questions ??= new();
+        Item.Documents ??= new();
+
+        try
+        {
+            groups = await DbContext.UserGroups.AsNoTracking().ToListAsync();
+            teams = await DbContext.UserTeams.AsNoTracking().ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Ошибка БД",
+                Detail = "Не удалось загрузить списки групп или команд."
+            });
+        }
+    }
+
+    private void AddQuestion() => Item.Questions.Add(new TestQuestion { Type = QuestionType.ManualText, Options = new() });
+
+    private void OnScopeChanged()
+    {
+        if (Item.Scope == VisibilityScope.Public)
+        {
+            Item.TargetGroupId = null;
+            Item.TargetTeamId = null;
+        }
+        else if (Item.Scope == VisibilityScope.GroupOnly)
+        {
+            Item.TargetTeamId = null;
+        }
+        else if (Item.Scope == VisibilityScope.TeamOnly)
+        {
+            Item.TargetGroupId = null;
+        }
+    }
+
+    private async Task UploadDocAsync(InputFileChangeEventArgs e, TestDocument doc)
+    {
+        doc.FilePath = await TestService.UploadDocumentAsync(e.File);
+        if (string.IsNullOrWhiteSpace(doc.Title)) doc.Title = e.File.Name;
+    }
+
+    private async Task OnSave()
+    {
+        if (string.IsNullOrWhiteSpace(Item.Title))
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Ошибка", "Укажите название теста");
+            return;
+        }
+
+        if (Item.Questions == null || !Item.Questions.Any())
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Ошибка", "Добавьте хотя бы один вопрос перед сохранением");
+            return;
+        }
+
+        if (Item.Scope == VisibilityScope.GroupOnly && Item.TargetGroupId == null)
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Ошибка", "Выберите учебную группу для ограниченного доступа");
+            return;
+        }
+
+        if (Item.Scope == VisibilityScope.TeamOnly && Item.TargetTeamId == null)
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Ошибка", "Выберите команду для ограниченного доступа");
+            return;
+        }
+
+        await TestService.SaveAsync(Item);
+        DialogService.Close(true);
+    }
+}

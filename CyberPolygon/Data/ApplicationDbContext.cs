@@ -16,9 +16,14 @@ namespace CyberPolygon.Data
         // Добавь это свойство к остальным DbSet
         public DbSet<UserAnswerProgress> UserAnswerProgresses { get; set; }
         public DbSet<InstructionModel> Instructions { get; set; }
-        
 
-
+       // Добавление таблиц для тестов
+        public DbSet<CyberTest> CyberTests { get; set; }
+        public DbSet<TestQuestion> TestQuestions { get; set; }
+        public DbSet<TestOption> TestOptions { get; set; }
+        public DbSet<TestDocument> TestDocuments { get; set; }
+        public DbSet<UserTestProgress> UserTestProgresses { get; set; }
+        public DbSet<UserTestAnswer> UserTestAnswers { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
