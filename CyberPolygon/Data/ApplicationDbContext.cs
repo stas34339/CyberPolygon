@@ -52,6 +52,9 @@ namespace CyberPolygon.Data
 
             public bool IsCorrect { get; set; } = false;
             public int FailedAttempts { get; set; } = 0;
+
+            public string LastSubmittedAnswer { get; set; } = string.Empty;
+            public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
         }
 
     }

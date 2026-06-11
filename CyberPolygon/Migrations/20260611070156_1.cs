@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CyberPolygon.Migrations
 {
     /// <inheritdoc />
-    public partial class Initial : Migration
+    public partial class _1 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -97,7 +97,9 @@ namespace CyberPolygon.Migrations
                     UserScenarioProgressId = table.Column<int>(type: "integer", nullable: false),
                     QuestionId = table.Column<int>(type: "integer", nullable: false),
                     IsCorrect = table.Column<bool>(type: "boolean", nullable: false),
-                    FailedAttempts = table.Column<int>(type: "integer", nullable: false)
+                    FailedAttempts = table.Column<int>(type: "integer", nullable: false),
+                    LastSubmittedAnswer = table.Column<string>(type: "text", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {

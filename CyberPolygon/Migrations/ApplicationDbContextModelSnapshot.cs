@@ -51,8 +51,15 @@ namespace CyberPolygon.Migrations
                     b.Property<bool>("IsCorrect")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("LastSubmittedAnswer")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<int>("QuestionId")
                         .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("UserScenarioProgressId")
                         .HasColumnType("integer");

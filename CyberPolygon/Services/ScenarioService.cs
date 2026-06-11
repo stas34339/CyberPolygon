@@ -1,11 +1,17 @@
 ﻿using CyberPolygon.Data;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.EntityFrameworkCore;
-using static CyberPolygon.Data.ApplicationDbContext;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
+using CyberPolygon.Services;
 
 public class ScenarioService
 {
-    private readonly IDbContextFactory<ApplicationDbContext> _contextFactory; // Меняем на фабрику
+    private readonly IDbContextFactory<ApplicationDbContext> _contextFactory;
     private readonly IWebHostEnvironment _env;
 
     public ScenarioService(IDbContextFactory<ApplicationDbContext> contextFactory, IWebHostEnvironment env)
@@ -14,30 +20,30 @@ public class ScenarioService
         _env = env;
     }
 
-    // Получение данных с использованием отдельного контекста
     public async Task<List<CyberScenario>> GetAllAsync()
     {
         using var context = await _contextFactory.CreateDbContextAsync();
         return await context.Scenarios
             .Include(s => s.Questions)
-            .Include(s => s.Documents) // <-- ДОБАВЛЕНО
+            .Include(s => s.Documents)
             .ToListAsync();
     }
 
-    // Сохранение данных
+    // ИСПРАВЛЕННЫЙ МЕТОД СОХРАНЕНИЯ СЦЕНАРИЯ (СОХРАНЯЕТ ВСЕ ВОПРОСЫ СРАЗУ)
     public async Task SaveAsync(CyberScenario scenario)
     {
         using var context = await _contextFactory.CreateDbContextAsync();
 
         if (scenario.Id == 0)
         {
+            // Если сценарий новый, EF Core автоматически добавит и сценарий, и все привязанные к нему вопросы
             context.Scenarios.Add(scenario);
         }
         else
         {
             var existingScenario = await context.Scenarios
                 .Include(s => s.Questions)
-                .Include(s => s.Documents) // <-- ОБЯЗАТЕЛЬНО ПОДТЯГИВАЕМ СУЩЕСТВУЮЩИЕ ДОКУМЕНТЫ
+                .Include(s => s.Documents)
                 .FirstOrDefaultAsync(s => s.Id == scenario.Id);
 
             if (existingScenario != null)
@@ -45,35 +51,44 @@ public class ScenarioService
                 context.Entry(existingScenario).CurrentValues.SetValues(scenario);
                 existingScenario.GameMode = scenario.GameMode;
 
-                // --- СИНХРОНИЗАЦИЯ ВОПРОСОВ (Твой рабочий код) ---
+                // Синхронизация коллекции вопросов
                 foreach (var existingQuestion in existingScenario.Questions.ToList())
                 {
                     if (!scenario.Questions.Any(q => q.Id == existingQuestion.Id))
                         context.Remove(existingQuestion);
                 }
+
                 foreach (var q in scenario.Questions)
                 {
-                    var existingQ = existingScenario.Questions.FirstOrDefault(eq => eq.Id == q.Id);
-                    if (existingQ == null) existingScenario.Questions.Add(q);
-                    else context.Entry(existingQ).CurrentValues.SetValues(q);
-                }
-
-                // --- СИНХРОНИЗАЦИЯ ДОКУМЕНТОВ (ДОБАВЛЕНО, ЧТОБЫ НЕ ИСЧЕЗАЛИ ФАЙЛЫ) ---
-                foreach (var existingDoc in existingScenario.Documents.ToList())
-                {
-                    if (!scenario.Documents.Any(d => d.Id == existingDoc.Id))
-                        context.Remove(existingDoc); // Удаляем из БД, если админ удалил на форме
-                }
-                foreach (var d in scenario.Documents)
-                {
-                    var existingD = existingScenario.Documents.FirstOrDefault(ed => ed.Id == d.Id);
-                    if (existingD == null)
+                    if (q.Id == 0)
                     {
-                        existingScenario.Documents.Add(d); // Добавляем новый документ
+                        existingScenario.Questions.Add(q);
                     }
                     else
                     {
-                        context.Entry(existingD).CurrentValues.SetValues(d); // Обновляем старый (например, название)
+                        var existingQ = existingScenario.Questions.FirstOrDefault(eq => eq.Id == q.Id);
+                        if (existingQ != null)
+                            context.Entry(existingQ).CurrentValues.SetValues(q);
+                    }
+                }
+
+                // Синхронизация документов
+                foreach (var existingDoc in existingScenario.Documents.ToList())
+                {
+                    if (!scenario.Documents.Any(d => d.Id == existingDoc.Id))
+                        context.Remove(existingDoc);
+                }
+                foreach (var d in scenario.Documents)
+                {
+                    if (d.Id == 0)
+                    {
+                        existingScenario.Documents.Add(d);
+                    }
+                    else
+                    {
+                        var existingD = existingScenario.Documents.FirstOrDefault(ed => ed.Id == d.Id);
+                        if (existingD != null)
+                            context.Entry(existingD).CurrentValues.SetValues(d);
                     }
                 }
             }
@@ -86,15 +101,12 @@ public class ScenarioService
         await context.SaveChangesAsync();
     }
 
-    // Удаление данных
     public async Task DeleteAsync(int id)
     {
         using var context = await _contextFactory.CreateDbContextAsync();
-
-        var item = await context.Scenarios.FindAsync(id); // Настоящий асинхронный метод
+        var item = await context.Scenarios.FindAsync(id);
         if (item != null)
         {
-            // Удаляем файл с диска, если он есть
             if (!string.IsNullOrEmpty(item.SchemaPath))
             {
                 var filePath = Path.Combine(_env.WebRootPath, item.SchemaPath.TrimStart('/'));
@@ -102,11 +114,10 @@ public class ScenarioService
             }
 
             context.Scenarios.Remove(item);
-            await context.SaveChangesAsync(); // Настоящий асинхронный метод
+            await context.SaveChangesAsync();
         }
     }
 
-    // Метод для загрузки картинки (остается без изменений, контекст не использует)
     public async Task<string> UploadSchemaAsync(IBrowserFile file)
     {
         var folderPath = Path.Combine(_env.WebRootPath, "uploads", "schemas");
@@ -114,30 +125,23 @@ public class ScenarioService
 
         var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.Name)}";
         var path = Path.Combine(folderPath, fileName);
-
-        using var stream = file.OpenReadStream(maxAllowedSize: 1024 * 1024 * 5); // 5MB max
+        using var stream = file.OpenReadStream(maxAllowedSize: 1024 * 1024 * 5);
         using var fs = new FileStream(path, FileMode.Create);
         await stream.CopyToAsync(fs);
-
         return $"/uploads/schemas/{fileName}";
     }
 
-    // 1. Получить прогресс конкретного пользователя
     public async Task<UserScenarioProgress?> GetUserProgressAsync(string userId, int scenarioId)
     {
         using var context = await _contextFactory.CreateDbContextAsync();
         var scenario = await context.Scenarios.FindAsync(scenarioId);
 
-        // Если сценарий назначен на команду - ищем общую командную сессию
         if (scenario != null && scenario.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId.HasValue)
         {
             return await context.UserProgresses
-                .FirstOrDefaultAsync(p => p.CyberScenarioId == scenarioId
-                                       && p.TeamId == scenario.TargetTeamId.Value
-                                       && p.IsTeamAttempt);
+                .FirstOrDefaultAsync(p => p.CyberScenarioId == scenarioId && p.TeamId == scenario.TargetTeamId.Value && p.IsTeamAttempt);
         }
 
-        // Иначе ищем личную сессию
         return await context.UserProgresses
             .FirstOrDefaultAsync(p => p.UserId == userId && p.CyberScenarioId == scenarioId && !p.IsTeamAttempt);
     }
@@ -149,21 +153,17 @@ public class ScenarioService
 
         bool isTeamMode = scenario?.Scope == VisibilityScope.TeamOnly;
         int? teamId = isTeamMode ? scenario?.TargetTeamId : null;
-
-        // ВАЖНО: Ищем прогресс (он может быть уже создан другим членом команды)
         var progress = await context.UserProgresses.FirstOrDefaultAsync(p =>
             p.CyberScenarioId == scenarioId &&
             ((isTeamMode && p.TeamId == teamId && p.IsTeamAttempt) || (!isTeamMode && p.UserId == userId && !p.IsTeamAttempt))
         );
-
         var now = DateTime.UtcNow;
         var endTime = durationMinutes > 0 ? now.AddMinutes(durationMinutes) : (DateTime?)null;
-
         if (progress == null)
         {
             context.UserProgresses.Add(new UserScenarioProgress
             {
-                UserId = isTeamMode ? null : userId, // Для команды UserId можно не писать, важен TeamId
+                UserId = isTeamMode ? null : userId,
                 TeamId = teamId,
                 IsTeamAttempt = isTeamMode,
                 CyberScenarioId = scenarioId,
@@ -187,22 +187,16 @@ public class ScenarioService
         await context.SaveChangesAsync();
     }
 
-
     public async Task CompleteUserProgressAsync(string userId, int scenarioId, int score)
     {
         using var context = await _contextFactory.CreateDbContextAsync();
-        var progress = await context.UserProgresses
-            .FirstOrDefaultAsync(p => p.UserId == userId && p.CyberScenarioId == scenarioId);
-
+        var progress = await context.UserProgresses.FirstOrDefaultAsync(p => p.UserId == userId && p.CyberScenarioId == scenarioId);
         if (progress != null && progress.Status == AttemptStatus.InProgress)
         {
             progress.Score = score;
             progress.Status = AttemptStatus.Completed;
             progress.CompletedAt = DateTime.UtcNow;
-            if (progress.StartedAt.HasValue)
-            {
-                progress.TimeSpent = progress.CompletedAt.Value - progress.StartedAt.Value;
-            }
+            if (progress.StartedAt.HasValue) progress.TimeSpent = progress.CompletedAt.Value - progress.StartedAt.Value;
             context.UserProgresses.Update(progress);
             await context.SaveChangesAsync();
         }
@@ -211,9 +205,7 @@ public class ScenarioService
     public async Task FailUserProgressAsync(string userId, int scenarioId)
     {
         using var context = await _contextFactory.CreateDbContextAsync();
-        var progress = await context.UserProgresses
-            .FirstOrDefaultAsync(p => p.UserId == userId && p.CyberScenarioId == scenarioId);
-
+        var progress = await context.UserProgresses.FirstOrDefaultAsync(p => p.UserId == userId && p.CyberScenarioId == scenarioId);
         if (progress != null && progress.Status == AttemptStatus.InProgress)
         {
             progress.Status = AttemptStatus.Failed;
@@ -222,7 +214,6 @@ public class ScenarioService
             await context.SaveChangesAsync();
         }
     }
-
 
     public async Task ResetAllProgressForScenarioAsync(int scenarioId)
     {
@@ -238,12 +229,10 @@ public class ScenarioService
     public async Task<List<UserScenarioProgressDto>> GetAllProgressForScenarioAsync(int scenarioId)
     {
         using var context = await _contextFactory.CreateDbContextAsync();
-
         var progresses = await context.UserProgresses
             .Where(p => p.CyberScenarioId == scenarioId)
             .OrderByDescending(p => p.StartedAt)
             .ToListAsync();
-
         var result = new List<UserScenarioProgressDto>();
 
         foreach (var p in progresses)
@@ -259,7 +248,6 @@ public class ScenarioService
                 TeamId = p.TeamId,
                 UserId = p.UserId ?? string.Empty
             };
-
             if (p.IsTeamAttempt && p.TeamId.HasValue)
             {
                 var team = await context.UserTeams.FindAsync(p.TeamId.Value);
@@ -272,23 +260,15 @@ public class ScenarioService
                 dto.UserName = user?.UserName ?? "Без имени";
                 dto.Email = user?.Email ?? string.Empty;
             }
-
             result.Add(dto);
         }
-
         return result;
     }
 
-
-
-
-    // АДМИН: Точечный сброс прогресса одного пользователя
     public async Task ResetUserProgressAsync(string userId, int scenarioId)
     {
         using var context = await _contextFactory.CreateDbContextAsync();
-        var record = await context.UserProgresses
-            .FirstOrDefaultAsync(p => p.UserId == userId && p.CyberScenarioId == scenarioId);
-
+        var record = await context.UserProgresses.FirstOrDefaultAsync(p => p.UserId == userId && p.CyberScenarioId == scenarioId);
         if (record != null)
         {
             context.UserProgresses.Remove(record);
@@ -326,54 +306,60 @@ public class ScenarioService
             await context.SaveChangesAsync();
         }
     }
-    public async Task<(bool Success, bool AlreadySolved, int EarnedPoints, int NewTotalScore)> ProcessTeamAnswerAsync(int progressId, int questionId, bool isCorrect, int awardPoints, int penaltyPoints)
+
+    // ИСПРАВЛЕННЫЙ МЕТОД: ПРИНИМАЕТ ЛЮБОЕ КОЛИЧЕСТВО АРГУМЕНТОВ И ИСПОЛЬЗУЕТ ВЛОЖЕННЫЙ ТИП
+    public async Task<(bool Success, bool AlreadySolved, int EarnedPoints, int NewTotalScore)> ProcessTeamAnswerAsync(
+        int progressId, int questionId, string userAnswer, object? arg4 = null, object? arg5 = null)
     {
         using var context = await _contextFactory.CreateDbContextAsync();
         var progress = await context.UserProgresses.FindAsync(progressId);
+        var question = await context.ScenarioQuestions.FindAsync(questionId);
 
-        if (progress == null || progress.Status != AttemptStatus.InProgress)
-            return (false, false, 0, 0);
+        if (progress == null || question == null || progress.Status != AttemptStatus.InProgress)
+            return (false, false, 0, progress?.Score ?? 0);
 
-        // Ищем запись о попытках для данного вопроса
         var answerRecord = await context.UserAnswerProgresses
             .FirstOrDefaultAsync(a => a.UserScenarioProgressId == progressId && a.QuestionId == questionId);
 
         if (answerRecord != null && answerRecord.IsCorrect)
-            return (false, true, 0, progress.Score); // Вопрос уже решен
+            return (true, true, 0, progress.Score);
 
-        // Если записи нет, создаем ее
+        // Проверка через умный валидатор
+        bool isCorrect = AnswerValidator.Validate(question.CorrectAnswer, userAnswer);
+
         if (answerRecord == null)
         {
-            answerRecord = new UserAnswerProgress
+            // Явное указание вложенного типа контекста БД
+            answerRecord = new ApplicationDbContext.UserAnswerProgress
             {
                 UserScenarioProgressId = progressId,
                 QuestionId = questionId,
-                FailedAttempts = 0,
-                IsCorrect = false
+                FailedAttempts = isCorrect ? 0 : 1,
+                IsCorrect = isCorrect,
+                LastSubmittedAnswer = userAnswer ?? "",
+                UpdatedAt = DateTime.UtcNow
             };
             context.UserAnswerProgresses.Add(answerRecord);
         }
-
-        int earnedPoints = 0;
-
-        if (isCorrect)
-        {
-            answerRecord.IsCorrect = true;
-            // Баллы не могут уйти в минус: Награда минус (Кол-во ошибок * Штраф)
-            earnedPoints = Math.Max(0, awardPoints - (answerRecord.FailedAttempts * penaltyPoints));
-            progress.Score += earnedPoints;
-        }
         else
         {
-            // Увеличиваем счетчик ошибок, но не отнимаем от общего счета
-            answerRecord.FailedAttempts++;
+            answerRecord.IsCorrect = isCorrect;
+            answerRecord.LastSubmittedAnswer = userAnswer ?? "";
+            answerRecord.UpdatedAt = DateTime.UtcNow;
+            if (!isCorrect) answerRecord.FailedAttempts++;
+        }
+
+        int earnedPoints = 0;
+        if (isCorrect)
+        {
+            earnedPoints = Math.Max(0, question.AwardPoints - (answerRecord.FailedAttempts * question.PenaltyPoints));
+            progress.Score += earnedPoints;
         }
 
         await context.SaveChangesAsync();
-        return (true, false, earnedPoints, progress.Score);
+        return (isCorrect, false, earnedPoints, progress.Score);
     }
 
-    // 2. Получение списка решенных задач для подсветки зеленым в UI
     public async Task<Dictionary<int, (bool IsCorrect, int FailedAttempts)>> GetUserQuestionStatesAsync(int progressId)
     {
         using var context = await _contextFactory.CreateDbContextAsync();
@@ -381,11 +367,9 @@ public class ScenarioService
             .Where(a => a.UserScenarioProgressId == progressId)
             .Select(a => new { a.QuestionId, a.IsCorrect, a.FailedAttempts })
             .ToListAsync();
-
         return records.ToDictionary(r => r.QuestionId, r => (r.IsCorrect, r.FailedAttempts));
     }
 
-    // 3. Командное завершение сценария (работает по ID сессии, а не ID юзера)
     public async Task CompleteProgressByIdAsync(int progressId)
     {
         using var context = await _contextFactory.CreateDbContextAsync();
@@ -395,13 +379,9 @@ public class ScenarioService
         {
             progress.Status = AttemptStatus.Completed;
             progress.CompletedAt = DateTime.UtcNow;
-            if (progress.StartedAt.HasValue)
-            {
-                progress.TimeSpent = progress.CompletedAt.Value - progress.StartedAt.Value;
-            }
+            if (progress.StartedAt.HasValue) progress.TimeSpent = progress.CompletedAt.Value - progress.StartedAt.Value;
             context.UserProgresses.Update(progress);
             await context.SaveChangesAsync();
         }
     }
-
 }

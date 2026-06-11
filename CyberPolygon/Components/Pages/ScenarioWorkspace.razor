@@ -488,15 +488,40 @@
     private async Task CheckAnswer(UserQuestionState state)
     {
         if (string.IsNullOrWhiteSpace(state.UserAnswer) || currentUserProgress?.Status != AttemptStatus.InProgress) return;
-        bool isRight = string.Equals(state.UserAnswer.Trim(), state.Question.CorrectAnswer.Trim(), StringComparison.OrdinalIgnoreCase);
-        var result = await ScenarioService.ProcessTeamAnswerAsync(currentUserProgress.Id, state.Question.Id, isRight, state.Question.AwardPoints, state.Question.PenaltyPoints);
 
-        if (!result.Success) { if (result.AlreadySolved) { state.FeedbackMessage = "Задание уже было решено!"; state.IsCorrect = true; } return; }
+        // ИСПРАВЛЕННЫЙ ВЫЗОВ: Третьим аргументом идет строка state.UserAnswer,
+        // а старые аргументы (юзер и команда) просто уходят в конец как 4-й и 5-й параметры
+        var result = await ScenarioService.ProcessTeamAnswerAsync(
+            currentUserProgress.Id,
+            state.Question.Id,
+            state.UserAnswer, // <-- ТЕПЕРЬ ЗДЕСЬ СТРОКА (ОШИБКА ИСЧЕЗНЕТ)
+            currentUserId,
+            scenario!.TargetTeamId
+        );
+
+        if (!result.Success)
+        {
+            if (result.AlreadySolved)
+            {
+                state.FeedbackMessage = "Задание уже было решено!";
+                state.IsCorrect = true;
+            }
+            else
+            {
+                state.FailedAttempts++;
+                state.FeedbackMessage = $"❌ Отказ системы. Потенциальная награда за вопрос снижена.";
+            }
+            return;
+        }
+
         totalScore = result.NewTotalScore;
-        if (isRight) { state.IsCorrect = true; state.FeedbackMessage = $"✓ Ответ принят! Начислено: +{result.EarnedPoints} XP."; }
-        else { state.FailedAttempts++; state.FeedbackMessage = $"❌ Отказ системы. Потенциальная награда за вопрос снижена."; }
+        state.IsCorrect = true;
+        state.FeedbackMessage = $"✓ Флаг принят! Начислено: +{result.EarnedPoints} XP.";
 
-        if (scenario!.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId.HasValue) SessionManager.NotifyTeamUpdate(scenario.TargetTeamId.Value);
+        if (scenario!.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId.HasValue)
+        {
+            SessionManager.NotifyTeamUpdate(scenario.TargetTeamId.Value);
+        }
     }
 
     private async Task CompleteScenario() { StopTimer(); if (currentUserProgress != null) await ScenarioService.CompleteProgressByIdAsync(currentUserProgress.Id); await LoadUserState(); NotificationService.Notify(NotificationSeverity.Success, "Успех", $"Сценарий завершен. Итоговый счет: {totalScore}"); if (scenario!.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId.HasValue) SessionManager.NotifyTeamUpdate(scenario.TargetTeamId.Value); }
