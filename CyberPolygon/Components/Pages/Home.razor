@@ -668,7 +668,7 @@
                     .Include(u => u.Teams)
                     .FirstOrDefaultAsync(u => u.Id == userId);
 
-                UserDisplayName = dbUser?.Email ?? userClaims.Identity.Name ?? "Оперативник";
+                UserDisplayName = dbUser?.LastName + " " + dbUser?.FirstName ?? userClaims.Identity.Name ?? "Оперативник";
             }
         }
         else

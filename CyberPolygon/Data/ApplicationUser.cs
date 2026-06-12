@@ -15,7 +15,7 @@ namespace CyberPolygon.Data
         public string MiddleName { get; set; } = string.Empty;
 
         // Вычисляемое свойство для полного имени
-        public string FullName => $"{LastName} {FirstName} {MiddleName}".Trim();
+        public string FullName => $"{LastName} {FirstName}".Trim();
     }
 
 }

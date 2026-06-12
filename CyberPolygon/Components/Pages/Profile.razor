@@ -639,7 +639,7 @@
             <div class="user-info">
                 <RadzenIcon Icon="admin_panel_settings" Style="color: var(--accent-cyan); font-size: 3rem;" />
                 <div>
-                    <h3 class="user-name">@UserDisplayName</h3>
+                    <h3 class="user-name">@UserDisplayFullName</h3>
                     <div class="user-meta">
                         Подразделение: <span>@(user?.Group?.Name ?? "Не назначено")</span> |
                         Команда: <span>@(user?.Teams.Any() == true ? string.Join(", ", user.Teams.Select(t => t.Name)) : "Личное участие")</span>
@@ -708,7 +708,6 @@
                                     }
                                     else
                                     {
-
                                         <span style="color: var(--text-muted);">Одиночный</span>
                                     }
                                 </Template>
@@ -721,15 +720,12 @@
                                             <span class="status-badge-mini status-in-progress">В процессе</span>
                                             break;
                                         case AttemptStatus.Completed:
-
                                             <span class="status-badge-mini status-completed">Завершен</span>
                                             break;
                                         case AttemptStatus.Failed:
-
                                             <span class="status-badge-mini status-failed">Неудача</span>
                                             break;
                                         default:
-
                                             <span class="status-badge-mini" style="background: rgba(143,160,181,0.15); color: var(--text-muted); border: 1px solid var(--border-color);">@data.Status</span>
                                             break;
                                     }
@@ -778,15 +774,12 @@
                                             <span class="status-badge-mini status-in-progress">В процессе</span>
                                             break;
                                         case AttemptStatus.Completed:
-
                                             <span class="status-badge-mini status-completed">Завершен</span>
                                             break;
                                         case AttemptStatus.Failed:
-
                                             <span class="status-badge-mini status-failed">Неудача</span>
                                             break;
                                         default:
-
                                             <span class="status-badge-mini" style="background: rgba(143,160,181,0.15); color: var(--text-muted); border: 1px solid var(--border-color);">@data.Status</span>
                                             break;
                                     }
@@ -1010,8 +1003,8 @@
                                     }
                                     else
                                     {
-
-                                        <span style="color: var(--text-light);">👤 @(usersList.FirstOrDefault(u => u.Id == data.UserId)?.UserName ?? "Пользователь")</span>
+                                        var usr = usersList.FirstOrDefault(u => u.Id == data.UserId);
+                                        <span style="color: var(--text-light);">👤 @GetUserDisplayName(usr)</span>
                                     }
                                 </Template>
                             </RadzenDataGridColumn>
@@ -1068,7 +1061,9 @@
                     <RadzenDataGrid Data="@allTestProgressList" TItem="UserTestProgress" AllowPaging="true" PageSize="10">
                         <Columns>
                             <RadzenDataGridColumn TItem="UserTestProgress" Title="ПОЛЬЗОВАТЕЛЬ" Width="160px">
-                                <Template Context="data"><span style="color: var(--text-light);">👤 @(usersList.FirstOrDefault(u => u.Id == data.UserId)?.UserName ?? "Пользователь")</span></Template>
+                                <Template Context="data">
+                                    <span style="color: var(--text-light);">👤 @GetUserDisplayName(usersList.FirstOrDefault(u => u.Id == data.UserId))</span>
+                                </Template>
                             </RadzenDataGridColumn>
                             <RadzenDataGridColumn TItem="UserTestProgress" Title="ТЕСТ" Width="180px">
                                 <Template Context="data"><span style="color: var(--text-light); font-weight: 500;">@(data.Test?.Title ?? "—")</span></Template>
@@ -1140,7 +1135,9 @@
                 <h4 class="section-title"><RadzenIcon Icon="assignment_ind" /> Распределение оперативников</h4>
                 <RadzenDataGrid Data="@usersList" TItem="ApplicationUser" AllowPaging="true" PageSize="10">
                     <Columns>
-                        <RadzenDataGridColumn TItem="ApplicationUser" Property="UserName" Title="АГЕНТ" Width="160px" />
+                        <RadzenDataGridColumn TItem="ApplicationUser" Title="АГЕНТ" Width="160px">
+                            <Template Context="u"><span style="color: var(--text-light);">@GetUserDisplayName(u)</span></Template>
+                        </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="ApplicationUser" Title="ПОДРАЗДЕЛЕНИЕ" Width="220px"><Template Context="usr"><RadzenDropDown TValue="int?" Data="@groupsList" TextProperty="Name" ValueProperty="Id" Value="@usr.GroupId" Change="@(async (args) => await UpdateUserGroup(usr.Id, args != null ? (int?)Convert.ToInt32(args) : null))" Placeholder="Нет" AllowClear="true" style="width: 100%;" /></Template></RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="ApplicationUser" Title="КОМАНДЫ" Width="90px" TextAlign="TextAlign.Center"><Template Context="usr"><button class="btn-primary-gradient" style="font-size: 0.78rem; padding: 5px 10px;" @onclick="@(() => OpenTeamAssignmentModal(usr))"><RadzenIcon Icon="settings" style="font-size: 0.9rem;" /> Состав</button></Template></RadzenDataGridColumn>
                     </Columns>
@@ -1195,7 +1192,9 @@
                             <Template Context="u"><span style="color: var(--text-light);">@u.UserName</span></Template>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="ApplicationUser" Title="ФИО" Width="220px">
-                            <Template Context="u"><span style="color: var(--text-light);">@u.LastName @u.FirstName @u.MiddleName</span></Template>
+                            <Template Context="u">
+                                <span style="color: var(--text-light);">@GetUserDisplayName(u)</span>
+                            </Template>
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="ApplicationUser" Title="РОЛЬ" Width="120px" TextAlign="TextAlign.Center">
                             <Template Context="u">
@@ -1205,6 +1204,7 @@
                                 }
                                 else
                                 {
+
                                     <span style="color: var(--text-muted);">Пользователь</span>
                                 }
                             </Template>
@@ -1214,12 +1214,8 @@
                         </RadzenDataGridColumn>
                         <RadzenDataGridColumn TItem="ApplicationUser" Title="" Width="120px" TextAlign="TextAlign.Center">
                             <Template Context="u">
-                                <button class="btn-detail" style="margin-right: 6px;" @onclick="@(() => ToggleAdminRole(u.Id))">
-                                    <RadzenIcon Icon="swap_horiz" style="font-size: 0.9rem;" /> Роль
-                                </button>
-                                <button class="btn-icon-danger" @onclick="@(() => DeleteUser(u.Id))">
-                                    <RadzenIcon Icon="delete" style="font-size: 0.9rem;" />
-                                </button>
+                                <button class="btn-detail" style="margin-right: 6px;" @onclick="@(() => ToggleAdminRole(u.Id))"><RadzenIcon Icon="swap_horiz" style="font-size: 0.9rem;" /> Роль</button>
+                                <button class="btn-icon-danger" @onclick="@(() => DeleteUser(u.Id))"><RadzenIcon Icon="delete" style="font-size: 0.9rem;" /></button>
                             </Template>
                         </RadzenDataGridColumn>
                     </Columns>
@@ -1233,7 +1229,7 @@
 {
     <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); backdrop-filter: blur(6px); display: flex; justify-content: center; align-items: center; z-index: 9999;">
         <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; width: 500px; padding: 25px; box-shadow: 0 0 40px rgba(91, 163, 227, 0.2);">
-            <h4 style="color: var(--accent-light-blue); margin: 0 0 10px 0;">Команды: @selectedUserForTeams.UserName</h4>
+            <h4 style="color: var(--accent-light-blue); margin: 0 0 10px 0;">Команды: @GetUserDisplayName(selectedUserForTeams)</h4>
             <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px;">Назначьте агента в команды его подразделения.</p>
             @{
                 var availableTeams = selectedUserForTeams.GroupId != null ? teamsList.Where(t => t.GroupId == selectedUserForTeams.GroupId).ToList() : teamsList;
@@ -1257,7 +1253,7 @@
 @code {
     [Inject] private IDbContextFactory<ApplicationDbContext> ContextFactory { get; set; }
     private int activeTabIndex = 0; private bool isLoaded = false; private bool isAdmin = false;
-    private string UserDisplayName = "Загрузка..."; private ApplicationUser? user;
+    private ApplicationUser? user;
     private UserScenarioProgress? activeScenario = null; private int activeScenarioQuestionsSolved = 0; private int activeScenarioTotalQuestions = 0;
     private int totalScenarios = 0; private int soloScenarios = 0; private int teamScenarios = 0;
     private int completedScenariosCount = 0; private int totalAttemptsScenarios = 0; private int totalScenarioScore = 0; private string scenarioSuccessRate = "0";
@@ -1269,6 +1265,25 @@
     // Поля для управления пользователями
     private UserCreationModel newUserModel = new();
     private HashSet<string> adminUserIds = new();
+
+    // Отображение ФИО
+    private string UserDisplayFName => user?.FirstName ?? "";
+    private string UserDisplayLName => user?.LastName ?? "";
+    private string UserDisplayFullName
+    {
+        get
+        {
+            var name = $"{user?.LastName} {user?.FirstName}".Trim();
+            return string.IsNullOrWhiteSpace(name) ? (user?.UserName ?? "Оперативник") : name;
+        }
+    }
+
+    private string GetUserDisplayName(ApplicationUser? u)
+    {
+        if (u == null) return "Пользователь";
+        var name = $"{u.LastName} {u.FirstName} {u.MiddleName}".Trim();
+        return string.IsNullOrWhiteSpace(name) ? (u.UserName ?? "Пользователь") : name;
+    }
 
     public class TestAttemptDto { public string TestTitle { get; set; } = ""; public string Difficulty { get; set; } = ""; public string DifficultyText { get; set; } = ""; public AttemptStatus Status { get; set; } public DateTime? StartedAt { get; set; } public DateTime? CompletedAt { get; set; } public TimeSpan? TimeSpent { get; set; } public int CorrectAnswers { get; set; } public int TotalQuestions { get; set; } }
     public class TeamMemberDto { public string Id { get; set; } = ""; public string Name { get; set; } = ""; public int TotalScore { get; set; } }
@@ -1293,7 +1308,6 @@
     private async Task LoadBaseData()
     {
         var s = await AuthProvider.GetAuthenticationStateAsync(); var uid = s.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        UserDisplayName = s.User.Identity?.Name ?? "Оперативник";
         using var c = await ContextFactory.CreateDbContextAsync();
         if (!string.IsNullOrEmpty(uid))
         {
@@ -1311,7 +1325,7 @@
             totalCorrectAnswers = tps.Where(tp => tp.Status == AttemptStatus.Completed).Sum(tp => tp.Score); totalQuestionsAnswered = tps.Where(tp => tp.Status == AttemptStatus.Completed).Sum(tp => tp.Test?.Questions?.Count ?? 0);
             correctAnswersPercent = totalQuestionsAnswered > 0 ? ((int)Math.Round((double)totalCorrectAnswers / totalQuestionsAnswered * 100)).ToString() : "0";
             allTestAttempts = tps.Select(tp => new TestAttemptDto { TestTitle = tp.Test?.Title ?? "Тест", Difficulty = tp.Test?.Difficulty.ToString() ?? "", DifficultyText = tp.Test?.Difficulty switch { TestDifficulty.Easy => "Лёгкий", TestDifficulty.Medium => "Средний", TestDifficulty.Hard => "Сложный", _ => tp.Test?.Difficulty.ToString() ?? "" }, Status = tp.Status, StartedAt = tp.StartedAt, CompletedAt = tp.CompletedAt, TimeSpent = (tp.StartedAt.HasValue && tp.CompletedAt.HasValue) ? tp.CompletedAt.Value - tp.StartedAt.Value : null, CorrectAnswers = tp.Score, TotalQuestions = tp.Test?.Questions?.Count ?? 0 }).ToList();
-            if (user?.Teams.Any() == true) { var tid = user.Teams.First().Id; var tu = await c.Set<UserTeam>().Where(t => t.Id == tid).SelectMany(t => t.Users).ToListAsync(); myTeamMembers.Clear(); foreach (var u in tu) { var sc = await c.UserProgresses.Where(p => p.UserId == u.Id && p.Status == AttemptStatus.Completed).SumAsync(p => p.Score); myTeamMembers.Add(new TeamMemberDto { Id = u.Id, Name = u.UserName ?? "Агент", TotalScore = sc }); } myTeamMembers = myTeamMembers.OrderByDescending(m => m.TotalScore).ToList(); }
+            if (user?.Teams.Any() == true) { var tid = user.Teams.First().Id; var tu = await c.Set<UserTeam>().Where(t => t.Id == tid).SelectMany(t => t.Users).ToListAsync(); myTeamMembers.Clear(); foreach (var u in tu) { var sc = await c.UserProgresses.Where(p => p.UserId == u.Id && p.Status == AttemptStatus.Completed).SumAsync(p => p.Score); myTeamMembers.Add(new TeamMemberDto { Id = u.Id, Name = GetUserDisplayName(u), TotalScore = sc }); } myTeamMembers = myTeamMembers.OrderByDescending(m => m.TotalScore).ToList(); }
         }
         if (isAdmin)
         {
@@ -1340,7 +1354,7 @@
         if (selectedCategory == "Сценарии")
         {
             var uq = c.Set<ApplicationUser>().Include(u => u.Group).AsQueryable(); if (f) uq = uq.Where(u => u.GroupId == gid.Value); var au = await uq.ToListAsync(); topUsers.Clear(); int ms = 0;
-            foreach (var u in au) { var pl = await c.UserProgresses.Where(p => p.UserId == u.Id && p.Status == AttemptStatus.Completed && !p.IsTeamAttempt).ToListAsync(); var sc = pl.Sum(p => p.Score); if (sc > ms) ms = sc; if (sc > 0) topUsers.Add(new UserLeaderboardDto { Name = u.UserName ?? "Агент", GroupName = u.Group?.Name ?? "", Score = sc, CompletedCount = pl.Count, IsCurrentUser = u.Id == cuid }); }
+            foreach (var u in au) { var pl = await c.UserProgresses.Where(p => p.UserId == u.Id && p.Status == AttemptStatus.Completed && !p.IsTeamAttempt).ToListAsync(); var sc = pl.Sum(p => p.Score); if (sc > ms) ms = sc; if (sc > 0) topUsers.Add(new UserLeaderboardDto { Name = GetUserDisplayName(u), GroupName = u.Group?.Name ?? "", Score = sc, CompletedCount = pl.Count, IsCurrentUser = u.Id == cuid }); }
             topUsers = topUsers.OrderByDescending(u => u.Score).Take(15).ToList(); for (int i = 0; i < topUsers.Count; i++) { topUsers[i].Rank = i + 1; topUsers[i].Percentile = ms > 0 ? (int)Math.Round((double)topUsers[i].Score / ms * 100) : 0; }
             var tq = c.UserTeams.Include(t => t.Group).AsQueryable(); if (f) tq = tq.Where(t => t.GroupId == gid.Value); var at = await tq.ToListAsync(); topTeams.Clear(); ms = 0;
             var uti = user?.Teams?.Select(t => t.Id).ToList() ?? new List<int>();
@@ -1350,7 +1364,7 @@
         else
         {
             var uq = c.Set<ApplicationUser>().Include(u => u.Group).AsQueryable(); if (f) uq = uq.Where(u => u.GroupId == gid.Value); var au = await uq.ToListAsync(); topTestUsers.Clear();
-            foreach (var u in au) { var tps = await c.Set<UserTestProgress>().Include(tp => tp.Test).ThenInclude(t => t.Questions).Where(tp => tp.UserId == u.Id && tp.Status == AttemptStatus.Completed).ToListAsync(); if (tps.Any()) { double tpct = 0; foreach (var tp in tps) { int tq = tp.Test?.Questions?.Count ?? 0; if (tq > 0) tpct += (double)tp.Score / tq * 100; } topTestUsers.Add(new TestUserLeaderboardDto { Name = u.UserName ?? "Агент", GroupName = u.Group?.Name ?? "", AverageScore = (int)Math.Round(tpct / tps.Count), CompletedCount = tps.Count, IsCurrentUser = u.Id == cuid }); } }
+            foreach (var u in au) { var tps = await c.Set<UserTestProgress>().Include(tp => tp.Test).ThenInclude(t => t.Questions).Where(tp => tp.UserId == u.Id && tp.Status == AttemptStatus.Completed).ToListAsync(); if (tps.Any()) { double tpct = 0; foreach (var tp in tps) { int tq = tp.Test?.Questions?.Count ?? 0; if (tq > 0) tpct += (double)tp.Score / tq * 100; } topTestUsers.Add(new TestUserLeaderboardDto { Name = GetUserDisplayName(u), GroupName = u.Group?.Name ?? "", AverageScore = (int)Math.Round(tpct / tps.Count), CompletedCount = tps.Count, IsCurrentUser = u.Id == cuid }); } }
             topTestUsers = topTestUsers.OrderByDescending(u => u.AverageScore).ThenByDescending(u => u.CompletedCount).Take(15).ToList(); for (int i = 0; i < topTestUsers.Count; i++) topTestUsers[i].Rank = i + 1;
             var allt = await c.Set<CyberTest>().Where(t => t.IsVisible || isAdmin).ToListAsync(); var act = await c.Set<UserTestProgress>().Include(tp => tp.Test).ThenInclude(t => t.Questions).Where(tp => tp.Status == AttemptStatus.Completed).ToListAsync();
             testLeaderboardStats = new TestLeaderboardStats { TotalTests = allt.Count, TotalCompleted = act.Count, UniqueUsers = act.Select(tp => tp.UserId).Distinct().Count(), OverallAverage = act.Any() ? (int)Math.Round(act.Average(tp => { int tq = tp.Test?.Questions?.Count ?? 0; return tq > 0 ? (double)tp.Score / tq * 100 : 0; })) : 0 };
@@ -1368,7 +1382,6 @@
     private async Task ResetScenarioProgress(int id) { var ok = await DialogService.Confirm("Сбросить сессию?", "Сброс", new ConfirmOptions { OkButtonText = "Сбросить", CancelButtonText = "Отмена" }); if (ok == true) { using var c = await ContextFactory.CreateDbContextAsync(); var p = await c.UserProgresses.FindAsync(id); if (p != null) { c.UserProgresses.Remove(p); await c.SaveChangesAsync(); await LoadBaseData(); await UpdateLeaderboards(); } } }
     private async Task ResetTestProgress(int id) { var ok = await DialogService.Confirm("Сбросить сессию?", "Сброс", new ConfirmOptions { OkButtonText = "Сбросить", CancelButtonText = "Отмена" }); if (ok == true) { using var c = await ContextFactory.CreateDbContextAsync(); var p = await c.Set<UserTestProgress>().FindAsync(id); if (p != null) { c.Set<UserTestProgress>().Remove(p); await c.SaveChangesAsync(); await LoadBaseData(); await UpdateLeaderboards(); } } }
 
-    // Методы для управления пользователями
     private async Task CreateUser()
     {
         if (string.IsNullOrWhiteSpace(newUserModel.Login) || string.IsNullOrWhiteSpace(newUserModel.Password))
@@ -1376,19 +1389,16 @@
             NotificationService.Notify(NotificationSeverity.Warning, "Ошибка", "Логин и пароль обязательны");
             return;
         }
-
         if (newUserModel.Password.Length < 6)
         {
             NotificationService.Notify(NotificationSeverity.Warning, "Ошибка", "Пароль должен содержать минимум 6 символов");
             return;
         }
-
         var (success, error) = await UserManagementService.CreateUserAsync(
             newUserModel.Login, newUserModel.Password,
             newUserModel.FirstName, newUserModel.LastName, newUserModel.MiddleName,
             newUserModel.IsAdmin
         );
-
         if (success)
         {
             NotificationService.Notify(NotificationSeverity.Success, "Успех", $"Пользователь {newUserModel.Login} создан");
@@ -1408,7 +1418,6 @@
             NotificationService.Notify(NotificationSeverity.Warning, "Ошибка", "Нельзя удалить самого себя");
             return;
         }
-
         var ok = await DialogService.Confirm("Удалить пользователя навсегда? Это действие необратимо.", "Удаление пользователя", new ConfirmOptions { OkButtonText = "Удалить", CancelButtonText = "Отмена" });
         if (ok == true)
         {
@@ -1432,7 +1441,6 @@
             NotificationService.Notify(NotificationSeverity.Warning, "Ошибка", "Нельзя изменить свою роль");
             return;
         }
-
         await UserManagementService.ToggleAdminRoleAsync(userId);
         await LoadBaseData();
         NotificationService.Notify(NotificationSeverity.Success, "Успех", "Роль пользователя изменена");

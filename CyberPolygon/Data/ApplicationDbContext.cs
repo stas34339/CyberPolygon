@@ -1,4 +1,5 @@
 using CyberPolygon.Data.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -55,6 +56,13 @@ namespace CyberPolygon.Data
 
             public string LastSubmittedAnswer { get; set; } = string.Empty;
             public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        }
+        public class RussianIdentityErrorDescriber : IdentityErrorDescriber
+        {
+            public override IdentityError PasswordTooShort(int length) => new() { Code = nameof(PasswordTooShort), Description = $"Пароль должен содержать минимум {length} символов." };
+            public override IdentityError PasswordRequiresNonAlphanumeric() => new() { Code = nameof(PasswordRequiresNonAlphanumeric), Description = "Пароль должен содержать хотя бы один спецсимвол (например, !, @, #)." };
+            public override IdentityError PasswordRequiresUpper() => new() { Code = nameof(PasswordRequiresUpper), Description = "Пароль должен содержать хотя бы одну заглавную букву." };
+            public override IdentityError DuplicateUserName(string userName) => new() { Code = nameof(DuplicateUserName), Description = $"Пользователь '{userName}' уже существует." };
         }
 
     }

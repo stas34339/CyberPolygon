@@ -1,6 +1,7 @@
 ﻿using CyberPolygon.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace CyberPolygon.Services
 {
@@ -17,10 +18,11 @@ namespace CyberPolygon.Services
 
         public async Task<(bool Success, string Error)> CreateUserAsync(string login, string password, string firstName, string lastName, string middleName, bool isAdmin)
         {
+            string emailLogin = login.Contains("@") ? login : $"{login}@polygon.do";
             var user = new ApplicationUser
             {
-                UserName = login,
-                Email = login,
+                UserName = emailLogin,
+                Email = emailLogin,
                 FirstName = firstName,
                 LastName = lastName,
                 MiddleName = middleName,
@@ -78,5 +80,7 @@ namespace CyberPolygon.Services
                 .Include(u => u.Teams)
                 .ToListAsync();
         }
+       
+
     }
 }
