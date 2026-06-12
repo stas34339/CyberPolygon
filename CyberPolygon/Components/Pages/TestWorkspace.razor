@@ -171,12 +171,31 @@
         letter-spacing: 1.5px;
         text-transform: uppercase;
         box-shadow: 0 4px 15px rgba(78, 195, 209, 0.2);
+        margin-bottom: 10px;
     }
 
         .btn-primary-gradient:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 25px rgba(78, 195, 209, 0.4);
-            background: linear-gradient(135deg, #5fd4e0 0%, #6fb3f0 100%);
+        }
+
+    .btn-retry {
+        width: 100%;
+        background: linear-gradient(135deg, #e06c75 0%, #e06c75 100%);
+        color: white;
+        font-weight: bold;
+        border: none;
+        padding: 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-size: 0.85rem;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+
+        .btn-retry:hover {
+            box-shadow: 0 4px 15px rgba(224, 108, 117, 0.4);
         }
 
     .btn-outline-danger {
@@ -227,11 +246,10 @@
             font-weight: bold;
             margin: 0 0 10px 0;
             font-size: 1.1rem;
-            letter-spacing: 0.5px;
         }
 
         .result-box p {
-            margin: 0;
+            margin: 0 0 15px 0;
             color: var(--text-light);
             font-size: 0.95rem;
         }
@@ -308,24 +326,18 @@
         line-height: 1.5;
     }
 
-    /* Инпуты */
-    .dark-input,
-    .dark-input input,
-    .rz-textbox,
-    .rz-textbox input {
+    .dark-input, .dark-input input, .rz-textbox, .rz-textbox input {
         background-color: var(--bg-input) !important;
         border: 1px solid var(--border-color) !important;
         color: var(--text-light) !important;
         border-radius: 6px !important;
     }
 
-        .dark-input:focus,
-        .rz-textbox:focus-within {
+        .dark-input:focus, .rz-textbox:focus-within {
             border-color: var(--accent-cyan) !important;
             box-shadow: 0 0 10px rgba(78, 195, 209, 0.15) !important;
         }
 
-    /* Радиокнопки и Чекбоксы */
     .rz-radiobtn-box, .rz-chkbox-box {
         background-color: var(--bg-input) !important;
         border: 1px solid var(--border-color) !important;
@@ -363,7 +375,6 @@
         font-size: 0.8rem;
         letter-spacing: 1px;
         text-transform: uppercase;
-        box-shadow: 0 2px 10px rgba(78, 195, 209, 0.2);
     }
 
         .btn-submit-answer:hover {
@@ -371,7 +382,6 @@
             transform: translateY(-1px);
         }
 
-    /* Блюр зона */
     .blur-zone-wrapper {
         position: relative;
         border: 1px solid var(--border-color);
@@ -410,7 +420,6 @@
             text-transform: uppercase;
             margin: 15px 0 8px 0;
             font-size: 1.1rem;
-            letter-spacing: 1px;
         }
 
         .lock-center-panel p {
@@ -418,7 +427,6 @@
             font-size: 0.85rem;
             max-width: 80%;
             margin: 0;
-            line-height: 1.5;
         }
 
     .loading-container {
@@ -433,19 +441,13 @@
 <div class="workspace-container">
     @if (test == null || activeStates == null)
     {
-        <div class="loading-container">
-            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" Style="background-color: var(--border-color);" />
-        </div>
+        <div class="loading-container"><RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" /></div>
     }
     else
     {
         <div class="workspace-header">
-            <button class="btn-back" @onclick="@(() => NavigationManager.NavigateTo("/tests"))">
-                <RadzenIcon Icon="arrow_back" /> Назад
-            </button>
-            <div class="header-title">
-                <h2>@test.Title</h2>
-            </div>
+            <button class="btn-back" @onclick="@(() => NavigationManager.NavigateTo("/tests"))"><RadzenIcon Icon="arrow_back" /> Назад</button>
+            <div class="header-title"><h2>@test.Title</h2></div>
             @if (isTestStarted && !isTestFinished && test.DurationInMinutes > 0)
             {
                 <div class="timer-box">@timeLeft.ToString(@"hh\:mm\:ss")</div>
@@ -462,33 +464,26 @@
                         <div class="documents-label">Материалы</div>
                         @foreach (var doc in test.Documents)
                         {
-                            <a href="@doc.FilePath" target="_blank" class="document-link">
-                                <RadzenIcon Icon="description" /> @doc.Title
-                            </a>
+                            <a href="@doc.FilePath" target="_blank" class="document-link"><RadzenIcon Icon="description" /> @doc.Title</a>
                         }
                     </div>
                 }
 
                 @if (!isTestStarted)
                 {
-                    <button class="btn-primary-gradient" @onclick="StartTest">
-                        АКТИВИРОВАТЬ ТЕСТ
-                    </button>
+                    <button class="btn-primary-gradient" @onclick="StartTest">АКТИВИРОВАТЬ ТЕСТ</button>
                 }
                 else if (!isTestFinished)
                 {
-                    <div class="progress-info">
-                        Выполнено: <b>@correctCount / @test.Questions.Count</b>
-                    </div>
-                    <button class="btn-outline-danger" @onclick="FinishTestDialog">
-                        ЗАВЕРШИТЬ ТЕСТ
-                    </button>
+                    <div class="progress-info">Выполнено: <b>@correctCount / @test.Questions.Count</b></div>
+                    <button class="btn-outline-danger" @onclick="FinishTestDialog">ЗАВЕРШИТЬ ТЕСТ</button>
                 }
                 else
                 {
                     <div class="result-box">
                         <h4>ТЕСТ ЗАВЕРШЕН</h4>
                         <p>Результат: <span class="score">@correctCount</span> из <b>@test.Questions.Count</b></p>
+                        <button class="btn-retry" @onclick="RestartTest">ПРОЙТИ ПОВТОРНО</button>
                     </div>
                 }
             </div>
@@ -503,16 +498,7 @@
                             <p>Для просмотра вопросов запустите тест на левой панели управления.</p>
                         </div>
                         <div class="blur-overlay-content">
-                            <div class="question-block">
-                                <span class="question-number">ВОПРОС №1</span>
-                                <p class="question-text">Какая сетевая утилита предназначена для обнаружения активных хостов и сканирования портов безопасности?</p>
-                                <div style="width: 40%; height: 30px; background: var(--border-color); border-radius: 4px;"></div>
-                            </div>
-                            <div class="question-block">
-                                <span class="question-number">ВОПРОС №2</span>
-                                <p class="question-text">Опишите базовый алгоритм защиты от подделки межсайтовых запросов (CSRF) на сервере.</p>
-                                <div style="width: 100%; height: 40px; background: var(--border-color); border-radius: 4px;"></div>
-                            </div>
+                            <div class="question-block"><span class="question-number">ВОПРОС №1</span><p class="question-text">Пример вопроса...</p></div>
                         </div>
                     </div>
                 }
@@ -533,10 +519,9 @@
                                     </span>
                                 }
                             </div>
-
                             <p class="question-text">@state.Question.Text</p>
 
-                            @if (!state.IsAnswered)
+                            @if (!state.IsAnswered && !isTestFinished)
                             {
                                 @if (state.Question.Type == QuestionType.ManualText)
                                 {
@@ -545,7 +530,7 @@
                                 else if (state.Question.Type == QuestionType.SingleChoice)
                                 {
                                     <div class="options-list">
-                                        <RadzenRadioButtonList @bind-Value="@state.SelectedOptionId" TValue="int" class="d-flex flex-column gap-2 text-light">
+                                        <RadzenRadioButtonList @bind-Value="@state.SelectedOptionId" TValue="int" Orientation="Orientation.Vertical" class="d-flex flex-column gap-2 text-light">
                                             <Items>
                                                 @foreach (var opt in state.Question.Options)
                                                 {
@@ -555,17 +540,21 @@
                                         </RadzenRadioButtonList>
                                     </div>
                                 }
-                                else if (state.Question.Type == QuestionType.SingleChoice)
+                                else if (state.Question.Type == QuestionType.MultipleChoice)
                                 {
                                     <div class="options-list">
-                                        <RadzenRadioButtonList @bind-Value="@state.SelectedOptionId" TValue="int" Orientation="Orientation.Vertical" class="d-flex flex-column gap-3 text-light">
-                                            <Items>
-                                                @foreach (var opt in state.Question.Options)
-                                                {
-                                                    <RadzenRadioButtonListItem Text="@opt.Text" Value="@opt.Id" />
-                                                }
-                                            </Items>
-                                        </RadzenRadioButtonList>
+                                        @foreach (var opt in state.Question.Options)
+                                        {
+                                            var currentOpt = opt;
+                                            var currentState = state;
+                                            var optId = currentOpt.Id;
+                                            var isChecked = currentState.SelectedMultipleOptions.GetValueOrDefault(optId, false);
+                                            <div class="option-item">
+                                                <RadzenCheckBox @bind-Checked="@isChecked"
+                                                                Change="@((bool val) => { currentState.SelectedMultipleOptions[optId] = val; })" />
+                                                <span>@currentOpt.Text</span>
+                                            </div>
+                                        }
                                     </div>
                                 }
 
@@ -593,7 +582,6 @@
     private bool isTestStarted = false;
     private bool isTestFinished = false;
     private int correctCount = 0;
-    private bool shouldSaveProgress = false;
 
     private System.Threading.Timer? _timer;
     private TimeSpan timeLeft;
@@ -616,13 +604,25 @@
         test = await TestService.GetByIdAsync(Id);
         if (test == null) { NavigationManager.NavigateTo("/tests"); return; }
 
+        await LoadProgress();
+    }
+
+    private async Task LoadProgress()
+    {
         progress = await TestService.GetUserProgressAsync(currentUserId, Id);
-        activeStates = test.Questions.Select(q =>
-                {
-                    var state = new QuestionUIState { Question = q };
-                    if (q.Type == QuestionType.MultipleChoice) foreach (var opt in q.Options) state.SelectedMultipleOptions[opt.Id] = false;
-                    return state;
-                }).ToList();
+        activeStates = test!.Questions.Select(q =>
+        {
+            var state = new QuestionUIState { Question = q };
+            if (q.Type == QuestionType.MultipleChoice)
+                foreach (var opt in q.Options)
+                    state.SelectedMultipleOptions[opt.Id] = false;
+            return state;
+        }).ToList();
+
+        isTestStarted = false;
+        isTestFinished = false;
+        correctCount = 0;
+        _timer?.Dispose();
 
         if (progress != null && progress.Status != AttemptStatus.NotStarted)
         {
@@ -638,73 +638,85 @@
                 if (wrongIds.Contains(state.Question.Id)) { state.IsAnswered = true; state.IsCorrect = false; }
             }
 
-            if (progress.Status == AttemptStatus.Completed) isTestFinished = true;
-            else if (progress.TargetEndTime.HasValue) StartTimer();
-        }
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender && isTestStarted)
-        {
-            try
-            {
-                await JSRuntime.InvokeVoidAsync("localStorage.setItem", $"test_progress_{Id}", "true");
-            }
-            catch
-            {
-                // Игнорируем ошибки localStorage
-            }
-        }
-
-        if (shouldSaveProgress)
-        {
-            shouldSaveProgress = false;
-            try
-            {
-                await JSRuntime.InvokeVoidAsync("localStorage.setItem", $"test_progress_{Id}", "true");
-            }
-            catch
-            {
-                // Игнорируем ошибки localStorage
-            }
+            if (progress.Status == AttemptStatus.Completed)
+                isTestFinished = true;
+            else if (progress.TargetEndTime.HasValue)
+                StartTimer();
         }
     }
 
     private async Task StartTest()
     {
         await TestService.StartTestAsync(currentUserId, Id, test!.DurationInMinutes);
-        progress = await TestService.GetUserProgressAsync(currentUserId, Id);
-        isTestStarted = true;
-        shouldSaveProgress = true;
-        if (progress!.TargetEndTime.HasValue) StartTimer();
+        await LoadProgress();
+        if (progress?.TargetEndTime.HasValue == true)
+            StartTimer();
+    }
+
+    private async Task RestartTest()
+    {
+        await TestService.RestartTestAsync(currentUserId, Id);
+        // Сразу начинаем новую попытку
+        await TestService.StartTestAsync(currentUserId, Id, test!.DurationInMinutes);
+        await LoadProgress();
+        if (progress?.TargetEndTime.HasValue == true)
+            StartTimer();
     }
 
     private async Task ConfirmAnswer(QuestionUIState state)
     {
-        var result = await DialogService.Confirm("Вы уверены? Изменить ответ в рамках этой попытки будет невозможно.", "Подтверждение ответа", new ConfirmOptions() { OkButtonText = "Да, подтверждаю", CancelButtonText = "Отмена" });
+        var result = await DialogService.Confirm(
+            "Вы уверены? Изменить ответ в рамках этой попытки будет невозможно.",
+            "Подтверждение ответа",
+            new ConfirmOptions() { OkButtonText = "Да, подтверждаю", CancelButtonText = "Отмена" });
+
         if (result == true)
         {
             bool isRight = false;
-            if (state.Question.Type == QuestionType.ManualText) isRight = string.Equals(state.UserTextAnswer.Trim(), state.Question.CorrectTextAnswer?.Trim(), StringComparison.OrdinalIgnoreCase);
-            else if (state.Question.Type == QuestionType.SingleChoice) { var correctOpt = state.Question.Options.FirstOrDefault(o => o.IsCorrect); isRight = correctOpt != null && correctOpt.Id == state.SelectedOptionId; }
+            string? selectedAnswer = null;
+
+            if (state.Question.Type == QuestionType.ManualText)
+            {
+                var correctAnswer = state.Question.CorrectTextAnswer?.Trim() ?? "";
+                isRight = string.Equals(state.UserTextAnswer.Trim(), correctAnswer, StringComparison.OrdinalIgnoreCase);
+                selectedAnswer = state.UserTextAnswer;
+            }
+            else if (state.Question.Type == QuestionType.SingleChoice)
+            {
+                var correctOpt = state.Question.Options.FirstOrDefault(o => o.IsCorrect == true);
+                isRight = correctOpt != null && correctOpt.Id == state.SelectedOptionId;
+                selectedAnswer = state.SelectedOptionId.ToString();
+            }
             else if (state.Question.Type == QuestionType.MultipleChoice)
             {
-                var correctIds = state.Question.Options.Where(o => o.IsCorrect).Select(o => o.Id).ToList();
-                var userSelectedIds = state.SelectedMultipleOptions.Where(kvp => kvp.Value).Select(kvp => kvp.Key).ToList();
-                isRight = !correctIds.Except(userSelectedIds).Any() && !userSelectedIds.Except(correctIds).Any();
+                var correctIds = state.Question.Options.Where(o => o.IsCorrect == true).Select(o => o.Id).OrderBy(x => x).ToList();
+                var userSelectedIds = state.SelectedMultipleOptions.Where(kvp => kvp.Value).Select(kvp => kvp.Key).OrderBy(x => x).ToList();
+                isRight = correctIds.SequenceEqual(userSelectedIds);
+                selectedAnswer = string.Join(",", userSelectedIds);
             }
 
-            await TestService.ProcessAnswerAsync(progress!.Id, state.Question.Id, isRight);
+            await TestService.ProcessAnswerAsync(progress!.Id, state.Question.Id, isRight, selectedAnswer ?? "");
             state.IsAnswered = true;
             state.IsCorrect = isRight;
             if (isRight) correctCount++;
+
+            if (activeStates!.All(s => s.IsAnswered))
+            {
+                await TestService.CompleteTestAsync(progress.Id);
+                isTestFinished = true;
+                _timer?.Dispose();
+                NotificationService.Notify(NotificationSeverity.Success, "Тест завершен", "Все вопросы отвечены!");
+            }
         }
     }
 
     private async Task FinishTestDialog()
     {
-        var result = await DialogService.Confirm("Вы действительно хотите досрочно завершить тестирование?", "Завершение попытки", new ConfirmOptions() { OkButtonText = "Да, завершить", CancelButtonText = "Продолжить тест" });
+        var result = await DialogService.Confirm(
+            "Вы действительно хотите досрочно завершить тестирование?",
+            "Завершение попытки",
+            new ConfirmOptions() { OkButtonText = "Да, завершить", CancelButtonText = "Продолжить тест" });
+
         if (result == true)
         {
             _timer?.Dispose();

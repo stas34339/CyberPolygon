@@ -93,39 +93,51 @@ public class TestService
     public async Task<UserTestProgress?> GetUserProgressAsync(string userId, int testId)
     {
         using var context = await _contextFactory.CreateDbContextAsync();
+
+        // Сначала ищем активную попытку
+        var active = await context.UserTestProgresses
+            .FirstOrDefaultAsync(p => p.UserId == userId && p.CyberTestId == testId && p.Status == AttemptStatus.InProgress);
+
+        if (active != null) return active;
+
+        // Если нет активной — возвращаем последнюю завершенную
         return await context.UserTestProgresses
-            .FirstOrDefaultAsync(p => p.UserId == userId && p.CyberTestId == testId);
+            .Where(p => p.UserId == userId && p.CyberTestId == testId)
+            .OrderByDescending(p => p.StartedAt)
+            .FirstOrDefaultAsync();
     }
 
     public async Task StartTestAsync(string userId, int testId, int durationMinutes)
     {
         using var context = await _contextFactory.CreateDbContextAsync();
-        var existing = await context.UserTestProgresses.FirstOrDefaultAsync(p => p.UserId == userId && p.CyberTestId == testId);
+
+        // Ищем незавершенную попытку
+        var existing = await context.UserTestProgresses
+            .FirstOrDefaultAsync(p => p.UserId == userId && p.CyberTestId == testId && p.Status == AttemptStatus.InProgress);
+
+        if (existing != null)
+        {
+            // Уже есть активная попытка — не создаем новую
+            return;
+        }
 
         var now = DateTime.UtcNow;
         var endTime = durationMinutes > 0 ? now.AddMinutes(durationMinutes) : (DateTime?)null;
 
-        if (existing == null)
+        context.UserTestProgresses.Add(new UserTestProgress
         {
-            context.UserTestProgresses.Add(new UserTestProgress
-            {
-                UserId = userId,
-                CyberTestId = testId,
-                Status = AttemptStatus.InProgress,
-                StartedAt = now,
-                TargetEndTime = endTime,
-                Score = 0
-            });
-        }
-        else if (existing.Status == AttemptStatus.NotStarted)
-        {
-            existing.Status = AttemptStatus.InProgress;
-            existing.StartedAt = now; existing.TargetEndTime = endTime;
-        }
+            UserId = userId,
+            CyberTestId = testId,
+            Status = AttemptStatus.InProgress,
+            StartedAt = now,
+            TargetEndTime = endTime,
+            Score = 0
+        });
+
         await context.SaveChangesAsync();
     }
 
-    public async Task ProcessAnswerAsync(int progressId, int questionId, bool isCorrect)
+    public async Task ProcessAnswerAsync(int progressId, int questionId, bool isCorrect, string selectedAnswer)
     {
         using var context = await _contextFactory.CreateDbContextAsync();
         var progress = await context.UserTestProgresses.FindAsync(progressId);
@@ -134,7 +146,14 @@ public class TestService
         var answer = await context.UserTestAnswers.FirstOrDefaultAsync(a => a.UserTestProgressId == progressId && a.QuestionId == questionId);
         if (answer == null)
         {
-            context.UserTestAnswers.Add(new UserTestAnswer { UserTestProgressId = progressId, QuestionId = questionId, IsCorrect = isCorrect });
+            context.UserTestAnswers.Add(new UserTestAnswer
+            {
+                UserTestProgressId = progressId,
+                QuestionId = questionId,
+                IsCorrect = isCorrect,
+                SelectedAnswer = selectedAnswer,
+                AnsweredAt = DateTime.UtcNow
+            });
             if (isCorrect) progress.Score++;
             await context.SaveChangesAsync();
         }
@@ -172,9 +191,58 @@ public class TestService
     public async Task<Dictionary<int, AttemptStatus>> GetAllUserProgressesAsync(string userId)
     {
         using var context = await _contextFactory.CreateDbContextAsync();
-        return await context.UserTestProgresses
+
+        var progresses = await context.UserTestProgresses
             .AsNoTracking()
             .Where(p => p.UserId == userId)
-            .ToDictionaryAsync(p => p.CyberTestId, p => p.Status);
+            .ToListAsync();
+
+        // Для каждого теста определяем результирующий статус:
+        // - Если есть Completed — показываем Completed
+        // - Если есть InProgress — показываем InProgress  
+        // - Иначе — последний статус (обычно NotStarted)
+        return progresses
+            .GroupBy(p => p.CyberTestId)
+            .Select(g =>
+            {
+                var latest = g.OrderByDescending(p => p.StartedAt).First();
+                var hasCompleted = g.Any(p => p.Status == AttemptStatus.Completed);
+                var hasInProgress = g.Any(p => p.Status == AttemptStatus.InProgress);
+
+                AttemptStatus status;
+                if (hasInProgress)
+                    status = AttemptStatus.InProgress;
+                else if (hasCompleted)
+                    status = AttemptStatus.Completed;
+                else
+                    status = latest.Status;
+
+                return new { TestId = g.Key, Status = status };
+            })
+            .ToDictionary(x => x.TestId, x => x.Status);
+    }
+    public async Task<UserTestProgress> RestartTestAsync(string userId, int testId)
+    {
+        using var context = await _contextFactory.CreateDbContextAsync();
+        var test = await context.CyberTests.FindAsync(testId);
+        if (test == null) throw new InvalidOperationException("Тест не найден");
+
+        var now = DateTime.UtcNow;
+        var endTime = test.DurationInMinutes > 0 ? now.AddMinutes(test.DurationInMinutes) : (DateTime?)null;
+
+        // Создаем новую попытку и сразу активируем её
+        var newProgress = new UserTestProgress
+        {
+            UserId = userId,
+            CyberTestId = testId,
+            Status = AttemptStatus.InProgress,
+            StartedAt = now,
+            TargetEndTime = endTime,
+            Score = 0
+        };
+        context.UserTestProgresses.Add(newProgress);
+        await context.SaveChangesAsync();
+
+        return newProgress;
     }
 }

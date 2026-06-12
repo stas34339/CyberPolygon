@@ -70,4 +70,6 @@ public class UserTestAnswer
     public int UserTestProgressId { get; set; }
     public int QuestionId { get; set; }
     public bool IsCorrect { get; set; }
+    public string SelectedAnswer { get; set; } = string.Empty; // Сохраненный ответ пользователя
+    public DateTime AnsweredAt { get; set; } = DateTime.UtcNow; // Время ответа
 }

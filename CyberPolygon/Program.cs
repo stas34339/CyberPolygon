@@ -22,6 +22,8 @@ builder.Services.AddSingleton<ScenarioSessionManager>();
 builder.Services.AddScoped<ContextMenuService>();
 builder.Services.AddScoped<InstructionService>();
 builder.Services.AddScoped<TestService>();
+builder.Services.AddScoped<UserManagementService>();
+
 
 builder.Services.AddRadzenCookieThemeService(options =>
 {

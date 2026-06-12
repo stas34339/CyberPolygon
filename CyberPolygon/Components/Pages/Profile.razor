@@ -1,5 +1,6 @@
 ﻿@page "/profile"
 @using CyberPolygon.Data
+@using CyberPolygon.Services
 @using Microsoft.EntityFrameworkCore
 @using Radzen
 @using Radzen.Blazor
@@ -10,6 +11,7 @@
 @inject ScenarioSessionManager SessionManager
 @inject NotificationService NotificationService
 @inject DialogService DialogService
+@inject UserManagementService UserManagementService
 @implements IDisposable
 @rendermode InteractiveServer
 
@@ -120,6 +122,7 @@
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
         transition: all 0.3s ease;
         overflow: hidden;
+        margin-bottom: 25px;
     }
 
         .cyber-card:hover {
@@ -257,6 +260,8 @@
         color: var(--accent-cyan) !important;
         border-bottom: 1px solid var(--border-color) !important;
         border-right: 1px solid var(--border-color) !important;
+        font-size: 0.8rem;
+        text-transform: uppercase;
     }
 
     ::deep .rz-grid-table tbody tr {
@@ -280,7 +285,7 @@
         color: var(--text-muted) !important;
     }
 
-    .rz-textbox, .rz-dropdown {
+    .rz-textbox, .rz-dropdown, .dark-input {
         background-color: var(--bg-input) !important;
         border: 1px solid var(--border-color) !important;
         color: var(--text-light) !important;
@@ -320,6 +325,33 @@
         font-size: 0.8rem;
         font-weight: 600;
         display: inline-block;
+    }
+
+    .status-badge-mini {
+        font-size: 0.75rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        padding: 3px 8px;
+        border-radius: 4px;
+        display: inline-block;
+    }
+
+    .status-in-progress {
+        background: rgba(78, 195, 209, 0.15);
+        color: var(--accent-cyan);
+        border: 1px solid rgba(78, 195, 209, 0.4);
+    }
+
+    .status-completed {
+        background: rgba(152, 195, 121, 0.15);
+        color: var(--success-color);
+        border: 1px solid rgba(152, 195, 121, 0.4);
+    }
+
+    .status-failed {
+        background: rgba(224, 108, 117, 0.15);
+        color: var(--danger-color);
+        border: 1px solid rgba(224, 108, 117, 0.4);
     }
 
     .rz-dialog {
@@ -376,6 +408,25 @@
         .btn-icon-danger:hover {
             background: rgba(224, 108, 117, 0.1);
             border-color: var(--danger-color);
+        }
+
+    .btn-detail {
+        background: transparent;
+        color: var(--accent-cyan);
+        border: 1px solid rgba(78, 195, 209, 0.3);
+        padding: 5px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.8rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+        .btn-detail:hover {
+            background: rgba(78, 195, 209, 0.1);
+            border-color: var(--accent-cyan);
         }
 
     .loading-container {
@@ -546,11 +597,27 @@
         flex-shrink: 0;
     }
 
-    /* Фикс для узких колонок с кнопками удаления */
-    .rz-datagrid td:last-child,
-    .rz-datagrid th:last-child {
+    .rz-datagrid td:last-child, .rz-datagrid th:last-child {
         padding-left: 4px !important;
         padding-right: 4px !important;
+    }
+
+    .cyber-label {
+        color: var(--accent-cyan) !important;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 6px;
+        display: block;
+        font-weight: 600;
+    }
+
+    .user-form-input {
+        background-color: var(--bg-input) !important;
+        border: 1px solid var(--border-color) !important;
+        color: var(--text-light) !important;
+        border-radius: 6px !important;
+        width: 100%;
     }
 </style>
 
@@ -601,17 +668,12 @@
         </div>
 
         <div class="tabs-navigation">
-            <button class="tab-trigger @(activeTabIndex == 0 ? "active" : "")" @onclick="() => activeTabIndex = 0">
-                <RadzenIcon Icon="bar_chart" /> СТАТИСТИКА
-            </button>
-            <button class="tab-trigger @(activeTabIndex == 1 ? "active" : "")" @onclick="() => activeTabIndex = 1">
-                <RadzenIcon Icon="leaderboard" /> РЕЙТИНГИ
-            </button>
+            <button class="tab-trigger @(activeTabIndex == 0 ? "active" : "")" @onclick="() => activeTabIndex = 0"><RadzenIcon Icon="bar_chart" /> СТАТИСТИКА</button>
+            <button class="tab-trigger @(activeTabIndex == 1 ? "active" : "")" @onclick="() => activeTabIndex = 1"><RadzenIcon Icon="leaderboard" /> РЕЙТИНГИ</button>
             @if (isAdmin)
             {
-                <button class="tab-trigger @(activeTabIndex == 2 ? "active" : "")" @onclick="() => activeTabIndex = 2">
-                    <RadzenIcon Icon="admin_panel_settings" /> УПРАВЛЕНИЕ
-                </button>
+                <button class="tab-trigger @(activeTabIndex == 2 ? "active" : "")" @onclick="() => activeTabIndex = 2"><RadzenIcon Icon="admin_panel_settings" /> УПРАВЛЕНИЕ</button>
+                <button class="tab-trigger @(activeTabIndex == 3 ? "active" : "")" @onclick="() => activeTabIndex = 3"><RadzenIcon Icon="person_add" /> ПОЛЬЗОВАТЕЛИ</button>
             }
         </div>
 
@@ -619,50 +681,131 @@
         {
             <h4 class="section-title"><RadzenIcon Icon="crisis_alert" /> Боевые сценарии</h4>
             <div class="stats-grid">
-                <div class="cyber-card stat-card">
-                    <div class="stat-label">Доступно сценариев</div>
-                    <div class="stat-value text-light-blue">@totalScenarios</div>
-                    <div class="stat-sub">@soloScenarios одиночных / @teamScenarios командных</div>
-                </div>
-                <div class="cyber-card stat-card">
-                    <div class="stat-label">Пройдено успешно</div>
-                    <div class="stat-value text-green">@completedScenariosCount</div>
-                    <div class="stat-sub">из @totalScenarios доступных</div>
-                </div>
-                <div class="cyber-card stat-card">
-                    <div class="stat-label">Процент успеха</div>
-                    <div class="stat-value text-cyan">@scenarioSuccessRate%</div>
-                    <div class="stat-sub">@completedScenariosCount завершено из @totalAttemptsScenarios попыток</div>
-                </div>
-                <div class="cyber-card stat-card">
-                    <div class="stat-label">Общий опыт (XP)</div>
-                    <div class="stat-value text-warning">@totalScenarioScore XP</div>
-                    <div class="stat-sub">заработано в сценариях</div>
-                </div>
+                <div class="cyber-card stat-card"><div class="stat-label">Доступно сценариев</div><div class="stat-value text-light-blue">@totalScenarios</div><div class="stat-sub">@soloScenarios одиночных / @teamScenarios командных</div></div>
+                <div class="cyber-card stat-card"><div class="stat-label">Пройдено успешно</div><div class="stat-value text-green">@completedScenariosCount</div><div class="stat-sub">из @totalScenarios доступных</div></div>
+                <div class="cyber-card stat-card"><div class="stat-label">Процент успеха</div><div class="stat-value text-cyan">@scenarioSuccessRate%</div><div class="stat-sub">@completedScenariosCount завершено из @totalAttemptsScenarios попыток</div></div>
+                <div class="cyber-card stat-card"><div class="stat-label">Общий опыт (XP)</div><div class="stat-value text-warning">@totalScenarioScore XP</div><div class="stat-sub">заработано в сценариях</div></div>
+            </div>
+
+            <div class="cyber-card">
+                <h4 class="section-title"><RadzenIcon Icon="history" /> Все попытки прохождения сценариев</h4>
+                @if (!allScenarioAttempts.Any())
+                {
+                    <div class="text-center py-4 text-muted"><RadzenIcon Icon="cloud_off" Style="font-size: 2rem; color: var(--border-color);" /><br />Нет ни одной попытки прохождения</div>
+                }
+                else
+                {
+                    <RadzenDataGrid Data="@allScenarioAttempts" TItem="UserScenarioProgress" AllowPaging="true" PageSize="10">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="СЦЕНАРИЙ" Width="200px">
+                                <Template Context="data"><span style="color: var(--text-light); font-weight: 500;">@(data.Scenario?.Title ?? "Неизвестный сценарий")</span></Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="ТИП" Width="120px" TextAlign="TextAlign.Center">
+                                <Template Context="data">
+                                    @if (data.IsTeamAttempt)
+                                    {
+                                        <span class="team-badge">КОМАНДА</span>
+                                    }
+                                    else
+                                    {
+
+                                        <span style="color: var(--text-muted);">Одиночный</span>
+                                    }
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="СТАТУС" Width="130px" TextAlign="TextAlign.Center">
+                                <Template Context="data">
+                                    @switch (data.Status)
+                                    {
+                                        case AttemptStatus.InProgress:
+                                            <span class="status-badge-mini status-in-progress">В процессе</span>
+                                            break;
+                                        case AttemptStatus.Completed:
+
+                                            <span class="status-badge-mini status-completed">Завершен</span>
+                                            break;
+                                        case AttemptStatus.Failed:
+
+                                            <span class="status-badge-mini status-failed">Неудача</span>
+                                            break;
+                                        default:
+
+                                            <span class="status-badge-mini" style="background: rgba(143,160,181,0.15); color: var(--text-muted); border: 1px solid var(--border-color);">@data.Status</span>
+                                            break;
+                                    }
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="НАЧАЛО" Width="150px" TextAlign="TextAlign.Center">
+                                <Template Context="data"><span style="font-size: 0.85rem;">@(data.StartedAt?.ToString("dd.MM.yyyy HH:mm") ?? "—")</span></Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="XP" Width="80px" TextAlign="TextAlign.Center">
+                                <Template Context="data"><span style="color: var(--accent-cyan); font-weight: bold;">@data.Score XP</span></Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                }
             </div>
 
             <h4 class="section-title"><RadzenIcon Icon="quiz" /> Тестовые задания</h4>
             <div class="stats-grid">
-                <div class="cyber-card stat-card">
-                    <div class="stat-label">Доступно тестов</div>
-                    <div class="stat-value text-light-blue">@totalTests</div>
-                    <div class="stat-sub">трёх уровней сложности</div>
-                </div>
-                <div class="cyber-card stat-card">
-                    <div class="stat-label">Пройдено успешно</div>
-                    <div class="stat-value text-green">@completedTestsCount</div>
-                    <div class="stat-sub">из @totalTests доступных</div>
-                </div>
-                <div class="cyber-card stat-card">
-                    <div class="stat-label">Процент успеха</div>
-                    <div class="stat-value text-cyan">@testSuccessRate%</div>
-                    <div class="stat-sub">@completedTestsCount завершено из @totalAttemptsTests попыток</div>
-                </div>
-                <div class="cyber-card stat-card">
-                    <div class="stat-label">Правильных ответов</div>
-                    <div class="stat-value text-warning">@correctAnswersPercent%</div>
-                    <div class="stat-sub">@totalCorrectAnswers из @totalQuestionsAnswered ответов</div>
-                </div>
+                <div class="cyber-card stat-card"><div class="stat-label">Доступно тестов</div><div class="stat-value text-light-blue">@totalTests</div><div class="stat-sub">трёх уровней сложности</div></div>
+                <div class="cyber-card stat-card"><div class="stat-label">Пройдено успешно</div><div class="stat-value text-green">@completedTestsCount</div><div class="stat-sub">из @totalTests доступных</div></div>
+                <div class="cyber-card stat-card"><div class="stat-label">Процент успеха</div><div class="stat-value text-cyan">@testSuccessRate%</div><div class="stat-sub">@completedTestsCount завершено из @totalAttemptsTests попыток</div></div>
+                <div class="cyber-card stat-card"><div class="stat-label">Правильных ответов</div><div class="stat-value text-warning">@correctAnswersPercent%</div><div class="stat-sub">@totalCorrectAnswers из @totalQuestionsAnswered ответов</div></div>
+            </div>
+
+            <div class="cyber-card">
+                <h4 class="section-title"><RadzenIcon Icon="assignment" /> Все попытки прохождения тестов</h4>
+                @if (!allTestAttempts.Any())
+                {
+                    <div class="text-center py-4 text-muted"><RadzenIcon Icon="cloud_off" Style="font-size: 2rem; color: var(--border-color);" /><br />Нет ни одной попытки прохождения</div>
+                }
+                else
+                {
+                    <RadzenDataGrid Data="@allTestAttempts" TItem="TestAttemptDto" AllowPaging="true" PageSize="10">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="TestAttemptDto" Title="ТЕСТ" Width="200px">
+                                <Template Context="data"><span style="color: var(--text-light); font-weight: 500;">@data.TestTitle</span></Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="TestAttemptDto" Title="СЛОЖНОСТЬ" Width="120px" TextAlign="TextAlign.Center">
+                                <Template Context="data"><span style="color: @GetDifficultyColor(data.Difficulty);">@data.DifficultyText</span></Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="TestAttemptDto" Title="СТАТУС" Width="130px" TextAlign="TextAlign.Center">
+                                <Template Context="data">
+                                    @switch (data.Status)
+                                    {
+                                        case AttemptStatus.InProgress:
+                                            <span class="status-badge-mini status-in-progress">В процессе</span>
+                                            break;
+                                        case AttemptStatus.Completed:
+
+                                            <span class="status-badge-mini status-completed">Завершен</span>
+                                            break;
+                                        case AttemptStatus.Failed:
+
+                                            <span class="status-badge-mini status-failed">Неудача</span>
+                                            break;
+                                        default:
+
+                                            <span class="status-badge-mini" style="background: rgba(143,160,181,0.15); color: var(--text-muted); border: 1px solid var(--border-color);">@data.Status</span>
+                                            break;
+                                    }
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="TestAttemptDto" Title="РЕЗУЛЬТАТ" Width="120px" TextAlign="TextAlign.Center">
+                                <Template Context="data"><span style="color: var(--accent-cyan); font-weight: bold;">@data.CorrectAnswers / @data.TotalQuestions</span></Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="TestAttemptDto" Title="%" Width="70px" TextAlign="TextAlign.Center">
+                                <Template Context="data">
+                                    @{
+                                        var pct = data.TotalQuestions > 0 ? (int)Math.Round((double)data.CorrectAnswers / data.TotalQuestions * 100) : 0;
+                                    }
+                                    <span style="color: @(pct >= 80 ? "var(--success-color)" : pct >= 50 ? "var(--warning-color)" : "var(--danger-color)"); font-weight: bold;">@pct%</span>
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                }
             </div>
 
             @if (user?.Teams.Any() == true)
@@ -672,84 +815,18 @@
                     @foreach (var member in myTeamMembers)
                     {
                         <div class="team-member-row">
-                            <span style="color: @(member.Id == user.Id ? "var(--accent-cyan)" : "var(--text-light)"); font-weight: @(member.Id == user.Id ? "bold" : "normal");">
-                                @member.Name @(member.Id == user.Id ? "(Вы)" : "")
-                            </span>
+                            <span style="color: @(member.Id == user.Id ? "var(--accent-cyan)" : "var(--text-light)"); font-weight: @(member.Id == user.Id ? "bold" : "normal");">@member.Name @(member.Id == user.Id ? "(Вы)" : "")</span>
                             <span style="color: var(--success-color); font-weight: bold;">@member.TotalScore XP</span>
                         </div>
                     }
-                </div>
-            }
-
-            <div class="cyber-card" style="margin-bottom: 25px;">
-                <h4 class="section-title"><RadzenIcon Icon="history" /> Архив завершённых сценариев</h4>
-                <RadzenDataGrid Data="@completedScenariosList" TItem="UserScenarioProgress" AllowPaging="true" PageSize="10">
-                    <Columns>
-                        <RadzenDataGridColumn TItem="UserScenarioProgress" Title="НАЗВАНИЕ">
-                            <Template Context="data">
-                                <span style="color: var(--text-light); font-weight: 500;">@data.Scenario?.Title</span>
-                            </Template>
-                        </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="UserScenarioProgress" Title="ТИП" Width="150px">
-                            <Template Context="data">
-                                @if (data.IsTeamAttempt)
-                                {
-                                    <span class="team-badge">КОМАНДА: @(teamsList.FirstOrDefault(t => t.Id == data.TeamId)?.Name ?? "—")</span>
-                                }
-                                else
-                                {
-                                    <span class="text-muted">ОДИНОЧНАЯ</span>
-                                }
-                            </Template>
-                        </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="UserScenarioProgress" Property="CompletedAt" Title="ДАТА" FormatString="{0:dd.MM.yyyy HH:mm}" Width="150px" />
-                        <RadzenDataGridColumn TItem="UserScenarioProgress" Title="XP" Width="100px" TextAlign="TextAlign.Center">
-                            <Template Context="data">
-                                <span class="text-green" style="font-weight: bold;">@data.Score XP</span>
-                            </Template>
-                        </RadzenDataGridColumn>
-                    </Columns>
-                </RadzenDataGrid>
-            </div>
-
-            @if (completedTestsList.Any())
-            {
-                <div class="cyber-card">
-                    <h4 class="section-title"><RadzenIcon Icon="assignment_turned_in" /> Архив завершённых тестов</h4>
-                    <RadzenDataGrid Data="@completedTestsList" TItem="TestProgressDto" AllowPaging="true" PageSize="10">
-                        <Columns>
-                            <RadzenDataGridColumn TItem="TestProgressDto" Title="НАЗВАНИЕ">
-                                <Template Context="data">
-                                    <span style="color: var(--text-light); font-weight: 500;">@data.TestTitle</span>
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="TestProgressDto" Title="СЛОЖНОСТЬ" Width="120px">
-                                <Template Context="data">
-                                    <span style="color: @GetDifficultyColor(data.Difficulty);">@data.DifficultyText</span>
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="TestProgressDto" Property="CompletedAt" Title="ДАТА" FormatString="{0:dd.MM.yyyy HH:mm}" Width="150px" />
-                            <RadzenDataGridColumn TItem="TestProgressDto" Title="РЕЗУЛЬТАТ" Width="120px" TextAlign="TextAlign.Center">
-                                <Template Context="data">
-                                    <span style="color: var(--accent-cyan); font-weight: bold;">@data.CorrectAnswers / @data.TotalQuestions</span>
-                                </Template>
-                            </RadzenDataGridColumn>
-                        </Columns>
-                    </RadzenDataGrid>
                 </div>
             }
         }
         else if (activeTabIndex == 1)
         {
             <div class="mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
-                <div class="d-flex align-items-center gap-3">
-                    <span class="text-muted">Категория:</span>
-                    <RadzenDropDown Data="@leaderboardCategories" @bind-Value="selectedCategory" Change="@UpdateLeaderboards" Style="width: 200px;" />
-                </div>
-                <div class="d-flex align-items-center gap-3">
-                    <span class="text-muted">Подразделение:</span>
-                    <RadzenDropDown Data="@leaderboardFilters" @bind-Value="selectedFilter" Change="@UpdateLeaderboards" Style="width: 220px;" />
-                </div>
+                <div class="d-flex align-items-center gap-3"><span class="text-muted">Категория:</span><RadzenDropDown Data="@leaderboardCategories" @bind-Value="selectedCategory" Change="@UpdateLeaderboards" Style="width: 200px;" /></div>
+                <div class="d-flex align-items-center gap-3"><span class="text-muted">Подразделение:</span><RadzenDropDown Data="@leaderboardFilters" @bind-Value="selectedFilter" Change="@UpdateLeaderboards" Style="width: 220px;" /></div>
             </div>
 
             @if (selectedCategory == "Сценарии")
@@ -759,7 +836,7 @@
                         <h4 class="section-title"><RadzenIcon Icon="emoji_events" style="color: #e5c07b;" /> Топ оперативников (сценарии)</h4>
                         @if (!topUsers.Any())
                         {
-                            <div class="text-center py-4 text-muted">Нет данных для отображения</div>
+                            <div class="text-center py-4 text-muted">Нет данных</div>
                         }
                         else
                         {
@@ -774,14 +851,17 @@
                                             }
                                             else if (item.Rank == 2)
                                             {
+
                                                 <span class="rank-medal">🥈</span>
                                             }
                                             else if (item.Rank == 3)
                                             {
+
                                                 <span class="rank-medal">🥉</span>
                                             }
                                             else
                                             {
+
                                                 <span class="rank-number">@item.Rank</span>
                                             }
                                         </div>
@@ -792,27 +872,18 @@
                                                 <span class="user-group-text">@item.GroupName</span>
                                             }
                                         </div>
-                                        <div class="score-col">
-                                            <span class="score-value">@item.Score</span>
-                                            <span class="score-label">XP</span>
-                                        </div>
-                                        <div class="progress-col">
-                                            <div class="mini-progress">
-                                                <div class="mini-progress-fill" style="width: @item.Percentile%;"></div>
-                                            </div>
-                                            <span class="completed-count">@item.CompletedCount завершено</span>
-                                        </div>
+                                        <div class="score-col"><span class="score-value">@item.Score</span><span class="score-label">XP</span></div>
+                                        <div class="progress-col"><div class="mini-progress"><div class="mini-progress-fill" style="width: @item.Percentile%;"></div></div><span class="completed-count">@item.CompletedCount завершено</span></div>
                                     </div>
                                 }
                             </div>
                         }
                     </div>
-
                     <div class="cyber-card">
                         <h4 class="section-title"><RadzenIcon Icon="military_tech" style="color: #98c379;" /> Топ команд (сценарии)</h4>
                         @if (!topTeams.Any())
                         {
-                            <div class="text-center py-4 text-muted">Нет данных для отображения</div>
+                            <div class="text-center py-4 text-muted">Нет данных</div>
                         }
                         else
                         {
@@ -827,14 +898,17 @@
                                             }
                                             else if (item.Rank == 2)
                                             {
+
                                                 <span class="rank-medal">🥈</span>
                                             }
                                             else if (item.Rank == 3)
                                             {
+
                                                 <span class="rank-medal">🥉</span>
                                             }
                                             else
                                             {
+
                                                 <span class="rank-number">@item.Rank</span>
                                             }
                                         </div>
@@ -845,16 +919,8 @@
                                                 <span class="user-group-text">@item.GroupName</span>
                                             }
                                         </div>
-                                        <div class="score-col">
-                                            <span class="score-value">@item.Score</span>
-                                            <span class="score-label">XP</span>
-                                        </div>
-                                        <div class="progress-col">
-                                            <div class="mini-progress">
-                                                <div class="mini-progress-fill" style="width: @item.Percentile%;"></div>
-                                            </div>
-                                            <span class="completed-count">@item.CompletedCount завершено</span>
-                                        </div>
+                                        <div class="score-col"><span class="score-value">@item.Score</span><span class="score-label">XP</span></div>
+                                        <div class="progress-col"><div class="mini-progress"><div class="mini-progress-fill" style="width: @item.Percentile%;"></div></div><span class="completed-count">@item.CompletedCount завершено</span></div>
                                     </div>
                                 }
                             </div>
@@ -869,7 +935,7 @@
                         <h4 class="section-title"><RadzenIcon Icon="emoji_events" style="color: #e5c07b;" /> Топ оперативников (тесты)</h4>
                         @if (!topTestUsers.Any())
                         {
-                            <div class="text-center py-4 text-muted">Нет данных для отображения</div>
+                            <div class="text-center py-4 text-muted">Нет данных</div>
                         }
                         else
                         {
@@ -884,14 +950,17 @@
                                             }
                                             else if (item.Rank == 2)
                                             {
+
                                                 <span class="rank-medal">🥈</span>
                                             }
                                             else if (item.Rank == 3)
                                             {
+
                                                 <span class="rank-medal">🥉</span>
                                             }
                                             else
                                             {
+
                                                 <span class="rank-number">@item.Rank</span>
                                             }
                                         </div>
@@ -902,41 +971,20 @@
                                                 <span class="user-group-text">@item.GroupName</span>
                                             }
                                         </div>
-                                        <div class="score-col">
-                                            <span class="score-value">@item.AverageScore%</span>
-                                            <span class="score-label">средний балл</span>
-                                        </div>
-                                        <div class="progress-col">
-                                            <div class="mini-progress">
-                                                <div class="mini-progress-fill test-fill" style="width: @item.AverageScore%;"></div>
-                                            </div>
-                                            <span class="completed-count">@item.CompletedCount тестов</span>
-                                        </div>
+                                        <div class="score-col"><span class="score-value">@item.AverageScore%</span><span class="score-label">средний балл</span></div>
+                                        <div class="progress-col"><div class="mini-progress"><div class="mini-progress-fill test-fill" style="width: @item.AverageScore%;"></div></div><span class="completed-count">@item.CompletedCount тестов</span></div>
                                     </div>
                                 }
                             </div>
                         }
                     </div>
-
                     <div class="cyber-card">
                         <h4 class="section-title"><RadzenIcon Icon="quiz" style="color: var(--accent-cyan);" /> Статистика по тестам</h4>
                         <div class="test-stats-grid">
-                            <div class="test-stat-item">
-                                <div class="test-stat-value text-light-blue">@testLeaderboardStats.TotalTests</div>
-                                <div class="test-stat-label">Всего тестов</div>
-                            </div>
-                            <div class="test-stat-item">
-                                <div class="test-stat-value text-green">@testLeaderboardStats.TotalCompleted</div>
-                                <div class="test-stat-label">Завершено</div>
-                            </div>
-                            <div class="test-stat-item">
-                                <div class="test-stat-value text-cyan">@testLeaderboardStats.UniqueUsers</div>
-                                <div class="test-stat-label">Участников</div>
-                            </div>
-                            <div class="test-stat-item">
-                                <div class="test-stat-value text-warning">@testLeaderboardStats.OverallAverage%</div>
-                                <div class="test-stat-label">Средний балл</div>
-                            </div>
+                            <div class="test-stat-item"><div class="test-stat-value text-light-blue">@testLeaderboardStats.TotalTests</div><div class="test-stat-label">Всего тестов</div></div>
+                            <div class="test-stat-item"><div class="test-stat-value text-green">@testLeaderboardStats.TotalCompleted</div><div class="test-stat-label">Завершено</div></div>
+                            <div class="test-stat-item"><div class="test-stat-value text-cyan">@testLeaderboardStats.UniqueUsers</div><div class="test-stat-label">Участников</div></div>
+                            <div class="test-stat-item"><div class="test-stat-value text-warning">@testLeaderboardStats.OverallAverage%</div><div class="test-stat-label">Средний балл</div></div>
                         </div>
                     </div>
                 </div>
@@ -944,194 +992,238 @@
         }
         else if (activeTabIndex == 2 && isAdmin)
         {
-            <div class="admin-grid">
-                <div class="cyber-card">
-                    <h4 class="section-title"><RadzenIcon Icon="lan" /> Управление подразделениями</h4>
-                    <div class="admin-row mb-3">
-                        <div class="admin-row-input">
-                            <RadzenTextBox @bind-Value="@newGroupName" Placeholder="Название подразделения" class="w-100" />
-                        </div>
-                        <div class="admin-row-btn">
-                            <button class="btn-primary-gradient" @onclick="CreateGroup">
-                                <RadzenIcon Icon="add" /> Добавить
-                            </button>
-                        </div>
-                    </div>
-                    <RadzenDataGrid Data="@groupsList" TItem="UserGroup" Height="200px">
+            <div class="cyber-card" style="margin-bottom: 25px;">
+                <h4 class="section-title"><RadzenIcon Icon="history" /> Попытки прохождения сценариев</h4>
+                @if (!allScenarioProgressList.Any())
+                {
+                    <div class="text-center py-4 text-muted"><RadzenIcon Icon="cloud_off" Style="font-size: 2rem; color: var(--border-color);" /><br />Нет попыток</div>
+                }
+                else
+                {
+                    <RadzenDataGrid Data="@allScenarioProgressList" TItem="UserScenarioProgress" AllowPaging="true" PageSize="10">
                         <Columns>
-                            <RadzenDataGridColumn TItem="UserGroup" Property="Name" Title="ПОДРАЗДЕЛЕНИЕ" />
-                            <RadzenDataGridColumn TItem="UserGroup" Title="" Width="45px" TextAlign="TextAlign.Left">
-                                <Template Context="grp">
-                                    <button class="btn-icon-danger" @onclick="@(async () => await DeleteGroup(grp.Id))">
-                                        <RadzenIcon Icon="delete" style="font-size: 0.9rem;" />
-                                    </button>
-                                </Template>
-                            </RadzenDataGridColumn>
-                        </Columns>
-                    </RadzenDataGrid>
-                </div>
+                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="ПОЛЬЗОВАТЕЛЬ" Width="160px">
+                                <Template Context="data">
+                                    @if (data.IsTeamAttempt)
+                                    {
+                                        <span style="color: var(--accent-blue);">👥 @(teamsList.FirstOrDefault(t => t.Id == data.TeamId)?.Name ?? "Команда")</span>
+                                    }
+                                    else
+                                    {
 
-                <div class="cyber-card">
-                    <h4 class="section-title"><RadzenIcon Icon="groups" /> Управление командами</h4>
-                    <div class="mb-2">
-                        <RadzenDropDown TValue="int" Data="@groupsList" TextProperty="Name" ValueProperty="Id" @bind-Value="@selectedGroupIdForTeam" Placeholder="Выберите подразделение" style="width: 100%;" />
-                    </div>
-                    <div class="admin-row mb-3">
-                        <div class="admin-row-input">
-                            <RadzenTextBox @bind-Value="@newTeamName" Placeholder="Название команды" class="w-100" />
-                        </div>
-                        <div class="admin-row-btn">
-                            <button class="btn-primary-gradient" style="background: linear-gradient(135deg, #98c379 0%, #7ec8f8 100%);" @onclick="CreateTeam">
-                                <RadzenIcon Icon="group_add" /> Создать
-                            </button>
-                        </div>
-                    </div>
-                    <RadzenDataGrid Data="@teamsList" TItem="UserTeam" Height="150px">
-                        <Columns>
-                            <RadzenDataGridColumn TItem="UserTeam" Title="КОМАНДА">
-                                <Template Context="t">
-                                    <span style="color: var(--text-light);">@t.Name</span>
-                                    <br /><span style="font-size:0.75rem;color:var(--text-muted);">@t.Group.Name</span>
+                                        <span style="color: var(--text-light);">👤 @(usersList.FirstOrDefault(u => u.Id == data.UserId)?.UserName ?? "Пользователь")</span>
+                                    }
                                 </Template>
                             </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="UserTeam" Title="" Width="45px" TextAlign="TextAlign.Left">
-                                <Template Context="tm">
-                                    <button class="btn-icon-danger" @onclick="@(async () => await DeleteTeam(tm.Id))">
-                                        <RadzenIcon Icon="delete" style="font-size: 0.9rem; left:0" />
-                                    </button>
+                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="СЦЕНАРИЙ" Width="180px">
+                                <Template Context="data"><span style="color: var(--text-light); font-weight: 500;">@(data.Scenario?.Title ?? "—")</span></Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="СТАТУС" Width="120px" TextAlign="TextAlign.Center">
+                                <Template Context="data">
+                                    @switch (data.Status)
+                                    {
+                                        case AttemptStatus.InProgress:
+                                            <span class="status-badge-mini status-in-progress">В процессе</span>
+                                            break;
+                                        case AttemptStatus.Completed:
+
+                                            <span class="status-badge-mini status-completed">Завершен</span>
+                                            break;
+                                        case AttemptStatus.Failed:
+
+                                            <span class="status-badge-mini status-failed">Неудача</span>
+                                            break;
+                                        default:
+
+                                            <span class="status-badge-mini" style="background: rgba(143,160,181,0.15); color: var(--text-muted); border: 1px solid var(--border-color);">@data.Status</span>
+                                            break;
+                                    }
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="XP" Width="70px" TextAlign="TextAlign.Center">
+                                <Template Context="data"><span style="color: var(--accent-cyan); font-weight: bold;">@data.Score</span></Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="ДАТА" Width="140px" TextAlign="TextAlign.Center">
+                                <Template Context="data"><span style="font-size: 0.85rem;">@(data.StartedAt?.ToString("dd.MM.yyyy HH:mm") ?? "—")</span></Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="" Width="110px" TextAlign="TextAlign.Center">
+                                <Template Context="data">
+                                    <button class="btn-detail" @onclick="@(() => NavigationManager.NavigateTo($"/admin/scenario-attempt/{data.Id}"))"><RadzenIcon Icon="visibility" style="font-size: 0.9rem;" /> Детали</button>
+                                    <button class="btn-primary-gradient" style="background: #e06c75; font-size: 0.7rem; padding: 4px 8px; margin-left: 4px;" @onclick="@(() => ResetScenarioProgress(data.Id))"><RadzenIcon Icon="refresh" style="font-size: 0.8rem;" /></button>
                                 </Template>
                             </RadzenDataGridColumn>
                         </Columns>
                     </RadzenDataGrid>
-                </div>
+                }
             </div>
 
             <div class="cyber-card" style="margin-bottom: 25px;">
+                <h4 class="section-title"><RadzenIcon Icon="assignment" /> Попытки прохождения тестов</h4>
+                @if (!allTestProgressList.Any())
+                {
+                    <div class="text-center py-4 text-muted"><RadzenIcon Icon="cloud_off" Style="font-size: 2rem; color: var(--border-color);" /><br />Нет попыток</div>
+                }
+                else
+                {
+                    <RadzenDataGrid Data="@allTestProgressList" TItem="UserTestProgress" AllowPaging="true" PageSize="10">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="UserTestProgress" Title="ПОЛЬЗОВАТЕЛЬ" Width="160px">
+                                <Template Context="data"><span style="color: var(--text-light);">👤 @(usersList.FirstOrDefault(u => u.Id == data.UserId)?.UserName ?? "Пользователь")</span></Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="UserTestProgress" Title="ТЕСТ" Width="180px">
+                                <Template Context="data"><span style="color: var(--text-light); font-weight: 500;">@(data.Test?.Title ?? "—")</span></Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="UserTestProgress" Title="СЛОЖНОСТЬ" Width="100px" TextAlign="TextAlign.Center">
+                                <Template Context="data">
+                                    @{
+                                        var d = data.Test?.Difficulty; var dt = d switch { TestDifficulty.Easy => "Лёгкий", TestDifficulty.Medium => "Средний", TestDifficulty.Hard => "Сложный", _ => "—" }; var dc = d switch { TestDifficulty.Easy => "var(--success-color)", TestDifficulty.Medium => "var(--warning-color)", TestDifficulty.Hard => "var(--danger-color)", _ => "var(--text-muted)" };
+                                    }
+                                    <span style="color: @dc;">@dt</span>
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="UserTestProgress" Title="СТАТУС" Width="120px" TextAlign="TextAlign.Center">
+                                <Template Context="data">
+                                    @switch (data.Status)
+                                    {
+                                        case AttemptStatus.InProgress:
+                                            <span class="status-badge-mini status-in-progress">В процессе</span>
+                                            break;
+                                        case AttemptStatus.Completed:
+
+                                            <span class="status-badge-mini status-completed">Завершен</span>
+                                            break;
+                                        case AttemptStatus.Failed:
+
+                                            <span class="status-badge-mini status-failed">Неудача</span>
+                                            break;
+                                        default:
+
+                                            <span class="status-badge-mini" style="background: rgba(143,160,181,0.15); color: var(--text-muted); border: 1px solid var(--border-color);">@data.Status</span>
+                                            break;
+                                    }
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="UserTestProgress" Title="РЕЗУЛЬТАТ" Width="100px" TextAlign="TextAlign.Center">
+                                <Template Context="data">
+                                    @{
+                                        var tq = data.Test?.Questions?.Count ?? 0; var tpct = tq > 0 ? (int)Math.Round((double)data.Score / tq * 100) : 0;
+                                    }
+                                    <span style="color: var(--accent-cyan); font-weight: bold;">@data.Score/@tq</span>
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="UserTestProgress" Title="" Width="110px" TextAlign="TextAlign.Center">
+                                <Template Context="data">
+                                    <button class="btn-detail" @onclick="@(() => NavigationManager.NavigateTo($"/admin/test-attempt/{data.Id}"))"><RadzenIcon Icon="visibility" style="font-size: 0.9rem;" /> Детали</button>
+                                    <button class="btn-primary-gradient" style="background: #e06c75; font-size: 0.7rem; padding: 4px 8px; margin-left: 4px;" @onclick="@(() => ResetTestProgress(data.Id))"><RadzenIcon Icon="refresh" style="font-size: 0.8rem;" /></button>
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                }
+            </div>
+
+            <div class="admin-grid">
+                <div class="cyber-card">
+                    <h4 class="section-title"><RadzenIcon Icon="lan" /> Управление подразделениями</h4>
+                    <div class="admin-row mb-3"><div class="admin-row-input"><RadzenTextBox @bind-Value="@newGroupName" Placeholder="Название подразделения" class="w-100" /></div><div class="admin-row-btn"><button class="btn-primary-gradient" @onclick="CreateGroup"><RadzenIcon Icon="add" /> Добавить</button></div></div>
+                    <RadzenDataGrid Data="@groupsList" TItem="UserGroup" Height="200px"><Columns><RadzenDataGridColumn TItem="UserGroup" Property="Name" Title="ПОДРАЗДЕЛЕНИЕ" /><RadzenDataGridColumn TItem="UserGroup" Title="" Width="45px"><Template Context="grp"><button class="btn-icon-danger" @onclick="@(async () => await DeleteGroup(grp.Id))"><RadzenIcon Icon="delete" style="font-size: 0.9rem;" /></button></Template></RadzenDataGridColumn></Columns></RadzenDataGrid>
+                </div>
+                <div class="cyber-card">
+                    <h4 class="section-title"><RadzenIcon Icon="groups" /> Управление командами</h4>
+                    <div class="mb-2"><RadzenDropDown TValue="int" Data="@groupsList" TextProperty="Name" ValueProperty="Id" @bind-Value="@selectedGroupIdForTeam" Placeholder="Выберите подразделение" style="width: 100%;" /></div>
+                    <div class="admin-row mb-3"><div class="admin-row-input"><RadzenTextBox @bind-Value="@newTeamName" Placeholder="Название команды" class="w-100" /></div><div class="admin-row-btn"><button class="btn-primary-gradient" style="background: linear-gradient(135deg, #98c379 0%, #7ec8f8 100%);" @onclick="CreateTeam"><RadzenIcon Icon="group_add" /> Создать</button></div></div>
+                    <RadzenDataGrid Data="@teamsList" TItem="UserTeam" Height="150px"><Columns><RadzenDataGridColumn TItem="UserTeam" Title="КОМАНДА"><Template Context="t"><span style="color: var(--text-light);">@t.Name</span><br /><span style="font-size:0.75rem;color:var(--text-muted);">@t.Group.Name</span></Template></RadzenDataGridColumn><RadzenDataGridColumn TItem="UserTeam" Title="" Width="45px"><Template Context="tm"><button class="btn-icon-danger" @onclick="@(async () => await DeleteTeam(tm.Id))"><RadzenIcon Icon="delete" style="font-size: 0.9rem;" /></button></Template></RadzenDataGridColumn></Columns></RadzenDataGrid>
+                </div>
+            </div>
+
+            <div class="cyber-card">
                 <h4 class="section-title"><RadzenIcon Icon="assignment_ind" /> Распределение оперативников</h4>
                 <RadzenDataGrid Data="@usersList" TItem="ApplicationUser" AllowPaging="true" PageSize="10">
                     <Columns>
                         <RadzenDataGridColumn TItem="ApplicationUser" Property="UserName" Title="АГЕНТ" Width="160px" />
-                        <RadzenDataGridColumn TItem="ApplicationUser" Title="ПОДРАЗДЕЛЕНИЕ" Width="220px">
-                            <Template Context="usr">
-                                <RadzenDropDown TValue="int?" Data="@groupsList" TextProperty="Name" ValueProperty="Id" Value="@usr.GroupId"
-                                                Change="@(async (args) => await UpdateUserGroup(usr.Id, args != null ? (int?)Convert.ToInt32(args) : null))"
-                                                Placeholder="Нет" AllowClear="true" style="width: 100%;" />
+                        <RadzenDataGridColumn TItem="ApplicationUser" Title="ПОДРАЗДЕЛЕНИЕ" Width="220px"><Template Context="usr"><RadzenDropDown TValue="int?" Data="@groupsList" TextProperty="Name" ValueProperty="Id" Value="@usr.GroupId" Change="@(async (args) => await UpdateUserGroup(usr.Id, args != null ? (int?)Convert.ToInt32(args) : null))" Placeholder="Нет" AllowClear="true" style="width: 100%;" /></Template></RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="ApplicationUser" Title="КОМАНДЫ" Width="90px" TextAlign="TextAlign.Center"><Template Context="usr"><button class="btn-primary-gradient" style="font-size: 0.78rem; padding: 5px 10px;" @onclick="@(() => OpenTeamAssignmentModal(usr))"><RadzenIcon Icon="settings" style="font-size: 0.9rem;" /> Состав</button></Template></RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+            </div>
+        }
+        else if (activeTabIndex == 3 && isAdmin)
+        {
+            <div class="cyber-card" style="margin-bottom: 25px;">
+                <h4 class="section-title"><RadzenIcon Icon="person_add" /> Создание нового пользователя</h4>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="cyber-label">Логин (Email)</label>
+                        <RadzenTextBox @bind-Value="@newUserModel.Login" class="w-100 user-form-input" Placeholder="user@example.com" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="cyber-label">Пароль</label>
+                        <RadzenTextBox @bind-Value="@newUserModel.Password" type="password" class="w-100 user-form-input" Placeholder="Минимум 6 символов" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="cyber-label">Фамилия</label>
+                        <RadzenTextBox @bind-Value="@newUserModel.LastName" class="w-100 user-form-input" Placeholder="Иванов" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="cyber-label">Имя</label>
+                        <RadzenTextBox @bind-Value="@newUserModel.FirstName" class="w-100 user-form-input" Placeholder="Иван" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="cyber-label">Отчество</label>
+                        <RadzenTextBox @bind-Value="@newUserModel.MiddleName" class="w-100 user-form-input" Placeholder="Иванович" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="d-flex align-items-center gap-3" style="height: 37px;">
+                            <RadzenCheckBox @bind-Value="@newUserModel.IsAdmin" />
+                            <span style="color: var(--text-light);">Администратор</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3 text-end">
+                        <button class="btn-primary-gradient" @onclick="CreateUser">
+                            <RadzenIcon Icon="person_add" /> Создать пользователя
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cyber-card">
+                <h4 class="section-title"><RadzenIcon Icon="people" /> Список пользователей (@usersList.Count)</h4>
+                <RadzenDataGrid Data="@usersList" TItem="ApplicationUser" AllowPaging="true" PageSize="10">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="ApplicationUser" Title="ЛОГИН" Width="200px">
+                            <Template Context="u"><span style="color: var(--text-light);">@u.UserName</span></Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="ApplicationUser" Title="ФИО" Width="220px">
+                            <Template Context="u"><span style="color: var(--text-light);">@u.LastName @u.FirstName @u.MiddleName</span></Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="ApplicationUser" Title="РОЛЬ" Width="120px" TextAlign="TextAlign.Center">
+                            <Template Context="u">
+                                @if (adminUserIds.Contains(u.Id))
+                                {
+                                    <span class="status-badge-mini status-completed">Админ</span>
+                                }
+                                else
+                                {
+                                    <span style="color: var(--text-muted);">Пользователь</span>
+                                }
                             </Template>
                         </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="ApplicationUser" Title="КОМАНДЫ" Width="90px" TextAlign="TextAlign.Center">
-                            <Template Context="usr">
-                                <button class="btn-primary-gradient" style="font-size: 0.78rem; padding: 5px 10px;" @onclick="@(() => OpenTeamAssignmentModal(usr))">
-                                    <RadzenIcon Icon="settings" style="font-size: 0.9rem;" /> Состав
+                        <RadzenDataGridColumn TItem="ApplicationUser" Title="ПОДРАЗДЕЛЕНИЕ" Width="150px">
+                            <Template Context="u"><span style="color: var(--text-muted);">@(u.Group?.Name ?? "—")</span></Template>
+                        </RadzenDataGridColumn>
+                        <RadzenDataGridColumn TItem="ApplicationUser" Title="" Width="120px" TextAlign="TextAlign.Center">
+                            <Template Context="u">
+                                <button class="btn-detail" style="margin-right: 6px;" @onclick="@(() => ToggleAdminRole(u.Id))">
+                                    <RadzenIcon Icon="swap_horiz" style="font-size: 0.9rem;" /> Роль
+                                </button>
+                                <button class="btn-icon-danger" @onclick="@(() => DeleteUser(u.Id))">
+                                    <RadzenIcon Icon="delete" style="font-size: 0.9rem;" />
                                 </button>
                             </Template>
                         </RadzenDataGridColumn>
                     </Columns>
                 </RadzenDataGrid>
-            </div>
-
-            <div class="cyber-card" style="margin-bottom: 25px;">
-                <h4 class="section-title"><RadzenIcon Icon="restart_alt" style="color: var(--danger-color);" /> Управление сессиями сценариев</h4>
-                @if (!allScenarioProgressList.Any())
-                {
-                    <div class="text-center py-4 text-muted">Нет активных сессий сценариев</div>
-                }
-                else
-                {
-                    <RadzenDataGrid Data="@allScenarioProgressList" TItem="UserScenarioProgress" AllowPaging="true" PageSize="5">
-                        <Columns>
-                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="ОБЪЕКТ" Width="180px">
-                                <Template Context="p">
-                                    @if (p.IsTeamAttempt)
-                                    {
-                                        <span>👥 @(teamsList.FirstOrDefault(t => t.Id == p.TeamId)?.Name ?? "Команда")</span>
-                                    }
-                                    else
-                                    {
-                                        <span>👤 @(usersList.FirstOrDefault(u => u.Id == p.UserId)?.UserName ?? "Пользователь")</span>
-                                    }
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="НАЗВАНИЕ" Width="200px">
-                                <Template Context="p">
-                                    <span style="color: var(--text-light);">@(p.Scenario?.Title ?? "—")</span>
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="СТАТУС" Width="100px">
-                                <Template Context="p">
-                                    @if (p.Status == AttemptStatus.InProgress)
-                                    {
-                                        <span style="color: var(--accent-cyan);">В процессе</span>
-                                    }
-                                    else if (p.Status == AttemptStatus.Completed)
-                                    {
-                                        <span style="color: var(--success-color);">Завершён</span>
-                                    }
-                                    else
-                                    {
-                                        <span style="color: var(--text-muted);">@p.Status</span>
-                                    }
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="UserScenarioProgress" Property="Score" Title="XP" Width="70px" TextAlign="TextAlign.Center" />
-                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="" Width="95px" TextAlign="TextAlign.Center">
-                                <Template Context="p">
-                                    <button class="btn-primary-gradient" style="background: linear-gradient(135deg, #e06c75 0%, #e06c75 100%); font-size: 0.75rem; padding: 5px 8px;" @onclick="@(() => ResetScenarioProgress(p.Id))">
-                                        <RadzenIcon Icon="refresh" style="font-size: 0.9rem;" /> Сбросить
-                                    </button>
-                                </Template>
-                            </RadzenDataGridColumn>
-                        </Columns>
-                    </RadzenDataGrid>
-                }
-            </div>
-
-            <div class="cyber-card">
-                <h4 class="section-title"><RadzenIcon Icon="quiz" style="color: var(--danger-color);" /> Управление сессиями тестов</h4>
-                @if (!allTestProgressList.Any())
-                {
-                    <div class="text-center py-4 text-muted">Нет активных сессий тестов</div>
-                }
-                else
-                {
-                    <RadzenDataGrid Data="@allTestProgressList" TItem="UserTestProgress" AllowPaging="true" PageSize="5">
-                        <Columns>
-                            <RadzenDataGridColumn TItem="UserTestProgress" Title="ПОЛЬЗОВАТЕЛЬ" Width="160px">
-                                <Template Context="tp">
-                                    <span>👤 @(usersList.FirstOrDefault(u => u.Id == tp.UserId)?.UserName ?? "Пользователь")</span>
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="UserTestProgress" Title="НАЗВАНИЕ ТЕСТА" Width="200px">
-                                <Template Context="tp">
-                                    <span style="color: var(--text-light);">@(tp.Test?.Title ?? "—")</span>
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="UserTestProgress" Title="СТАТУС" Width="100px">
-                                <Template Context="tp">
-                                    @if (tp.Status == AttemptStatus.InProgress)
-                                    {
-                                        <span style="color: var(--accent-cyan);">В процессе</span>
-                                    }
-                                    else if (tp.Status == AttemptStatus.Completed)
-                                    {
-                                        <span style="color: var(--success-color);">Завершён</span>
-                                    }
-                                    else
-                                    {
-                                        <span style="color: var(--text-muted);">@tp.Status</span>
-                                    }
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="UserTestProgress" Property="Score" Title="БАЛЛЫ" Width="70px" TextAlign="TextAlign.Center" />
-                            <RadzenDataGridColumn TItem="UserTestProgress" Title="" Width="95px" TextAlign="TextAlign.Center">
-                                <Template Context="tp">
-                                    <button class="btn-primary-gradient" style="background: linear-gradient(135deg, #e06c75 0%, #e06c75 100%); font-size: 0.75rem; padding: 5px 8px;" @onclick="@(() => ResetTestProgress(tp.Id))">
-                                        <RadzenIcon Icon="refresh" style="font-size: 0.9rem;" /> Сбросить
-                                    </button>
-                                </Template>
-                            </RadzenDataGridColumn>
-                        </Columns>
-                    </RadzenDataGrid>
-                }
             </div>
         }
     }
@@ -1143,11 +1235,9 @@
         <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px; width: 500px; padding: 25px; box-shadow: 0 0 40px rgba(91, 163, 227, 0.2);">
             <h4 style="color: var(--accent-light-blue); margin: 0 0 10px 0;">Команды: @selectedUserForTeams.UserName</h4>
             <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 20px;">Назначьте агента в команды его подразделения.</p>
-
             @{
                 var availableTeams = selectedUserForTeams.GroupId != null ? teamsList.Where(t => t.GroupId == selectedUserForTeams.GroupId).ToList() : teamsList;
             }
-
             <div style="max-height: 250px; overflow-y: auto; background: var(--bg-main); border: 1px solid var(--border-color); padding: 12px; border-radius: 6px; margin-bottom: 20px;">
                 @if (!availableTeams.Any())
                 {
@@ -1156,370 +1246,196 @@
                 @foreach (var team in availableTeams)
                 {
                     var isChecked = selectedUserForTeams.Teams != null && selectedUserForTeams.Teams.Any(t => t.Id == team.Id);
-                    <div style="display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border-color);">
-                        <RadzenCheckBox TValue="bool" Value="@isChecked" Change="@(async (val) => await ToggleTeamAssignment(selectedUserForTeams.Id, team.Id, val))" />
-                        <span style="color: var(--text-light);">@team.Name</span>
-                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border-color);"><RadzenCheckBox TValue="bool" Value="@isChecked" Change="@(async (val) => await ToggleTeamAssignment(selectedUserForTeams.Id, team.Id, val))" /><span style="color: var(--text-light);">@team.Name</span></div>
                 }
             </div>
-
-            <div class="text-right">
-                <button class="btn-primary-gradient" @onclick="CloseTeamAssignmentModal">Закрыть</button>
-            </div>
+            <div class="text-right"><button class="btn-primary-gradient" @onclick="CloseTeamAssignmentModal">Закрыть</button></div>
         </div>
     </div>
 }
 
 @code {
     [Inject] private IDbContextFactory<ApplicationDbContext> ContextFactory { get; set; }
+    private int activeTabIndex = 0; private bool isLoaded = false; private bool isAdmin = false;
+    private string UserDisplayName = "Загрузка..."; private ApplicationUser? user;
+    private UserScenarioProgress? activeScenario = null; private int activeScenarioQuestionsSolved = 0; private int activeScenarioTotalQuestions = 0;
+    private int totalScenarios = 0; private int soloScenarios = 0; private int teamScenarios = 0;
+    private int completedScenariosCount = 0; private int totalAttemptsScenarios = 0; private int totalScenarioScore = 0; private string scenarioSuccessRate = "0";
+    private List<UserScenarioProgress> allScenarioAttempts = new();
+    private int totalTests = 0; private int completedTestsCount = 0; private int totalAttemptsTests = 0;
+    private string testSuccessRate = "0"; private string correctAnswersPercent = "0"; private int totalCorrectAnswers = 0; private int totalQuestionsAnswered = 0;
+    private List<TestAttemptDto> allTestAttempts = new();
 
-    private int activeTabIndex = 0;
-    private bool isLoaded = false;
-    private bool isAdmin = false;
-    private string UserDisplayName = "Загрузка...";
-    private ApplicationUser? user;
+    // Поля для управления пользователями
+    private UserCreationModel newUserModel = new();
+    private HashSet<string> adminUserIds = new();
 
-    private UserScenarioProgress? activeScenario = null;
-    private int activeScenarioQuestionsSolved = 0;
-    private int activeScenarioTotalQuestions = 0;
-    private int totalScenarios = 0;
-    private int soloScenarios = 0;
-    private int teamScenarios = 0;
-    private int completedScenariosCount = 0;
-    private int totalAttemptsScenarios = 0;
-    private int totalScenarioScore = 0;
-    private string scenarioSuccessRate = "0";
-    private List<UserScenarioProgress> completedScenariosList = new();
-
-    private int totalTests = 0;
-    private int completedTestsCount = 0;
-    private int totalAttemptsTests = 0;
-    private string testSuccessRate = "0";
-    private string correctAnswersPercent = "0";
-    private int totalCorrectAnswers = 0;
-    private int totalQuestionsAnswered = 0;
-    private List<TestProgressDto> completedTestsList = new();
-
-    public class TestProgressDto
-    {
-        public string TestTitle { get; set; } = "";
-        public string Difficulty { get; set; } = "";
-        public string DifficultyText { get; set; } = "";
-        public int CorrectAnswers { get; set; }
-        public int TotalQuestions { get; set; }
-        public DateTime? CompletedAt { get; set; }
-    }
-
+    public class TestAttemptDto { public string TestTitle { get; set; } = ""; public string Difficulty { get; set; } = ""; public string DifficultyText { get; set; } = ""; public AttemptStatus Status { get; set; } public DateTime? StartedAt { get; set; } public DateTime? CompletedAt { get; set; } public TimeSpan? TimeSpent { get; set; } public int CorrectAnswers { get; set; } public int TotalQuestions { get; set; } }
     public class TeamMemberDto { public string Id { get; set; } = ""; public string Name { get; set; } = ""; public int TotalScore { get; set; } }
+    public class UserCreationModel { public string Login { get; set; } = string.Empty; public string Password { get; set; } = string.Empty; public string FirstName { get; set; } = string.Empty; public string LastName { get; set; } = string.Empty; public string MiddleName { get; set; } = string.Empty; public bool IsAdmin { get; set; } }
+
     private List<TeamMemberDto> myTeamMembers = new();
+    private List<string> leaderboardCategories = new() { "Сценарии", "Тесты" }; private string selectedCategory = "Сценарии";
+    private List<string> leaderboardFilters = new() { "Все подразделения", "Мое подразделение" }; private string selectedFilter = "Все подразделения";
+    public class UserLeaderboardDto { public int Rank { get; set; } public string Name { get; set; } = ""; public string GroupName { get; set; } = ""; public int Score { get; set; } public int CompletedCount { get; set; } public int Percentile { get; set; } public bool IsCurrentUser { get; set; } }
+    public class TeamLeaderboardDto { public int Rank { get; set; } public string Name { get; set; } = ""; public string GroupName { get; set; } = ""; public int Score { get; set; } public int CompletedCount { get; set; } public int Percentile { get; set; } public bool IsUserTeam { get; set; } }
+    public class TestUserLeaderboardDto { public int Rank { get; set; } public string Name { get; set; } = ""; public string GroupName { get; set; } = ""; public int AverageScore { get; set; } public int CompletedCount { get; set; } public bool IsCurrentUser { get; set; } }
+    public class TestLeaderboardStats { public int TotalTests { get; set; } public int TotalCompleted { get; set; } public int UniqueUsers { get; set; } public int OverallAverage { get; set; } }
+    private List<UserLeaderboardDto> topUsers = new(); private List<TeamLeaderboardDto> topTeams = new();
+    private List<TestUserLeaderboardDto> topTestUsers = new(); private TestLeaderboardStats testLeaderboardStats = new();
+    private List<UserGroup> groupsList = new(); private List<UserTeam> teamsList = new(); private List<ApplicationUser> usersList = new();
+    private List<UserScenarioProgress> allScenarioProgressList = new(); private List<UserTestProgress> allTestProgressList = new();
+    private bool showTeamModal = false; private ApplicationUser? selectedUserForTeams;
+    private string newGroupName = ""; private string newTeamName = ""; private int selectedGroupIdForTeam;
 
-    private List<string> leaderboardCategories = new() { "Сценарии", "Тесты" };
-    private string selectedCategory = "Сценарии";
-    private List<string> leaderboardFilters = new() { "Все подразделения", "Мое подразделение" };
-    private string selectedFilter = "Все подразделения";
-
-    public class UserLeaderboardDto
-    {
-        public int Rank { get; set; }
-        public string Name { get; set; } = "";
-        public string GroupName { get; set; } = "";
-        public int Score { get; set; }
-        public int CompletedCount { get; set; }
-        public int Percentile { get; set; }
-        public bool IsCurrentUser { get; set; }
-    }
-
-    public class TeamLeaderboardDto
-    {
-        public int Rank { get; set; }
-        public string Name { get; set; } = "";
-        public string GroupName { get; set; } = "";
-        public int Score { get; set; }
-        public int CompletedCount { get; set; }
-        public int Percentile { get; set; }
-        public bool IsUserTeam { get; set; }
-    }
-
-    public class TestUserLeaderboardDto
-    {
-        public int Rank { get; set; }
-        public string Name { get; set; } = "";
-        public string GroupName { get; set; } = "";
-        public int AverageScore { get; set; }
-        public int CompletedCount { get; set; }
-        public bool IsCurrentUser { get; set; }
-    }
-
-    public class TestLeaderboardStats
-    {
-        public int TotalTests { get; set; }
-        public int TotalCompleted { get; set; }
-        public int UniqueUsers { get; set; }
-        public int OverallAverage { get; set; }
-    }
-
-    private List<UserLeaderboardDto> topUsers = new();
-    private List<TeamLeaderboardDto> topTeams = new();
-    private List<TestUserLeaderboardDto> topTestUsers = new();
-    private TestLeaderboardStats testLeaderboardStats = new();
-
-    private List<UserGroup> groupsList = new();
-    private List<UserTeam> teamsList = new();
-    private List<ApplicationUser> usersList = new();
-    private List<UserScenarioProgress> allScenarioProgressList = new();
-    private List<UserTestProgress> allTestProgressList = new();
-    private bool showTeamModal = false;
-    private ApplicationUser? selectedUserForTeams;
-    private string newGroupName = "";
-    private string newTeamName = "";
-    private int selectedGroupIdForTeam;
-
-    protected override async Task OnInitializedAsync()
-    {
-        var authState = await AuthProvider.GetAuthenticationStateAsync();
-        isAdmin = authState.User.IsInRole("Admin");
-        await LoadBaseData();
-        await UpdateLeaderboards();
-        isLoaded = true;
-    }
+    protected override async Task OnInitializedAsync() { var s = await AuthProvider.GetAuthenticationStateAsync(); isAdmin = s.User.IsInRole("Admin"); await LoadBaseData(); await UpdateLeaderboards(); isLoaded = true; }
 
     private async Task LoadBaseData()
     {
-        var authState = await AuthProvider.GetAuthenticationStateAsync();
-        var userId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        UserDisplayName = authState.User.Identity?.Name ?? "Оперативник";
-
-        using var context = await ContextFactory.CreateDbContextAsync();
-        if (!string.IsNullOrEmpty(userId))
+        var s = await AuthProvider.GetAuthenticationStateAsync(); var uid = s.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        UserDisplayName = s.User.Identity?.Name ?? "Оперативник";
+        using var c = await ContextFactory.CreateDbContextAsync();
+        if (!string.IsNullOrEmpty(uid))
         {
-            user = await context.Set<ApplicationUser>()
-                .Include(u => u.Group)
-                .Include(u => u.Teams)
-                .FirstOrDefaultAsync(u => u.Id == userId);
-
-            activeScenario = await context.UserProgresses
-                .Include(p => p.Scenario).ThenInclude(s => s.Questions)
-                .FirstOrDefaultAsync(p => p.UserId == userId && p.Status == AttemptStatus.InProgress);
-
-            if (activeScenario != null)
-            {
-                activeScenarioTotalQuestions = activeScenario.Scenario.Questions.Count;
-                activeScenarioQuestionsSolved = await context.Set<UserAnswerProgress>()
-                    .CountAsync(a => a.UserScenarioProgressId == activeScenario.Id);
-            }
-
-            var allVisible = await context.Scenarios.Where(s => s.IsVisible || isAdmin).ToListAsync();
-            totalScenarios = allVisible.Count;
-            soloScenarios = allVisible.Count(s => s.Scope == VisibilityScope.Public || s.Scope == VisibilityScope.GroupOnly);
-            teamScenarios = allVisible.Count(s => s.Scope == VisibilityScope.TeamOnly);
-
-            completedScenariosList = await context.UserProgresses
-                .Include(p => p.Scenario)
-                .Where(p => p.UserId == userId && p.Status == AttemptStatus.Completed)
-                .OrderByDescending(p => p.CompletedAt)
-                .ToListAsync();
-
-            completedScenariosCount = completedScenariosList.Count;
-            totalScenarioScore = completedScenariosList.Sum(s => s.Score);
-            totalAttemptsScenarios = await context.UserProgresses.CountAsync(p => p.UserId == userId);
+            user = await c.Set<ApplicationUser>().Include(u => u.Group).Include(u => u.Teams).FirstOrDefaultAsync(u => u.Id == uid);
+            activeScenario = await c.UserProgresses.Include(p => p.Scenario).ThenInclude(s => s.Questions).FirstOrDefaultAsync(p => p.UserId == uid && p.Status == AttemptStatus.InProgress);
+            if (activeScenario != null) { activeScenarioTotalQuestions = activeScenario.Scenario.Questions.Count; activeScenarioQuestionsSolved = await c.Set<UserAnswerProgress>().CountAsync(a => a.UserScenarioProgressId == activeScenario.Id); }
+            var av = await c.Scenarios.Where(s => s.IsVisible || isAdmin).ToListAsync(); totalScenarios = av.Count; soloScenarios = av.Count(s => s.Scope == VisibilityScope.Public || s.Scope == VisibilityScope.GroupOnly); teamScenarios = av.Count(s => s.Scope == VisibilityScope.TeamOnly);
+            allScenarioAttempts = await c.UserProgresses.Include(p => p.Scenario).Where(p => p.UserId == uid).OrderByDescending(p => p.StartedAt).ToListAsync();
+            completedScenariosCount = allScenarioAttempts.Count(p => p.Status == AttemptStatus.Completed); totalScenarioScore = allScenarioAttempts.Where(p => p.Status == AttemptStatus.Completed).Sum(s => s.Score); totalAttemptsScenarios = allScenarioAttempts.Count;
             scenarioSuccessRate = totalAttemptsScenarios > 0 ? ((int)Math.Round((double)completedScenariosCount / totalAttemptsScenarios * 100)).ToString() : "0";
-
-            var allTests = await context.Set<CyberTest>().Where(t => t.IsVisible || isAdmin).ToListAsync();
-            totalTests = allTests.Count;
-
-            var testProgresses = await context.Set<UserTestProgress>()
-                .Include(tp => tp.Test).ThenInclude(t => t.Questions)
-                .Where(tp => tp.UserId == userId)
-                .OrderByDescending(tp => tp.CompletedAt)
-                .ToListAsync();
-
-            totalAttemptsTests = testProgresses.Count;
-            completedTestsCount = testProgresses.Count(tp => tp.Status == AttemptStatus.Completed);
+            var at = await c.Set<CyberTest>().Where(t => t.IsVisible || isAdmin).ToListAsync(); totalTests = at.Count;
+            var tps = await c.Set<UserTestProgress>().Include(tp => tp.Test).ThenInclude(t => t.Questions).Where(tp => tp.UserId == uid).OrderByDescending(tp => tp.CompletedAt).ToListAsync();
+            totalAttemptsTests = tps.Count; completedTestsCount = tps.Count(tp => tp.Status == AttemptStatus.Completed);
             testSuccessRate = totalAttemptsTests > 0 ? ((int)Math.Round((double)completedTestsCount / totalAttemptsTests * 100)).ToString() : "0";
-
-            totalCorrectAnswers = testProgresses.Where(tp => tp.Status == AttemptStatus.Completed).Sum(tp => tp.Score);
-            totalQuestionsAnswered = testProgresses.Where(tp => tp.Status == AttemptStatus.Completed)
-                .Sum(tp => tp.Test?.Questions?.Count ?? 0);
-            correctAnswersPercent = totalQuestionsAnswered > 0
-                ? ((int)Math.Round((double)totalCorrectAnswers / totalQuestionsAnswered * 100)).ToString()
-                : "0";
-
-            var completedTests = testProgresses.Where(tp => tp.Status == AttemptStatus.Completed).ToList();
-            completedTestsList = completedTests.Select(tp => new TestProgressDto
-            {
-                TestTitle = tp.Test?.Title ?? "Тест",
-                Difficulty = tp.Test?.Difficulty.ToString() ?? "",
-                DifficultyText = tp.Test?.Difficulty switch
-                {
-                    TestDifficulty.Easy => "Лёгкий",
-                    TestDifficulty.Medium => "Средний",
-                    TestDifficulty.Hard => "Сложный",
-                    _ => tp.Test?.Difficulty.ToString() ?? ""
-                },
-                CorrectAnswers = tp.Score,
-                TotalQuestions = tp.Test?.Questions?.Count ?? 0,
-                CompletedAt = tp.CompletedAt
-            }).ToList();
-
-            if (user?.Teams.Any() == true)
-            {
-                var myTeamId = user.Teams.First().Id;
-                var teamUsers = await context.Set<UserTeam>()
-                    .Where(t => t.Id == myTeamId)
-                    .SelectMany(t => t.Users)
-                    .ToListAsync();
-
-                myTeamMembers.Clear();
-                foreach (var tu in teamUsers)
-                {
-                    var uScore = await context.UserProgresses.Where(p => p.UserId == tu.Id && p.Status == AttemptStatus.Completed).SumAsync(p => p.Score);
-                    myTeamMembers.Add(new TeamMemberDto { Id = tu.Id, Name = tu.UserName ?? "Агент", TotalScore = uScore });
-                }
-                myTeamMembers = myTeamMembers.OrderByDescending(m => m.TotalScore).ToList();
-            }
+            totalCorrectAnswers = tps.Where(tp => tp.Status == AttemptStatus.Completed).Sum(tp => tp.Score); totalQuestionsAnswered = tps.Where(tp => tp.Status == AttemptStatus.Completed).Sum(tp => tp.Test?.Questions?.Count ?? 0);
+            correctAnswersPercent = totalQuestionsAnswered > 0 ? ((int)Math.Round((double)totalCorrectAnswers / totalQuestionsAnswered * 100)).ToString() : "0";
+            allTestAttempts = tps.Select(tp => new TestAttemptDto { TestTitle = tp.Test?.Title ?? "Тест", Difficulty = tp.Test?.Difficulty.ToString() ?? "", DifficultyText = tp.Test?.Difficulty switch { TestDifficulty.Easy => "Лёгкий", TestDifficulty.Medium => "Средний", TestDifficulty.Hard => "Сложный", _ => tp.Test?.Difficulty.ToString() ?? "" }, Status = tp.Status, StartedAt = tp.StartedAt, CompletedAt = tp.CompletedAt, TimeSpent = (tp.StartedAt.HasValue && tp.CompletedAt.HasValue) ? tp.CompletedAt.Value - tp.StartedAt.Value : null, CorrectAnswers = tp.Score, TotalQuestions = tp.Test?.Questions?.Count ?? 0 }).ToList();
+            if (user?.Teams.Any() == true) { var tid = user.Teams.First().Id; var tu = await c.Set<UserTeam>().Where(t => t.Id == tid).SelectMany(t => t.Users).ToListAsync(); myTeamMembers.Clear(); foreach (var u in tu) { var sc = await c.UserProgresses.Where(p => p.UserId == u.Id && p.Status == AttemptStatus.Completed).SumAsync(p => p.Score); myTeamMembers.Add(new TeamMemberDto { Id = u.Id, Name = u.UserName ?? "Агент", TotalScore = sc }); } myTeamMembers = myTeamMembers.OrderByDescending(m => m.TotalScore).ToList(); }
         }
-
         if (isAdmin)
         {
-            groupsList = await context.UserGroups.ToListAsync();
-            teamsList = await context.UserTeams.Include(t => t.Group).ToListAsync();
-            usersList = await context.Set<ApplicationUser>().Include(u => u.Group).Include(u => u.Teams).ToListAsync();
-            allScenarioProgressList = await context.UserProgresses.Include(p => p.Scenario).OrderByDescending(p => p.StartedAt).ToListAsync();
-            allTestProgressList = await context.Set<UserTestProgress>().Include(tp => tp.Test).OrderByDescending(tp => tp.StartedAt).ToListAsync();
+            groupsList = await c.UserGroups.ToListAsync();
+            teamsList = await c.UserTeams.Include(t => t.Group).ToListAsync();
+            usersList = await c.Set<ApplicationUser>().Include(u => u.Group).Include(u => u.Teams).ToListAsync();
+            allScenarioProgressList = await c.UserProgresses.Include(p => p.Scenario).OrderByDescending(p => p.StartedAt).ToListAsync();
+            allTestProgressList = await c.Set<UserTestProgress>().Include(tp => tp.Test).OrderByDescending(tp => tp.StartedAt).ToListAsync();
+
+            // Загружаем ID админов
+            adminUserIds.Clear();
+            foreach (var u in usersList)
+            {
+                if (await UserManagementService.IsUserAdminAsync(u.Id))
+                    adminUserIds.Add(u.Id);
+            }
         }
-        else
-        {
-            teamsList = await context.UserTeams.ToListAsync();
-        }
+        else { teamsList = await c.UserTeams.ToListAsync(); }
     }
 
-    private string GetDifficultyColor(string difficulty)
-    {
-        return difficulty switch
-        {
-            "Easy" => "var(--success-color)",
-            "Medium" => "var(--warning-color)",
-            "Hard" => "var(--danger-color)",
-            _ => "var(--text-muted)"
-        };
-    }
+    private string GetDifficultyColor(string d) => d switch { "Easy" => "var(--success-color)", "Medium" => "var(--warning-color)", "Hard" => "var(--danger-color)", _ => "var(--text-muted)" };
 
     private async Task UpdateLeaderboards()
     {
-        using var context = await ContextFactory.CreateDbContextAsync();
-        int? myGroupId = user?.GroupId;
-        bool filterByGroup = selectedFilter == "Мое подразделение" && myGroupId.HasValue;
-        var currentUserId = user?.Id;
-
+        using var c = await ContextFactory.CreateDbContextAsync(); int? gid = user?.GroupId; bool f = selectedFilter == "Мое подразделение" && gid.HasValue; var cuid = user?.Id;
         if (selectedCategory == "Сценарии")
         {
-            var usersQuery = context.Set<ApplicationUser>().Include(u => u.Group).AsQueryable();
-            if (filterByGroup) usersQuery = usersQuery.Where(u => u.GroupId == myGroupId.Value);
-            var allUsers = await usersQuery.ToListAsync();
-            topUsers.Clear();
-            int maxScore = 0;
-            foreach (var u in allUsers)
-            {
-                var progressList = await context.UserProgresses.Where(p => p.UserId == u.Id && p.Status == AttemptStatus.Completed && !p.IsTeamAttempt).ToListAsync();
-                var score = progressList.Sum(p => p.Score);
-                if (score > maxScore) maxScore = score;
-                if (score > 0) topUsers.Add(new UserLeaderboardDto { Name = u.UserName ?? "Агент", GroupName = u.Group?.Name ?? "Без подразделения", Score = score, CompletedCount = progressList.Count, IsCurrentUser = u.Id == currentUserId });
-            }
-            topUsers = topUsers.OrderByDescending(u => u.Score).Take(15).ToList();
-            for (int i = 0; i < topUsers.Count; i++) { topUsers[i].Rank = i + 1; topUsers[i].Percentile = maxScore > 0 ? (int)Math.Round((double)topUsers[i].Score / maxScore * 100) : 0; }
-
-            var teamsQuery = context.UserTeams.Include(t => t.Group).AsQueryable();
-            if (filterByGroup) teamsQuery = teamsQuery.Where(t => t.GroupId == myGroupId.Value);
-            var allTeams = await teamsQuery.ToListAsync();
-            topTeams.Clear();
-            maxScore = 0;
-            var userTeamIds = user?.Teams?.Select(t => t.Id).ToList() ?? new List<int>();
-            foreach (var t in allTeams)
-            {
-                var progressList = await context.UserProgresses.Where(p => p.TeamId == t.Id && p.Status == AttemptStatus.Completed && p.IsTeamAttempt).ToListAsync();
-                var score = progressList.Sum(p => p.Score);
-                if (score > maxScore) maxScore = score;
-                if (score > 0) topTeams.Add(new TeamLeaderboardDto { Name = t.Name, GroupName = t.Group?.Name ?? "", Score = score, CompletedCount = progressList.Count, IsUserTeam = userTeamIds.Contains(t.Id) });
-            }
-            topTeams = topTeams.OrderByDescending(t => t.Score).Take(15).ToList();
-            for (int i = 0; i < topTeams.Count; i++) { topTeams[i].Rank = i + 1; topTeams[i].Percentile = maxScore > 0 ? (int)Math.Round((double)topTeams[i].Score / maxScore * 100) : 0; }
+            var uq = c.Set<ApplicationUser>().Include(u => u.Group).AsQueryable(); if (f) uq = uq.Where(u => u.GroupId == gid.Value); var au = await uq.ToListAsync(); topUsers.Clear(); int ms = 0;
+            foreach (var u in au) { var pl = await c.UserProgresses.Where(p => p.UserId == u.Id && p.Status == AttemptStatus.Completed && !p.IsTeamAttempt).ToListAsync(); var sc = pl.Sum(p => p.Score); if (sc > ms) ms = sc; if (sc > 0) topUsers.Add(new UserLeaderboardDto { Name = u.UserName ?? "Агент", GroupName = u.Group?.Name ?? "", Score = sc, CompletedCount = pl.Count, IsCurrentUser = u.Id == cuid }); }
+            topUsers = topUsers.OrderByDescending(u => u.Score).Take(15).ToList(); for (int i = 0; i < topUsers.Count; i++) { topUsers[i].Rank = i + 1; topUsers[i].Percentile = ms > 0 ? (int)Math.Round((double)topUsers[i].Score / ms * 100) : 0; }
+            var tq = c.UserTeams.Include(t => t.Group).AsQueryable(); if (f) tq = tq.Where(t => t.GroupId == gid.Value); var at = await tq.ToListAsync(); topTeams.Clear(); ms = 0;
+            var uti = user?.Teams?.Select(t => t.Id).ToList() ?? new List<int>();
+            foreach (var t in at) { var pl = await c.UserProgresses.Where(p => p.TeamId == t.Id && p.Status == AttemptStatus.Completed && p.IsTeamAttempt).ToListAsync(); var sc = pl.Sum(p => p.Score); if (sc > ms) ms = sc; if (sc > 0) topTeams.Add(new TeamLeaderboardDto { Name = t.Name, GroupName = t.Group?.Name ?? "", Score = sc, CompletedCount = pl.Count, IsUserTeam = uti.Contains(t.Id) }); }
+            topTeams = topTeams.OrderByDescending(t => t.Score).Take(15).ToList(); for (int i = 0; i < topTeams.Count; i++) { topTeams[i].Rank = i + 1; topTeams[i].Percentile = ms > 0 ? (int)Math.Round((double)topTeams[i].Score / ms * 100) : 0; }
         }
-        else if (selectedCategory == "Тесты")
+        else
         {
-            var usersQuery = context.Set<ApplicationUser>().Include(u => u.Group).AsQueryable();
-            if (filterByGroup) usersQuery = usersQuery.Where(u => u.GroupId == myGroupId.Value);
-            var allUsers = await usersQuery.ToListAsync();
-            topTestUsers.Clear();
-            foreach (var u in allUsers)
-            {
-                var testProgresses = await context.Set<UserTestProgress>().Include(tp => tp.Test).ThenInclude(t => t.Questions).Where(tp => tp.UserId == u.Id && tp.Status == AttemptStatus.Completed).ToListAsync();
-                if (testProgresses.Any())
-                {
-                    double totalPercent = 0;
-                    foreach (var tp in testProgresses) { int totalQ = tp.Test?.Questions?.Count ?? 0; if (totalQ > 0) totalPercent += (double)tp.Score / totalQ * 100; }
-                    int avgScore = (int)Math.Round(totalPercent / testProgresses.Count);
-                    topTestUsers.Add(new TestUserLeaderboardDto { Name = u.UserName ?? "Агент", GroupName = u.Group?.Name ?? "Без подразделения", AverageScore = avgScore, CompletedCount = testProgresses.Count, IsCurrentUser = u.Id == currentUserId });
-                }
-            }
-            topTestUsers = topTestUsers.OrderByDescending(u => u.AverageScore).ThenByDescending(u => u.CompletedCount).Take(15).ToList();
-            for (int i = 0; i < topTestUsers.Count; i++) topTestUsers[i].Rank = i + 1;
-
-            var allTests = await context.Set<CyberTest>().Where(t => t.IsVisible || isAdmin).ToListAsync();
-            var allCompletedTests = await context.Set<UserTestProgress>().Include(tp => tp.Test).ThenInclude(t => t.Questions).Where(tp => tp.Status == AttemptStatus.Completed).ToListAsync();
-            testLeaderboardStats = new TestLeaderboardStats
-            {
-                TotalTests = allTests.Count,
-                TotalCompleted = allCompletedTests.Count,
-                UniqueUsers = allCompletedTests.Select(tp => tp.UserId).Distinct().Count(),
-                OverallAverage = allCompletedTests.Any() ? (int)Math.Round(allCompletedTests.Average(tp => { int totalQ = tp.Test?.Questions?.Count ?? 0; return totalQ > 0 ? (double)tp.Score / totalQ * 100 : 0; })) : 0
-            };
+            var uq = c.Set<ApplicationUser>().Include(u => u.Group).AsQueryable(); if (f) uq = uq.Where(u => u.GroupId == gid.Value); var au = await uq.ToListAsync(); topTestUsers.Clear();
+            foreach (var u in au) { var tps = await c.Set<UserTestProgress>().Include(tp => tp.Test).ThenInclude(t => t.Questions).Where(tp => tp.UserId == u.Id && tp.Status == AttemptStatus.Completed).ToListAsync(); if (tps.Any()) { double tpct = 0; foreach (var tp in tps) { int tq = tp.Test?.Questions?.Count ?? 0; if (tq > 0) tpct += (double)tp.Score / tq * 100; } topTestUsers.Add(new TestUserLeaderboardDto { Name = u.UserName ?? "Агент", GroupName = u.Group?.Name ?? "", AverageScore = (int)Math.Round(tpct / tps.Count), CompletedCount = tps.Count, IsCurrentUser = u.Id == cuid }); } }
+            topTestUsers = topTestUsers.OrderByDescending(u => u.AverageScore).ThenByDescending(u => u.CompletedCount).Take(15).ToList(); for (int i = 0; i < topTestUsers.Count; i++) topTestUsers[i].Rank = i + 1;
+            var allt = await c.Set<CyberTest>().Where(t => t.IsVisible || isAdmin).ToListAsync(); var act = await c.Set<UserTestProgress>().Include(tp => tp.Test).ThenInclude(t => t.Questions).Where(tp => tp.Status == AttemptStatus.Completed).ToListAsync();
+            testLeaderboardStats = new TestLeaderboardStats { TotalTests = allt.Count, TotalCompleted = act.Count, UniqueUsers = act.Select(tp => tp.UserId).Distinct().Count(), OverallAverage = act.Any() ? (int)Math.Round(act.Average(tp => { int tq = tp.Test?.Questions?.Count ?? 0; return tq > 0 ? (double)tp.Score / tq * 100 : 0; })) : 0 };
         }
     }
 
-    private void OpenTeamAssignmentModal(ApplicationUser targetUser) { selectedUserForTeams = targetUser; showTeamModal = true; }
+    private void OpenTeamAssignmentModal(ApplicationUser u) { selectedUserForTeams = u; showTeamModal = true; }
     private void CloseTeamAssignmentModal() { showTeamModal = false; selectedUserForTeams = null; }
+    private async Task ToggleTeamAssignment(string uid, int tid, bool assign) { using var c = await ContextFactory.CreateDbContextAsync(); var u = await c.Set<ApplicationUser>().Include(u => u.Teams).FirstOrDefaultAsync(u => u.Id == uid); var t = await c.UserTeams.FindAsync(tid); if (u != null && t != null) { if (assign && !u.Teams.Any(x => x.Id == tid)) u.Teams.Add(t); else if (!assign) { var tr = u.Teams.FirstOrDefault(x => x.Id == tid); if (tr != null) u.Teams.Remove(tr); } await c.SaveChangesAsync(); await LoadBaseData(); if (selectedUserForTeams?.Id == uid) selectedUserForTeams = usersList.FirstOrDefault(x => x.Id == uid); } }
+    private async Task CreateGroup() { if (string.IsNullOrWhiteSpace(newGroupName)) return; using var c = await ContextFactory.CreateDbContextAsync(); c.UserGroups.Add(new UserGroup { Name = newGroupName }); await c.SaveChangesAsync(); newGroupName = ""; await LoadBaseData(); }
+    private async Task CreateTeam() { if (string.IsNullOrWhiteSpace(newTeamName) || selectedGroupIdForTeam <= 0) return; using var c = await ContextFactory.CreateDbContextAsync(); c.UserTeams.Add(new UserTeam { Name = newTeamName, GroupId = selectedGroupIdForTeam }); await c.SaveChangesAsync(); newTeamName = ""; await LoadBaseData(); }
+    private async Task UpdateUserGroup(string uid, int? gid) { using var c = await ContextFactory.CreateDbContextAsync(); var u = await c.Set<ApplicationUser>().FindAsync(uid); if (u != null) { u.GroupId = gid; await c.SaveChangesAsync(); } await LoadBaseData(); }
+    private async Task DeleteGroup(int id) { var ok = await DialogService.Confirm("Удалить подразделение?", "Удаление", new ConfirmOptions { OkButtonText = "Удалить", CancelButtonText = "Отмена" }); if (ok == true) { using var c = await ContextFactory.CreateDbContextAsync(); var g = await c.UserGroups.FindAsync(id); if (g != null) { c.UserGroups.Remove(g); await c.SaveChangesAsync(); await LoadBaseData(); } } }
+    private async Task DeleteTeam(int id) { var ok = await DialogService.Confirm("Удалить команду?", "Удаление", new ConfirmOptions { OkButtonText = "Удалить", CancelButtonText = "Отмена" }); if (ok == true) { using var c = await ContextFactory.CreateDbContextAsync(); var t = await c.UserTeams.FindAsync(id); if (t != null) { c.UserTeams.Remove(t); await c.SaveChangesAsync(); await LoadBaseData(); } } }
+    private async Task ResetScenarioProgress(int id) { var ok = await DialogService.Confirm("Сбросить сессию?", "Сброс", new ConfirmOptions { OkButtonText = "Сбросить", CancelButtonText = "Отмена" }); if (ok == true) { using var c = await ContextFactory.CreateDbContextAsync(); var p = await c.UserProgresses.FindAsync(id); if (p != null) { c.UserProgresses.Remove(p); await c.SaveChangesAsync(); await LoadBaseData(); await UpdateLeaderboards(); } } }
+    private async Task ResetTestProgress(int id) { var ok = await DialogService.Confirm("Сбросить сессию?", "Сброс", new ConfirmOptions { OkButtonText = "Сбросить", CancelButtonText = "Отмена" }); if (ok == true) { using var c = await ContextFactory.CreateDbContextAsync(); var p = await c.Set<UserTestProgress>().FindAsync(id); if (p != null) { c.Set<UserTestProgress>().Remove(p); await c.SaveChangesAsync(); await LoadBaseData(); await UpdateLeaderboards(); } } }
 
-    private async Task ToggleTeamAssignment(string userId, int teamId, bool assign)
+    // Методы для управления пользователями
+    private async Task CreateUser()
     {
-        using var context = await ContextFactory.CreateDbContextAsync();
-        var dbUser = await context.Set<ApplicationUser>().Include(u => u.Teams).FirstOrDefaultAsync(u => u.Id == userId);
-        var dbTeam = await context.UserTeams.FindAsync(teamId);
-        if (dbUser != null && dbTeam != null)
+        if (string.IsNullOrWhiteSpace(newUserModel.Login) || string.IsNullOrWhiteSpace(newUserModel.Password))
         {
-            if (assign && !dbUser.Teams.Any(t => t.Id == teamId)) dbUser.Teams.Add(dbTeam);
-            else if (!assign) { var teamToRemove = dbUser.Teams.FirstOrDefault(t => t.Id == teamId); if (teamToRemove != null) dbUser.Teams.Remove(teamToRemove); }
-            await context.SaveChangesAsync();
+            NotificationService.Notify(NotificationSeverity.Warning, "Ошибка", "Логин и пароль обязательны");
+            return;
+        }
+
+        if (newUserModel.Password.Length < 6)
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Ошибка", "Пароль должен содержать минимум 6 символов");
+            return;
+        }
+
+        var (success, error) = await UserManagementService.CreateUserAsync(
+            newUserModel.Login, newUserModel.Password,
+            newUserModel.FirstName, newUserModel.LastName, newUserModel.MiddleName,
+            newUserModel.IsAdmin
+        );
+
+        if (success)
+        {
+            NotificationService.Notify(NotificationSeverity.Success, "Успех", $"Пользователь {newUserModel.Login} создан");
+            newUserModel = new UserCreationModel();
             await LoadBaseData();
-            if (selectedUserForTeams != null && selectedUserForTeams.Id == userId) selectedUserForTeams = usersList.FirstOrDefault(u => u.Id == userId);
+        }
+        else
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Ошибка", error);
         }
     }
 
-    private async Task CreateGroup() { if (string.IsNullOrWhiteSpace(newGroupName)) return; using var context = await ContextFactory.CreateDbContextAsync(); context.UserGroups.Add(new UserGroup { Name = newGroupName }); await context.SaveChangesAsync(); newGroupName = ""; await LoadBaseData(); }
-    private async Task CreateTeam() { if (string.IsNullOrWhiteSpace(newTeamName) || selectedGroupIdForTeam <= 0) return; using var context = await ContextFactory.CreateDbContextAsync(); context.UserTeams.Add(new UserTeam { Name = newTeamName, GroupId = selectedGroupIdForTeam }); await context.SaveChangesAsync(); newTeamName = ""; await LoadBaseData(); }
-    private async Task UpdateUserGroup(string userId, int? groupId) { using var context = await ContextFactory.CreateDbContextAsync(); var targetUser = await context.Set<ApplicationUser>().FindAsync(userId); if (targetUser != null) { targetUser.GroupId = groupId; await context.SaveChangesAsync(); } await LoadBaseData(); }
-
-    private async Task DeleteGroup(int groupId)
+    private async Task DeleteUser(string userId)
     {
-        var confirm = await DialogService.Confirm("Вы уверены, что хотите удалить подразделение?", "Удаление", new ConfirmOptions() { OkButtonText = "Удалить", CancelButtonText = "Отмена" });
-        if (confirm == true) { using var context = await ContextFactory.CreateDbContextAsync(); var group = await context.UserGroups.FindAsync(groupId); if (group != null) { context.UserGroups.Remove(group); await context.SaveChangesAsync(); await LoadBaseData(); } }
+        if (userId == user?.Id)
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Ошибка", "Нельзя удалить самого себя");
+            return;
+        }
+
+        var ok = await DialogService.Confirm("Удалить пользователя навсегда? Это действие необратимо.", "Удаление пользователя", new ConfirmOptions { OkButtonText = "Удалить", CancelButtonText = "Отмена" });
+        if (ok == true)
+        {
+            var result = await UserManagementService.DeleteUserAsync(userId);
+            if (result)
+            {
+                NotificationService.Notify(NotificationSeverity.Success, "Успех", "Пользователь удален");
+                await LoadBaseData();
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Ошибка", "Не удалось удалить пользователя");
+            }
+        }
     }
 
-    private async Task DeleteTeam(int teamId)
+    private async Task ToggleAdminRole(string userId)
     {
-        var confirm = await DialogService.Confirm("Удалить команду?", "Удаление", new ConfirmOptions() { OkButtonText = "Удалить", CancelButtonText = "Отмена" });
-        if (confirm == true) { using var context = await ContextFactory.CreateDbContextAsync(); var team = await context.UserTeams.FindAsync(teamId); if (team != null) { context.UserTeams.Remove(team); await context.SaveChangesAsync(); await LoadBaseData(); } }
-    }
+        if (userId == user?.Id)
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Ошибка", "Нельзя изменить свою роль");
+            return;
+        }
 
-    private async Task ResetScenarioProgress(int progressId)
-    {
-        var confirm = await DialogService.Confirm("Сбросить эту сессию сценария? Все очки будут аннулированы.", "Сброс прогресса", new ConfirmOptions() { OkButtonText = "Сбросить", CancelButtonText = "Отмена" });
-        if (confirm == true) { using var context = await ContextFactory.CreateDbContextAsync(); var progress = await context.UserProgresses.FindAsync(progressId); if (progress != null) { context.UserProgresses.Remove(progress); await context.SaveChangesAsync(); await LoadBaseData(); await UpdateLeaderboards(); } }
-    }
-
-    private async Task ResetTestProgress(int progressId)
-    {
-        var confirm = await DialogService.Confirm("Сбросить эту сессию теста? Все результаты будут аннулированы.", "Сброс прогресса", new ConfirmOptions() { OkButtonText = "Сбросить", CancelButtonText = "Отмена" });
-        if (confirm == true) { using var context = await ContextFactory.CreateDbContextAsync(); var progress = await context.Set<UserTestProgress>().FindAsync(progressId); if (progress != null) { context.Set<UserTestProgress>().Remove(progress); await context.SaveChangesAsync(); await LoadBaseData(); await UpdateLeaderboards(); } }
+        await UserManagementService.ToggleAdminRoleAsync(userId);
+        await LoadBaseData();
+        NotificationService.Notify(NotificationSeverity.Success, "Успех", "Роль пользователя изменена");
     }
 
     public void Dispose() { }

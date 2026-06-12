@@ -462,7 +462,14 @@
 
     private async Task LoadUserState()
     {
-        currentUserProgress = await ScenarioService.GetUserProgressAsync(currentUserId, scenario!.Id) ?? new UserScenarioProgress { Status = AttemptStatus.NotStarted };
+        currentUserProgress = await ScenarioService.GetUserProgressAsync(currentUserId, scenario!.Id);
+
+        // Если прогресса нет вообще, создаем объект "NotStarted" локально, чтобы UI не падал
+        if (currentUserProgress == null)
+        {
+            currentUserProgress = new UserScenarioProgress { Status = AttemptStatus.NotStarted };
+        }
+
         totalScore = currentUserProgress.Score;
 
         if (!string.IsNullOrEmpty(scenario.SchemaPath) && (scenario.SchemaPath.EndsWith(".xml", StringComparison.OrdinalIgnoreCase) || scenario.SchemaPath.EndsWith(".drawio", StringComparison.OrdinalIgnoreCase) || scenario.SchemaPath.EndsWith(".drawioa", StringComparison.OrdinalIgnoreCase)))
@@ -471,30 +478,58 @@
             try { var filePath = Path.Combine(Env.WebRootPath, scenario.SchemaPath.TrimStart('/')); if (System.IO.File.Exists(filePath)) schemaXmlContent = await System.IO.File.ReadAllTextAsync(filePath); }
             catch { }
         }
-        if (scenario.Questions != null && questionStates.Count == 0) questionStates = scenario.Questions.Select(q => new UserQuestionState { Question = q }).ToList();
+        if (scenario.Questions != null && questionStates.Count == 0)
+        {
+            questionStates = scenario.Questions.Select(q => new UserQuestionState { Question = q }).ToList();
+        }
 
+        // Загружаем состояния ответов только если есть реальная попытка в БД
         if (currentUserProgress.Id != 0)
         {
             var statesDb = await ScenarioService.GetUserQuestionStatesAsync(currentUserProgress.Id);
-            foreach (var qState in questionStates) { if (statesDb.TryGetValue(qState.Question.Id, out var dbInfo)) { qState.IsCorrect = dbInfo.IsCorrect; qState.FailedAttempts = dbInfo.FailedAttempts; } }
+            foreach (var qState in questionStates)
+            {
+                if (statesDb.TryGetValue(qState.Question.Id, out var dbInfo))
+                {
+                    qState.IsCorrect = dbInfo.IsCorrect;
+                    qState.FailedAttempts = dbInfo.FailedAttempts;
+                }
+            }
         }
-        if (currentUserProgress.Status == AttemptStatus.InProgress) { CheckTime(); StartTimer(); }
+
+        if (currentUserProgress.Status == AttemptStatus.InProgress)
+        {
+            CheckTime();
+            StartTimer();
+        }
     }
 
-    private async void OnTeamProgressChanged(int teamId) { if (scenario?.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId == teamId) { await InvokeAsync(async () => { await LoadUserState(); StateHasChanged(); }); } }
+    private async void OnTeamProgressChanged(int teamId)
+    {
+        if (scenario?.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId == teamId)
+        {
+            await InvokeAsync(async () => { await LoadUserState(); StateHasChanged(); });
+        }
+    }
 
-    private async Task StartScenario() { await ScenarioService.StartScenarioAsync(currentUserId, scenario!.Id, scenario.DurationInMinutes); await LoadUserState(); if (scenario!.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId.HasValue) SessionManager.NotifyTeamUpdate(scenario.TargetTeamId.Value); }
+    private async Task StartScenario()
+    {
+        // Теперь StartScenarioAsync возвращает прогресс
+        currentUserProgress = await ScenarioService.StartScenarioAsync(currentUserId, scenario!.Id, scenario.DurationInMinutes);
+        // Перезагружаем состояние, чтобы подтянуть ID и всё остальное
+        await LoadUserState();
+        if (scenario!.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId.HasValue)
+            SessionManager.NotifyTeamUpdate(scenario.TargetTeamId.Value);
+    }
 
     private async Task CheckAnswer(UserQuestionState state)
     {
         if (string.IsNullOrWhiteSpace(state.UserAnswer) || currentUserProgress?.Status != AttemptStatus.InProgress) return;
 
-        // ИСПРАВЛЕННЫЙ ВЫЗОВ: Третьим аргументом идет строка state.UserAnswer,
-        // а старые аргументы (юзер и команда) просто уходят в конец как 4-й и 5-й параметры
         var result = await ScenarioService.ProcessTeamAnswerAsync(
             currentUserProgress.Id,
             state.Question.Id,
-            state.UserAnswer, // <-- ТЕПЕРЬ ЗДЕСЬ СТРОКА (ОШИБКА ИСЧЕЗНЕТ)
+            state.UserAnswer,
             currentUserId,
             scenario!.TargetTeamId
         );
@@ -524,32 +559,108 @@
         }
     }
 
-    private async Task CompleteScenario() { StopTimer(); if (currentUserProgress != null) await ScenarioService.CompleteProgressByIdAsync(currentUserProgress.Id); await LoadUserState(); NotificationService.Notify(NotificationSeverity.Success, "Успех", $"Сценарий завершен. Итоговый счет: {totalScore}"); if (scenario!.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId.HasValue) SessionManager.NotifyTeamUpdate(scenario.TargetTeamId.Value); }
+    private async Task CompleteScenario()
+    {
+        StopTimer();
+        if (currentUserProgress != null)
+        {
+            await ScenarioService.CompleteProgressByIdAsync(currentUserProgress.Id);
+            await LoadUserState();
+            NotificationService.Notify(NotificationSeverity.Success, "Успех", $"Сценарий завершен. Итоговый счет: {totalScore}");
+            if (scenario!.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId.HasValue)
+                SessionManager.NotifyTeamUpdate(scenario.TargetTeamId.Value);
+        }
+    }
 
-    private async Task HandleKeyPress(KeyboardEventArgs e, UserQuestionState state) { if (e.Key == "Enter") await CheckAnswer(state); }
+    private async Task HandleKeyPress(KeyboardEventArgs e, UserQuestionState state)
+    {
+        if (e.Key == "Enter") await CheckAnswer(state);
+    }
 
     private async void TimerTick(object? state)
     {
         if (currentUserProgress?.TargetEndTime != null)
         {
             timeLeft = currentUserProgress.TargetEndTime.Value - DateTime.UtcNow;
-            if (timeLeft.TotalSeconds <= 0) { StopTimer(); await ScenarioService.FailUserProgressAsync(currentUserId, scenario!.Id); await InvokeAsync(LoadUserState); await InvokeAsync(StateHasChanged); if (scenario!.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId.HasValue) SessionManager.NotifyTeamUpdate(scenario.TargetTeamId.Value); }
-            else await InvokeAsync(StateHasChanged);
+            if (timeLeft.TotalSeconds <= 0)
+            {
+                StopTimer();
+                await ScenarioService.FailUserProgressAsync(currentUserId, scenario!.Id);
+                await InvokeAsync(LoadUserState);
+                await InvokeAsync(StateHasChanged);
+                if (scenario!.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId.HasValue)
+                    SessionManager.NotifyTeamUpdate(scenario.TargetTeamId.Value);
+            }
+            else
+            {
+                await InvokeAsync(StateHasChanged);
+            }
         }
     }
 
-    private void StartTimer() { if (scenario!.DurationInMinutes > 0 && currentUserProgress?.TargetEndTime != null) { _timer?.Dispose(); _timer = new Timer(TimerTick, null, 0, 1000); } }
+    private void StartTimer()
+    {
+        if (scenario!.DurationInMinutes > 0 && currentUserProgress?.TargetEndTime != null)
+        {
+            _timer?.Dispose();
+            _timer = new Timer(TimerTick, null, 0, 1000);
+        }
+    }
     private void StopTimer() => _timer?.Dispose();
 
-    private void CheckTime() { if (currentUserProgress?.TargetEndTime != null && DateTime.UtcNow >= currentUserProgress.TargetEndTime.Value) { _ = ScenarioService.FailUserProgressAsync(currentUserId, scenario!.Id); currentUserProgress.Status = AttemptStatus.Failed; } }
+    private void CheckTime()
+    {
+        if (currentUserProgress?.TargetEndTime != null && DateTime.UtcNow >= currentUserProgress.TargetEndTime.Value)
+        {
+            _ = ScenarioService.FailUserProgressAsync(currentUserId, scenario!.Id);
+            currentUserProgress.Status = AttemptStatus.Failed;
+        }
+    }
 
-    private async Task RestartScenario() { await ScenarioService.ResetUserProgressAsync(currentUserId, scenario!.Id); questionStates.ForEach(q => { q.IsCorrect = false; q.UserAnswer = ""; q.FeedbackMessage = ""; q.FailedAttempts = 0; }); await LoadUserState(); if (scenario!.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId.HasValue) SessionManager.NotifyTeamUpdate(scenario.TargetTeamId.Value); }
+    // КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Теперь создаем НОВУЮ попытку
+    private async Task RestartScenario()
+    {
+        // Создаем новую попытку (старая Failed/Completed остается в истории)
+        currentUserProgress = await ScenarioService.RestartUserProgressAsync(currentUserId, scenario!.Id);
+
+        // Сбрасываем UI вопросов для новой попытки
+        if (scenario.Questions != null)
+        {
+            questionStates = scenario.Questions.Select(q => new UserQuestionState { Question = q }).ToList();
+        }
+
+        // Перезагружаем состояние для синхронизации с новой попыткой
+        await LoadUserState();
+
+        if (scenario!.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId.HasValue)
+            SessionManager.NotifyTeamUpdate(scenario.TargetTeamId.Value);
+    }
 
     private async Task LoadAdminData() => completedUsers = await ScenarioService.GetAllProgressForScenarioAsync(scenario!.Id);
 
-    private async Task ResetAllProgress() { await ScenarioService.ResetAllProgressForScenarioAsync(scenario!.Id); await LoadAdminData(); if (!isAdmin) await LoadUserState(); }
+    private async Task ResetAllProgress()
+    {
+        await ScenarioService.ResetAllProgressForScenarioAsync(scenario!.Id);
+        await LoadAdminData();
+        if (!isAdmin) await LoadUserState();
+    }
 
-    private async Task ResetSessionById(int progressId) { await ScenarioService.ResetProgressByIdAsync(progressId); await LoadAdminData(); if (currentUserProgress != null && currentUserProgress.Id == progressId) { StopTimer(); await LoadUserState(); } }
+    private async Task ResetSessionById(int progressId)
+    {
+        // Для админа удаляем конкретную попытку
+        await ScenarioService.DeleteProgressByIdAsync(progressId);
+        await LoadAdminData();
+        // Если удалили текущую попытку пользователя, перезагружаем его UI
+        if (currentUserProgress != null && currentUserProgress.Id == progressId)
+        {
+            StopTimer();
+            await LoadUserState();
+        }
+    }
 
-    public void Dispose() { StopTimer(); SessionManager.TeamProgressChanged -= OnTeamProgressChanged; }
+    public void Dispose()
+    {
+        StopTimer();
+        SessionManager.TeamProgressChanged -= OnTeamProgressChanged;
+    }
 }

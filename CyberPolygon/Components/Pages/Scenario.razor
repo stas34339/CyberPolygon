@@ -22,8 +22,10 @@
         --accent-cyan: #4ec3d1;
         --accent-light-blue: #7ec8f8;
         --border-color: #2a3a4a;
+        --border-glow: #4ec3d1;
         --success-color: #98c379;
         --danger-color: #e06c75;
+        --warning-color: #e5c07b;
     }
 
     .scenarios-container {
@@ -44,22 +46,32 @@
         gap: 30px;
     }
 
-    .header-text h1 {
-        color: var(--accent-light-blue);
-        font-weight: 700;
-        text-transform: uppercase;
-        margin: 0 0 12px 0;
-        font-size: 2.4rem;
-        letter-spacing: 2px;
-        text-shadow: 0 0 20px rgba(126, 200, 248, 0.3);
+    .header-text {
+        flex: 1;
     }
 
-    .header-text p {
-        color: var(--text-muted);
-        font-size: 1.1rem;
-        margin: 0;
-        line-height: 1.6;
-        max-width: 600px;
+        .header-text h1 {
+            color: var(--accent-light-blue);
+            font-weight: 700;
+            text-transform: uppercase;
+            margin: 0 0 12px 0;
+            font-size: 2.4rem;
+            letter-spacing: 2px;
+            text-shadow: 0 0 20px rgba(126, 200, 248, 0.3);
+        }
+
+        .header-text p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin: 0;
+            line-height: 1.6;
+            max-width: 600px;
+        }
+
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 15px;
     }
 
     .create-btn {
@@ -71,11 +83,16 @@
         border-radius: 8px;
         cursor: pointer;
         transition: all 0.3s;
+        font-size: 0.95rem;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 15px rgba(78, 195, 209, 0.2);
+        white-space: nowrap;
     }
 
         .create-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 25px rgba(78, 195, 209, 0.4);
+            background: linear-gradient(135deg, #5fd4e0 0%, #6fb3f0 100%);
         }
 
     .cards-list {
@@ -91,31 +108,31 @@
         padding: 25px 30px;
         transition: all 0.3s ease;
         position: relative;
+        display: flex;
+        align-items: center;
+        gap: 30px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     }
 
         .cyber-card:hover {
             border-color: var(--accent-cyan);
-            box-shadow: 0 8px 30px rgba(78, 195, 209, 0.15);
+            transform: translateX(5px);
+            box-shadow: 0 8px 30px rgba(78, 195, 209, 0.15), 0 0 20px rgba(78, 195, 209, 0.05);
+            background: linear-gradient(135deg, #1e2d3d 0%, #223548 100%);
         }
 
-    .card-header-clickable {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        cursor: pointer;
+    .card-main {
+        flex: 1;
+        min-width: 0;
     }
 
-    .card-title-group {
+    .card-header {
+        position: relative;
+        margin-bottom: 10px;
         display: flex;
         align-items: center;
-        gap: 15px;
-    }
-
-    .card-title {
-        color: var(--accent-light-blue);
-        margin: 0;
-        font-size: 1.2rem;
-        font-weight: bold;
+        gap: 12px;
+        flex-wrap: wrap;
     }
 
     .status-badge {
@@ -124,6 +141,8 @@
         text-transform: uppercase;
         padding: 4px 10px;
         border-radius: 6px;
+        letter-spacing: 0.5px;
+        backdrop-filter: blur(10px);
     }
 
     .status-published {
@@ -138,71 +157,154 @@
         border: 1px solid var(--border-color);
     }
 
+    .card-title {
+        color: var(--accent-light-blue);
+        margin: 0;
+        font-size: 1.2rem;
+        font-weight: bold;
+        letter-spacing: 0.3px;
+    }
+
+    .card-description {
+        color: var(--text-muted);
+        font-size: 0.92rem;
+        line-height: 1.6;
+        margin: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .card-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-shrink: 0;
+    }
+
+    .btn-details {
+        background: none;
+        border: 1px solid rgba(78, 195, 209, 0.3);
+        color: var(--accent-cyan);
+        cursor: pointer;
+        padding: 8px 18px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        white-space: nowrap;
+    }
+
+        .btn-details:hover {
+            background: rgba(78, 195, 209, 0.1);
+            border-color: var(--accent-cyan);
+        }
+
+    .admin-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    .btn-icon {
+        background: transparent;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 6px 10px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+        .btn-icon.edit {
+            color: var(--accent-light-blue);
+            border-color: rgba(126, 200, 248, 0.3);
+        }
+
+            .btn-icon.edit:hover {
+                background: rgba(126, 200, 248, 0.1);
+                border-color: var(--accent-light-blue);
+            }
+
+        .btn-icon.delete {
+            color: #e06c75;
+            border-color: rgba(224, 108, 117, 0.3);
+        }
+
+            .btn-icon.delete:hover {
+                background: rgba(224, 108, 117, 0.1);
+                border-color: #e06c75;
+            }
+
     .card-details {
-        margin-top: 20px;
+        margin-top: 0;
         padding: 20px;
-        border-radius: 8px;
+        border-radius: 0 0 10px 10px;
         background: rgba(0, 0, 0, 0.3);
         border: 1px solid var(--border-color);
+        border-top: none;
         color: var(--text-light);
+        width: 100%;
     }
+
+        .card-details .legend {
+            font-size: 0.85rem;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
 
     .card-stats {
         display: flex;
         gap: 25px;
         margin-bottom: 18px;
         font-family: monospace;
+        font-size: 0.85rem;
         color: var(--accent-cyan);
-        font-size: 0.9rem;
     }
 
+        .card-stats span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
     .btn-start {
+        width: 100%;
         background: linear-gradient(135deg, #4ec3d1 0%, #5ba3e3 100%);
         color: #1a1d21;
         font-weight: bold;
-        padding: 12px 24px;
+        letter-spacing: 1.5px;
+        padding: 12px;
         border: none;
         border-radius: 8px;
         cursor: pointer;
         transition: all 0.3s;
+        font-size: 0.9rem;
         text-transform: uppercase;
-        letter-spacing: 1px;
+        box-shadow: 0 4px 15px rgba(78, 195, 209, 0.2);
     }
 
         .btn-start:hover {
-            box-shadow: 0 4px 15px rgba(78, 195, 209, 0.4);
+            box-shadow: 0 6px 25px rgba(78, 195, 209, 0.4);
+            background: linear-gradient(135deg, #5fd4e0 0%, #6fb3f0 100%);
+            transform: translateY(-1px);
         }
 
-    .btn-icon {
-        background: transparent;
-        border: 1px solid var(--border-color);
-        border-radius: 6px;
-        padding: 8px 12px;
-        cursor: pointer;
-        transition: all 0.2s;
-        color: var(--text-light);
-    }
-
-        .btn-icon.edit:hover {
-            border-color: var(--accent-light-blue);
-            color: var(--accent-light-blue);
-        }
-
-        .btn-icon.delete:hover {
-            border-color: var(--danger-color);
-            color: var(--danger-color);
-        }
-
-    .loading-container, .empty-state {
+    .empty-state {
         text-align: center;
-        padding: 60px;
-        color: var(--text-muted);
+        padding: 60px 20px;
         border: 2px dashed var(--border-color);
         border-radius: 12px;
+        color: var(--text-muted);
         background: rgba(26, 35, 50, 0.5);
     }
 
-    /* Модальное окно */
+    .loading-container {
+        text-align: center;
+        padding: 60px;
+    }
+
+    /* Модальное окно удаления */
     .modal-overlay {
         position: fixed;
         top: 0;
@@ -215,14 +317,77 @@
         justify-content: center;
         align-items: center;
         z-index: 9999;
+        animation: fadeIn 0.2s ease;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
     }
 
     .modal-box {
         background: linear-gradient(135deg, #1a2332 0%, #1e2d3d 100%);
         border: 1px solid var(--border-color);
+        box-shadow: 0 0 40px rgba(91, 163, 227, 0.2);
         border-radius: 12px;
         width: 450px;
+        max-width: 90%;
         padding: 30px;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+
+        .modal-header h3 {
+            color: var(--accent-light-blue);
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
+    .modal-close {
+        background: none;
+        border: 1px solid var(--border-color);
+        color: var(--text-muted);
+        cursor: pointer;
+        font-size: 1.2rem;
+        width: 30px;
+        height: 30px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+
+        .modal-close:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+    .modal-body {
+        text-align: center;
+        margin-bottom: 30px;
+        color: #e06c75;
+        font-size: 1.05rem;
+        line-height: 1.5;
+        padding: 10px 0;
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
     }
 
     .btn-ok {
@@ -233,7 +398,13 @@
         border-radius: 8px;
         font-weight: bold;
         cursor: pointer;
+        letter-spacing: 0.5px;
+        transition: all 0.2s;
     }
+
+        .btn-ok:hover {
+            box-shadow: 0 4px 15px rgba(78, 195, 209, 0.4);
+        }
 
     .btn-cancel {
         background: transparent;
@@ -243,7 +414,14 @@
         border-radius: 8px;
         font-weight: bold;
         cursor: pointer;
+        letter-spacing: 0.5px;
+        transition: all 0.2s;
     }
+
+        .btn-cancel:hover {
+            border-color: var(--text-muted);
+            background: rgba(143, 160, 181, 0.1);
+        }
 </style>
 
 <RadzenComponents />
@@ -255,22 +433,27 @@
             <h1>Боевые сценарии</h1>
             <p>Практические симуляции кибератак для отработки навыков защиты в условиях, приближенных к реальным.</p>
         </div>
+
         <AuthorizeView Roles="Admin">
-            <button class="create-btn" @onclick="@(() => OpenEditDialog(new CyberScenario()))">
-                <RadzenIcon Icon="add" Style="vertical-align: middle;" /> Новый сценарий
-            </button>
+            <div class="header-actions">
+                <button class="create-btn" @onclick="@(() => OpenEditDialog(new CyberScenario()))">
+                    <RadzenIcon Icon="add" Style="vertical-align: middle; margin-right: 6px;" /> Новый сценарий
+                </button>
+            </div>
         </AuthorizeView>
     </div>
 
     @if (scenarios == null)
     {
-        <div class="loading-container"><RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" /></div>
+        <div class="loading-container">
+            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" Style="background-color: var(--border-color);" />
+        </div>
     }
     else if (!scenarios.Any())
     {
         <div class="empty-state">
-            <RadzenIcon Icon="school" Style="font-size: 3rem; margin-bottom: 20px;" />
-            <p>База данных пуста. Сценарии не обнаружены.</p>
+            <RadzenIcon Icon="school" Style="font-size: 3rem; color: var(--border-color); margin-bottom: 20px;" />
+            <p style="font-size: 1.1rem; margin: 0;">База данных пуста. Сценарии не обнаружены.</p>
         </div>
     }
     else
@@ -281,63 +464,94 @@
                 bool isExpanded = expandedCards.ContainsKey(item.Id) && expandedCards[item.Id];
                 bool hasProgress = userProgresses.TryGetValue(item.Id, out var status);
                 bool isCompleted = hasProgress && status == AttemptStatus.Completed;
-                bool isStarted = hasProgress && status != AttemptStatus.Completed && status != AttemptStatus.NotStarted;
+                bool isFailed = hasProgress && status == AttemptStatus.Failed;
+                bool isStarted = hasProgress && status == AttemptStatus.InProgress;
 
-                <div class="cyber-card">
-                    <div class="card-header-clickable" @onclick="@(() => ToggleCard(item.Id))">
-                        <div class="card-title-group">
-                            <h3 class="card-title">@item.Title</h3>
+                <div>
+                    <div class="cyber-card">
+                        <div class="card-main">
+                            <div class="card-header">
+                                <h3 class="card-title">@item.Title</h3>
 
-                            @if (isStarted)
-                            {
-                                <span class="status-badge" style="background: rgba(229, 192, 123, 0.15); color: #e5c07b; border: 1px solid #e5c07b;">В процессе</span>
-                            }
-                            else if (isCompleted)
-                            {
+                                @if (isStarted)
+                                {
+                                    <span class="status-badge" style="background: rgba(229, 192, 123, 0.15); color: #e5c07b; border: 1px solid rgba(229, 192, 123, 0.4);">В процессе</span>
+                                }
+                                else if (isCompleted)
+                                {
+                                    <span class="status-badge" style="background: rgba(152, 195, 121, 0.15); color: #98c379; border: 1px solid rgba(152, 195, 121, 0.4);">Завершен</span>
+                                }
+                                else if (isFailed)
+                                {
+                                    <span class="status-badge" style="background: rgba(224, 108, 117, 0.15); color: #e06c75; border: 1px solid rgba(224, 108, 117, 0.4);">Неудача</span>
+                                }
 
-                                <span class="status-badge" style="background: rgba(152, 195, 121, 0.15); color: #98c379; border: 1px solid #98c379;">Завершен</span>
-                            }
-
-                            <AuthorizeView Roles="Admin">
-                                <span class="status-badge @(item.IsVisible ? "status-published" : "status-draft")">@(item.IsVisible ? "Открыт" : "Черновик")</span>
-                            </AuthorizeView>
+                                <AuthorizeView Roles="Admin">
+                                    <span class="status-badge @(item.IsVisible ? "status-published" : "status-draft")">
+                                        @(item.IsVisible ? "Открыт" : "Черновик")
+                                    </span>
+                                </AuthorizeView>
+                            </div>
+                            <p class="card-description">@item.Description</p>
                         </div>
 
-                        <RadzenIcon Icon="@(isExpanded ? "expand_less" : "expand_more")" Style="color: var(--accent-cyan); font-size: 1.8rem;" />
-                    </div>
+                        <div class="card-actions">
+                            <button class="btn-details" @onclick="@(() => ToggleCard(item.Id))">
+                                <RadzenIcon Icon="@(isExpanded ? "expand_less" : "expand_more")" />
+                                @(isExpanded ? "Скрыть" : "Подробнее")
+                            </button>
 
-                    @if (!isExpanded)
-                    {
-                        <p style="margin: 10px 0 0 0; color: var(--text-muted); font-size: 0.95rem;">@item.Description</p>
-                    }
+                            <AuthorizeView Roles="Admin">
+                                <div class="admin-actions">
+                                    <button class="btn-icon edit" @onclick="@(() => OpenEditDialog(item))">
+                                        <RadzenIcon Icon="edit" />
+                                    </button>
+                                    <button class="btn-icon delete" @onclick="@(() => DeleteItem(item.Id))">
+                                        <RadzenIcon Icon="delete" />
+                                    </button>
+                                </div>
+                            </AuthorizeView>
+                        </div>
+                    </div>
 
                     @if (isExpanded)
                     {
-                        <div class="card-details" @onclick:stopPropagation="true">
-                            <div style="margin-bottom: 15px; line-height: 1.6;">@((MarkupString)item.Legend)</div>
+                        <div class="card-details">
+                            <div class="legend">@((MarkupString)item.Legend)</div>
 
                             <div class="card-stats">
-                                <span><RadzenIcon Icon="schedule" Style="vertical-align: middle; margin-right: 5px;" /> @(item.DurationInMinutes > 0 ? $"{item.DurationInMinutes} мин." : "Без ограничений")</span>
-                                <span><RadzenIcon Icon="flag" Style="vertical-align: middle; margin-right: 5px;" /> Заданий: @(item.Questions?.Count ?? 0)</span>
+                                <span><RadzenIcon Icon="schedule" /> @(item.DurationInMinutes > 0 ? $"{item.DurationInMinutes} мин." : "Без ограничений")</span>
+                                <span><RadzenIcon Icon="flag" /> Заданий: @(item.Questions?.Count ?? 0)</span>
                             </div>
 
-                            <div class="d-flex justify-content-between align-items-center mt-4 pt-3" style="border-top: 1px solid var(--border-color);">
-                                <AuthorizeView Roles="Admin">
-                                    <div class="d-flex gap-2">
-                                        <button class="btn-icon edit" @onclick="@(() => OpenEditDialog(item))"><RadzenIcon Icon="edit" /></button>
-                                        <button class="btn-icon delete" @onclick="@(() => DeleteItem(item.Id))"><RadzenIcon Icon="delete" /></button>
-                                    </div>
-                                </AuthorizeView>
+                            @{
+                                string btnText;
+                                string btnColor = "";
 
-                                @{
-                                    string btnText = isCompleted ? "ПРОСМОТРЕТЬ РЕЗУЛЬТАТ" : (isStarted ? "ПРОДОЛЖИТЬ" : "НАЧАТЬ СЦЕНАРИЙ");
-                                    string btnColor = isCompleted ? "#98c379" : (isStarted ? "#e5c07b" : "");
+                                if (isCompleted)
+                                {
+                                    btnText = "ПРОСМОТРЕТЬ РЕЗУЛЬТАТ";
+                                    btnColor = "#98c379";
                                 }
-                                <button class="btn-start ms-auto" style="@(string.IsNullOrEmpty(btnColor) ? "" : $"background: {btnColor}; box-shadow: none;")"
-                                        @onclick="@(() => NavigationManager.NavigateTo($"/scenario/{item.Id}/workspace"))">
-                                    @btnText
-                                </button>
-                            </div>
+                                else if (isFailed)
+                                {
+                                    btnText = "ПРОЙТИ ПОВТОРНО";
+                                    btnColor = "#e06c75";
+                                }
+                                else if (isStarted)
+                                {
+                                    btnText = "ПРОДОЛЖИТЬ";
+                                    btnColor = "#e5c07b";
+                                }
+                                else
+                                {
+                                    btnText = "НАЧАТЬ СЦЕНАРИЙ";
+                                }
+                            }
+                            <button class="btn-start" style="@(string.IsNullOrEmpty(btnColor) ? "" : $"background: {btnColor}; box-shadow: none;")"
+                                    @onclick="@(() => NavigationManager.NavigateTo($"/scenario/{item.Id}/workspace"))">
+                                @btnText
+                            </button>
                         </div>
                     }
                 </div>
@@ -350,14 +564,14 @@
 {
     <div class="modal-overlay">
         <div class="modal-box">
-            <div class="modal-header d-flex justify-content-between mb-3">
-                <h3 style="color: var(--accent-light-blue); margin: 0; font-size: 1.2rem; font-weight: bold;">Предупреждение</h3>
-                <button style="background: none; border: none; color: var(--text-muted); cursor: pointer;" @onclick="CloseDeleteDialog">✕</button>
+            <div class="modal-header">
+                <h3>Предупреждение системы</h3>
+                <button class="modal-close" @onclick="CloseDeleteDialog">✕</button>
             </div>
-            <div class="modal-body text-center mb-4" style="color: var(--danger-color); font-size: 1.05rem;">
-                Удалить сценарий из базы навсегда?
+            <div class="modal-body">
+                Вы уверены, что хотите навсегда удалить этот сценарий из базы данных?
             </div>
-            <div class="modal-footer d-flex justify-content-center gap-2">
+            <div class="modal-footer">
                 <button class="btn-ok" @onclick="ConfirmDelete">ОК</button>
                 <button class="btn-cancel" @onclick="CloseDeleteDialog">ОТМЕНА</button>
             </div>
@@ -380,24 +594,44 @@
         var userPrincipal = authState.User;
         currentUserId = userPrincipal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
 
-        // Загрузка прогресса пользователя для динамической кнопки старта
         if (!string.IsNullOrEmpty(currentUserId))
         {
             try
             {
                 using var context = await ContextFactory.CreateDbContextAsync();
-                var progresses = await context.Set<UserScenarioProgress>().Where(p => p.UserId == currentUserId).ToListAsync();
+                var progresses = await context.Set<UserScenarioProgress>()
+                    .Where(p => p.UserId == currentUserId)
+                    .ToListAsync();
+
                 foreach (var p in progresses)
                 {
-                    // Адаптируй под точное имя поля в БД, если оно называется иначе (например, ScenarioId)
                     var prop = p.GetType().GetProperty("CyberScenarioId") ?? p.GetType().GetProperty("ScenarioId");
                     if (prop != null)
                     {
-                        userProgresses[(int)prop.GetValue(p)!] = p.Status;
+                        int scenarioId = (int)prop.GetValue(p)!;
+
+                        if (p.Status == AttemptStatus.InProgress && p.TargetEndTime.HasValue)
+                        {
+                            if (DateTime.UtcNow >= p.TargetEndTime.Value)
+                            {
+                                p.Status = AttemptStatus.Failed;
+                                p.CompletedAt = DateTime.UtcNow;
+                                if (p.StartedAt.HasValue)
+                                    p.TimeSpent = p.CompletedAt.Value - p.StartedAt.Value;
+
+                                context.UserProgresses.Update(p);
+                                await context.SaveChangesAsync();
+                            }
+                        }
+
+                        userProgresses[scenarioId] = p.Status;
                     }
                 }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка загрузки прогресса: {ex.Message}");
+            }
         }
 
         if (userPrincipal.IsInRole("Admin"))
@@ -407,7 +641,10 @@
         else
         {
             using var context = await ContextFactory.CreateDbContextAsync();
-            var dbUser = await context.Set<ApplicationUser>().Include(u => u.Teams).FirstOrDefaultAsync(u => u.Id == currentUserId);
+            var dbUser = await context.Set<ApplicationUser>()
+                .Include(u => u.Teams)
+                .FirstOrDefaultAsync(u => u.Id == currentUserId);
+
             if (dbUser == null)
             {
                 scenarios = new List<CyberScenario>();
