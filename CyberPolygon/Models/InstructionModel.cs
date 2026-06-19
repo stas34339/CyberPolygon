@@ -19,6 +19,7 @@ namespace CyberPolygon.Data.Models
         [Required(ErrorMessage = "Необходимо выбрать или указать иконку.")]
         public string IconName { get; set; } = "assignment";
 
+        public int Order { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     }
     public class InstructionAttachment

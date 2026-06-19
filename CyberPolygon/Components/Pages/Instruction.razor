@@ -103,7 +103,6 @@
         font-weight: 600;
     }
 
-    /* Инпуты */
     .dark-input,
     .dark-input input,
     .rz-textbox,
@@ -213,6 +212,60 @@
             background: linear-gradient(135deg, #5fd4e0 0%, #6fb3f0 100%);
         }
 
+    .btn-icon {
+        background: transparent;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 5px 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+    }
+
+        .btn-icon.edit {
+            color: var(--accent-light-blue);
+            border-color: rgba(126, 200, 248, 0.3);
+        }
+
+            .btn-icon.edit:hover {
+                background: rgba(126, 200, 248, 0.1);
+                border-color: var(--accent-light-blue);
+            }
+
+        .btn-icon.delete {
+            color: var(--danger-color);
+            border-color: rgba(224, 108, 117, 0.3);
+        }
+
+            .btn-icon.delete:hover {
+                background: rgba(224, 108, 117, 0.1);
+                border-color: var(--danger-color);
+            }
+
+        .btn-icon.move {
+            color: var(--accent-cyan);
+            border-color: rgba(78, 195, 209, 0.3);
+        }
+
+            .btn-icon.move:hover {
+                background: rgba(78, 195, 209, 0.1);
+                border-color: var(--accent-cyan);
+            }
+
+        .btn-icon.save {
+            color: var(--success-color);
+            border-color: rgba(152, 195, 121, 0.3);
+        }
+
+            .btn-icon.save:hover {
+                background: rgba(152, 195, 121, 0.1);
+                border-color: var(--success-color);
+            }
+
     .content-layout {
         display: grid;
         grid-template-columns: 1fr 350px;
@@ -261,6 +314,19 @@
         border-bottom-right-radius: 8px;
     }
 
+    .instruction-item {
+        position: relative;
+    }
+
+    .instruction-actions {
+        display: flex;
+        gap: 6px;
+        position: absolute;
+        top: 0;
+        right: 0;
+        z-index: 5;
+    }
+
     .instruction-text {
         white-space: pre-wrap;
         word-break: break-word;
@@ -305,6 +371,37 @@
             background: rgba(78, 195, 209, 0.2);
             border-color: var(--accent-cyan);
         }
+
+    /* Режим редактирования */
+    .edit-mode .instruction-text {
+        display: none;
+    }
+
+    .edit-textarea {
+        width: 100%;
+        min-height: 120px;
+        background-color: var(--bg-input) !important;
+        border: 1px solid var(--accent-cyan) !important;
+        color: var(--text-light) !important;
+        border-radius: 6px !important;
+        padding: 12px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-size: 0.95rem;
+        line-height: 1.7;
+        resize: vertical;
+    }
+
+    .edit-title-input {
+        background-color: var(--bg-input) !important;
+        border: 1px solid var(--accent-cyan) !important;
+        color: var(--text-light) !important;
+        border-radius: 6px !important;
+        padding: 8px 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        width: 100%;
+        margin-bottom: 10px;
+    }
 
     .side-panel {
         background: linear-gradient(135deg, #1a2332 0%, #1e2d3d 100%);
@@ -365,6 +462,11 @@
         color: var(--accent-cyan) !important;
         font-size: 0.8rem;
         margin-top: 4px;
+    }
+
+    .move-buttons {
+        display: flex;
+        gap: 4px;
     }
 
     ::-webkit-scrollbar {
@@ -478,22 +580,55 @@
             {
                 <RadzenAccordion Multiple="true" class="cyber-accordion">
                     <Items>
-                        @foreach (var item in instructions)
+                        @for (int i = 0; i < instructions.Count; i++)
                         {
-                            <RadzenAccordionItem Text="@item.Title" Icon="@item.IconName">
-                                <div class="position-relative">
-                                    <AuthorizeView Roles="Admin" Context="authDeleteContext">
-                                        <div class="position-absolute top-0 end-0">
-                                            <RadzenButton Icon="delete" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Danger"
-                                                          Variant="Variant.Outlined" Tooltip="Удалить инструкцию"
-                                                          Click="@(() => DeleteInstruction(item.Id))" />
+                            var item = instructions[i];
+                            var index = i;
+                            var isEditing = editingItemId == item.Id;
+
+                            <RadzenAccordionItem Text="@(isEditing ? "[РЕДАКТИРОВАНИЕ] " + item.Title : item.Title)" Icon="@item.IconName">
+                                <div class="instruction-item">
+                                    <AuthorizeView Roles="Admin">
+                                        <div class="instruction-actions">
+                                            @if (isEditing)
+                                            {
+                                                <button class="btn-icon save" title="Сохранить" @onclick="@(async () => await SaveEdit(item))">
+                                                    <RadzenIcon Icon="save" />
+                                                </button>
+                                                <button class="btn-icon delete" title="Отмена" @onclick="@(() => CancelEdit())">
+                                                    <RadzenIcon Icon="close" />
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <div class="move-buttons">
+                                                    <button class="btn-icon move" title="Вверх" disabled="@(index == 0)" @onclick="@(() => MoveInstruction(index, -1))">
+                                                        <RadzenIcon Icon="arrow_upward" />
+                                                    </button>
+                                                    <button class="btn-icon move" title="Вниз" disabled="@(index == instructions.Count - 1)" @onclick="@(() => MoveInstruction(index, 1))">
+                                                        <RadzenIcon Icon="arrow_downward" />
+                                                    </button>
+                                                </div>
+                                                <button class="btn-icon edit" title="Редактировать" @onclick="@(() => StartEdit(item))">
+                                                    <RadzenIcon Icon="edit" />
+                                                </button>
+                                                <button class="btn-icon delete" title="Удалить" @onclick="@(() => DeleteInstruction(item.Id))">
+                                                    <RadzenIcon Icon="delete" />
+                                                </button>
+                                            }
                                         </div>
                                     </AuthorizeView>
 
-                                    <div class="pe-5">
-                                        <p class="instruction-text">
-                                            @item.Description
-                                        </p>
+                                    <div class="pe-5" style="@(isEditing ? "" : "")">
+                                        @if (isEditing)
+                                        {
+                                            <input class="edit-title-input" @bind="editTitle" placeholder="Название инструкции" />
+                                            <textarea class="edit-textarea" @bind="editDescription" placeholder="Содержание инструкции"></textarea>
+                                        }
+                                        else
+                                        {
+                                            <p class="instruction-text">@item.Description</p>
+                                        }
 
                                         @if (item.Attachments != null && item.Attachments.Any())
                                         {
@@ -545,6 +680,11 @@
     private int maxAllowedFiles = 10;
     private long maxFileSize = 1024 * 1024 * 30;
 
+    // Переменные для редактирования
+    private int? editingItemId = null;
+    private string editTitle = string.Empty;
+    private string editDescription = string.Empty;
+
     private readonly List<string> availableIcons = new()
     {
         "assignment", "terminal", "security", "shield", "bug_report",
@@ -562,6 +702,8 @@
         try
         {
             instructions = await InstructionService.GetAllAsync();
+            // Сортируем по Order, если поле есть
+            instructions = instructions.OrderBy(i => i.Order).ToList();
         }
         catch (Exception ex)
         {
@@ -582,6 +724,7 @@
     {
         try
         {
+            newInstruction.Order = instructions.Any() ? instructions.Max(i => i.Order) + 1 : 1;
             await InstructionService.AddAsync(newInstruction, uploadedFiles);
 
             NotificationService.Notify(NotificationSeverity.Success, "Система", "Новая инструкция успешно интегрирована.");
@@ -597,6 +740,77 @@
             NotificationService.Notify(NotificationSeverity.Error, "Критическая ошибка", ex.Message);
         }
     }
+
+    // === РЕДАКТИРОВАНИЕ ===
+
+    private void StartEdit(InstructionModel item)
+    {
+        editingItemId = item.Id;
+        editTitle = item.Title;
+        editDescription = item.Description;
+    }
+
+    private void CancelEdit()
+    {
+        editingItemId = null;
+        editTitle = string.Empty;
+        editDescription = string.Empty;
+    }
+
+    private async Task SaveEdit(InstructionModel item)
+    {
+        if (string.IsNullOrWhiteSpace(editTitle))
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Ошибка", "Название не может быть пустым");
+            return;
+        }
+
+        try
+        {
+            item.Title = editTitle;
+            item.Description = editDescription;
+            await InstructionService.UpdateAsync(item);
+
+            NotificationService.Notify(NotificationSeverity.Success, "Система", "Инструкция обновлена.");
+            CancelEdit();
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Ошибка", ex.Message);
+        }
+    }
+
+    // === ПЕРЕМЕЩЕНИЕ ===
+
+    private async Task MoveInstruction(int currentIndex, int direction)
+    {
+        if (currentIndex + direction < 0 || currentIndex + direction >= instructions.Count)
+            return;
+
+        var currentItem = instructions[currentIndex];
+        var swapItem = instructions[currentIndex + direction];
+
+        // Меняем Order местами
+        var tempOrder = currentItem.Order;
+        currentItem.Order = swapItem.Order;
+        swapItem.Order = tempOrder;
+
+        try
+        {
+            await InstructionService.UpdateOrderAsync(currentItem);
+            await InstructionService.UpdateOrderAsync(swapItem);
+
+            NotificationService.Notify(NotificationSeverity.Success, "Система", "Порядок инструкций обновлён.");
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Ошибка", ex.Message);
+        }
+    }
+
+    // === УДАЛЕНИЕ ===
 
     private async Task DeleteInstruction(int id)
     {
