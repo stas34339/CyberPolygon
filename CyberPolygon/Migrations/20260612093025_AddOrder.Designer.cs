@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CyberPolygon.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260522070708_AddAnswerProgress")]
-    partial class AddAnswerProgress
+    [Migration("20260612093025_AddOrder")]
+    partial class AddOrder
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -40,6 +40,38 @@ namespace CyberPolygon.Migrations
                     b.ToTable("UserTeamMappings", (string)null);
                 });
 
+            modelBuilder.Entity("CyberPolygon.Data.ApplicationDbContext+UserAnswerProgress", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("FailedAttempts")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsCorrect")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LastSubmittedAnswer")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("UserScenarioProgressId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("UserAnswerProgresses");
+                });
+
             modelBuilder.Entity("CyberPolygon.Data.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -59,14 +91,26 @@ namespace CyberPolygon.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<int?>("GroupId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("boolean");
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("MiddleName")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
@@ -107,6 +151,64 @@ namespace CyberPolygon.Migrations
                         .HasDatabaseName("UserNameIndex");
 
                     b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("CyberPolygon.Data.Models.InstructionAttachment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("InstructionId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InstructionId");
+
+                    b.ToTable("InstructionAttachment");
+                });
+
+            modelBuilder.Entity("CyberPolygon.Data.Models.InstructionModel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("IconName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Instructions");
                 });
 
             modelBuilder.Entity("CyberScenario", b =>
@@ -163,6 +265,49 @@ namespace CyberPolygon.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Scenarios", (string)null);
+                });
+
+            modelBuilder.Entity("CyberTest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Difficulty")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DurationInMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("FullDescription")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsVisible")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Scope")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ShortDescription")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int?>("TargetGroupId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TargetTeamId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CyberTests");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -355,6 +500,85 @@ namespace CyberPolygon.Migrations
                     b.ToTable("ScenarioQuestions");
                 });
 
+            modelBuilder.Entity("TestDocument", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CyberTestId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CyberTestId");
+
+                    b.ToTable("TestDocuments");
+                });
+
+            modelBuilder.Entity("TestOption", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("IsCorrect")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("TestQuestionId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TestQuestionId");
+
+                    b.ToTable("TestOptions");
+                });
+
+            modelBuilder.Entity("TestQuestion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CorrectTextAnswer")
+                        .HasColumnType("text");
+
+                    b.Property<int>("CyberTestId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CyberTestId");
+
+                    b.ToTable("TestQuestions");
+                });
+
             modelBuilder.Entity("UserGroup", b =>
                 {
                     b.Property<int>("Id")
@@ -439,6 +663,72 @@ namespace CyberPolygon.Migrations
                     b.ToTable("UserTeams");
                 });
 
+            modelBuilder.Entity("UserTestAnswer", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("AnsweredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsCorrect")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("QuestionId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SelectedAnswer")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("UserTestProgressId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("UserTestAnswers");
+                });
+
+            modelBuilder.Entity("UserTestProgress", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CyberTestId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("TargetEndTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CyberTestId");
+
+                    b.ToTable("UserTestProgresses");
+                });
+
             modelBuilder.Entity("ApplicationUserUserTeam", b =>
                 {
                     b.HasOne("UserTeam", null)
@@ -462,6 +752,17 @@ namespace CyberPolygon.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Group");
+                });
+
+            modelBuilder.Entity("CyberPolygon.Data.Models.InstructionAttachment", b =>
+                {
+                    b.HasOne("CyberPolygon.Data.Models.InstructionModel", "Instruction")
+                        .WithMany("Attachments")
+                        .HasForeignKey("InstructionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Instruction");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -535,6 +836,33 @@ namespace CyberPolygon.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("TestDocument", b =>
+                {
+                    b.HasOne("CyberTest", null)
+                        .WithMany("Documents")
+                        .HasForeignKey("CyberTestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TestOption", b =>
+                {
+                    b.HasOne("TestQuestion", null)
+                        .WithMany("Options")
+                        .HasForeignKey("TestQuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TestQuestion", b =>
+                {
+                    b.HasOne("CyberTest", null)
+                        .WithMany("Questions")
+                        .HasForeignKey("CyberTestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("UserScenarioProgress", b =>
                 {
                     b.HasOne("CyberScenario", "Scenario")
@@ -557,11 +885,39 @@ namespace CyberPolygon.Migrations
                     b.Navigation("Group");
                 });
 
+            modelBuilder.Entity("UserTestProgress", b =>
+                {
+                    b.HasOne("CyberTest", "Test")
+                        .WithMany()
+                        .HasForeignKey("CyberTestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Test");
+                });
+
+            modelBuilder.Entity("CyberPolygon.Data.Models.InstructionModel", b =>
+                {
+                    b.Navigation("Attachments");
+                });
+
             modelBuilder.Entity("CyberScenario", b =>
                 {
                     b.Navigation("Documents");
 
                     b.Navigation("Questions");
+                });
+
+            modelBuilder.Entity("CyberTest", b =>
+                {
+                    b.Navigation("Documents");
+
+                    b.Navigation("Questions");
+                });
+
+            modelBuilder.Entity("TestQuestion", b =>
+                {
+                    b.Navigation("Options");
                 });
 
             modelBuilder.Entity("UserGroup", b =>

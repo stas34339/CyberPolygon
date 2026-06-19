@@ -14,43 +14,263 @@
 
 <style>
     :root {
-        --bg-dark: #0d1117;
-        --bg-card: #161b22;
-        --accent-blue: #00e5ff;
-        --accent-purple: #b388ff;
-        --border-color: #30363d;
-        --text-main: #ffffff; /* Убеждаемся, что основной текст чисто белый */
-        --text-muted: #8b949e;
+        --bg-main: #1e1e1e;
+        --bg-card: #1a2332;
+        --bg-input: #1a2332;
+        --border-color: #2a3a4a;
+        --text-muted: #8fa0b5;
+        --text-light: #cbe0f5;
+        --accent-cyan: #4ec3d1;
+        --accent-blue: #5ba3e3;
+        --accent-light-blue: #7ec8f8;
+        --success-color: #98c379;
+        --danger-color: #e06c75;
+        --warning-color: #e5c07b;
     }
 
     .instruction-container {
-        background-color: var(--bg-dark);
+        background-color: var(--bg-main);
         min-height: 100vh;
-        color: var(--text-main);
-        font-family: 'Courier New', Courier, monospace;
+        color: var(--text-light);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
-        /* Принудительно делаем текст светлым во всех базовых элементах */
-        .instruction-container p,
-        .instruction-container span,
-        .instruction-container div,
-        .instruction-container label {
-            color: var(--text-main);
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 35px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid var(--border-color);
+        position: relative;
+        gap: 20px;
+    }
+
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 60px;
+            height: 2px;
+            background: var(--accent-cyan);
+            box-shadow: 0 0 10px rgba(78, 195, 209, 0.5);
         }
 
-    .text-muted {
+    .header-text {
+        flex: 1;
+    }
+
+        .header-text h1 {
+            color: var(--accent-light-blue);
+            font-weight: 700;
+            text-transform: uppercase;
+            margin: 0 0 8px 0;
+            font-size: 1.8rem;
+            letter-spacing: 1px;
+        }
+
+        .header-text p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin: 0;
+            line-height: 1.5;
+        }
+
+    .admin-panel {
+        background: linear-gradient(135deg, rgba(78, 195, 209, 0.05) 0%, rgba(91, 163, 227, 0.05) 100%);
+        border: 1px solid rgba(78, 195, 209, 0.3);
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+
+    .admin-panel-title {
+        color: var(--accent-cyan);
+        font-weight: 600;
+        margin-bottom: 20px;
+        font-size: 1.1rem;
+        letter-spacing: 0.5px;
+    }
+
+    .cyber-label {
+        color: var(--accent-cyan) !important;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 6px;
+        display: block;
+        font-weight: 600;
+    }
+
+    .dark-input,
+    .dark-input input,
+    .rz-textbox,
+    .rz-textbox input,
+    .rz-textarea,
+    .rz-textarea textarea,
+    .rz-dropdown,
+    .rz-dropdown input {
+        background-color: var(--bg-input) !important;
+        border: 1px solid var(--border-color) !important;
+        color: var(--text-light) !important;
+        border-radius: 6px !important;
+    }
+
+        .dark-input:focus,
+        .rz-textbox:focus-within,
+        .rz-textarea:focus-within,
+        .rz-dropdown:focus-within {
+            border-color: var(--accent-cyan) !important;
+            box-shadow: 0 0 10px rgba(78, 195, 209, 0.15) !important;
+        }
+
+    .rz-dropdown-label.rz-placeholder {
         color: var(--text-muted) !important;
     }
 
-    .header-block {
-        border-bottom: 1px solid var(--border-color);
+    .rz-dropdown-panel {
+        background-color: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 6px !important;
     }
 
-    .page-title {
-        font-family: monospace;
+    .rz-dropdown-items-wrapper {
+        background-color: var(--bg-card) !important;
+    }
+
+    .rz-dropdown-item {
+        color: var(--text-light) !important;
+    }
+
+        .rz-dropdown-item:hover,
+        .rz-dropdown-item.rz-state-highlight {
+            background-color: rgba(78, 195, 209, 0.1) !important;
+            color: var(--accent-cyan) !important;
+        }
+
+    .file-input {
+        background-color: var(--bg-input) !important;
+        border: 1px solid var(--border-color) !important;
+        color: var(--text-light) !important;
+        border-radius: 6px !important;
+        padding: 8px 12px;
+        width: 100%;
+    }
+
+        .file-input::file-selector-button {
+            background-color: var(--bg-card);
+            color: var(--accent-light-blue);
+            border: 1px solid var(--border-color);
+            margin-right: 12px;
+            padding: 6px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+            .file-input::file-selector-button:hover {
+                background-color: rgba(91, 163, 227, 0.1);
+                border-color: var(--accent-blue);
+            }
+
+    .uploaded-files-list {
+        margin-top: 10px;
+        padding: 12px;
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px dashed var(--border-color);
+        border-radius: 6px;
+    }
+
+    .file-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 0;
+        color: var(--accent-blue);
+        font-size: 0.85rem;
+    }
+
+    .btn-primary-gradient {
+        background: linear-gradient(135deg, #4ec3d1 0%, #5ba3e3 100%);
+        color: #1a1d21;
         font-weight: bold;
-        letter-spacing: 1px;
-        color: var(--text-main) !important;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-size: 0.9rem;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 15px rgba(78, 195, 209, 0.2);
+    }
+
+        .btn-primary-gradient:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 25px rgba(78, 195, 209, 0.4);
+            background: linear-gradient(135deg, #5fd4e0 0%, #6fb3f0 100%);
+        }
+
+    .btn-icon {
+        background: transparent;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 5px 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+    }
+
+        .btn-icon.edit {
+            color: var(--accent-light-blue);
+            border-color: rgba(126, 200, 248, 0.3);
+        }
+
+            .btn-icon.edit:hover {
+                background: rgba(126, 200, 248, 0.1);
+                border-color: var(--accent-light-blue);
+            }
+
+        .btn-icon.delete {
+            color: var(--danger-color);
+            border-color: rgba(224, 108, 117, 0.3);
+        }
+
+            .btn-icon.delete:hover {
+                background: rgba(224, 108, 117, 0.1);
+                border-color: var(--danger-color);
+            }
+
+        .btn-icon.move {
+            color: var(--accent-cyan);
+            border-color: rgba(78, 195, 209, 0.3);
+        }
+
+            .btn-icon.move:hover {
+                background: rgba(78, 195, 209, 0.1);
+                border-color: var(--accent-cyan);
+            }
+
+        .btn-icon.save {
+            color: var(--success-color);
+            border-color: rgba(152, 195, 121, 0.3);
+        }
+
+            .btn-icon.save:hover {
+                background: rgba(152, 195, 121, 0.1);
+                border-color: var(--success-color);
+            }
+
+    .content-layout {
+        display: grid;
+        grid-template-columns: 1fr 350px;
+        gap: 25px;
+        align-items: start;
     }
 
     .cyber-accordion {
@@ -59,131 +279,219 @@
     }
 
     ::deep .rz-accordion-header {
-        background-color: var(--bg-card) !important;
+        background: linear-gradient(135deg, #1a2332 0%, #1e2d3d 100%) !important;
         border: 1px solid var(--border-color) !important;
-        color: var(--text-main) !important;
-        margin-bottom: 8px;
-        border-radius: 4px;
-        font-family: monospace;
+        color: var(--text-light) !important;
+        margin-bottom: 6px;
+        border-radius: 8px !important;
+        padding: 16px 20px !important;
+        transition: all 0.2s;
     }
 
-        ::deep .rz-accordion-header .rz-accordion-header-text,
+        ::deep .rz-accordion-header:hover {
+            border-color: rgba(78, 195, 209, 0.3) !important;
+        }
+
+        ::deep .rz-accordion-header .rz-accordion-header-text {
+            color: var(--accent-light-blue) !important;
+            font-weight: 600 !important;
+            letter-spacing: 0.5px;
+        }
+
         ::deep .rz-accordion-header .rz-accordion-toggle {
-            color: var(--text-main) !important;
+            color: var(--accent-cyan) !important;
         }
 
     ::deep .rz-accordion-content {
-        background-color: #161b22 !important;
+        background: linear-gradient(135deg, #1a2332 0%, #1e2d3d 100%) !important;
         border: 1px solid var(--border-color) !important;
         border-top: none !important;
-        color: #ffffff !important;
+        color: var(--text-light) !important;
         padding: 20px !important;
-        margin-top: -9px;
-        margin-bottom: 15px;
-        border-bottom-left-radius: 4px;
-        border-bottom-right-radius: 4px;
+        margin-top: -7px;
+        margin-bottom: 12px;
+        border-bottom-left-radius: 8px;
+        border-bottom-right-radius: 8px;
     }
 
-    /* Стилизация текстовых полей */
-    ::deep .rz-textbox,
-    ::deep .rz-textarea,
-    ::deep .rz-dropdown {
-        background-color: #0d1117 !important;
-        color: #ffffff !important;
-        border-color: var(--border-color) !important;
+    .instruction-item {
+        position: relative;
     }
 
-    ::deep .rz-dropdown-label {
-        color: #ffffff !important;
+    .instruction-actions {
+        display: flex;
+        gap: 6px;
+        position: absolute;
+        top: 0;
+        right: 0;
+        z-index: 5;
     }
 
-    .form-control[type="file"] {
-        background-color: #0d1117 !important;
-        color: #ffffff !important;
-        border: 1px solid var(--border-color) !important;
-    }
-
-        .form-control[type="file"]::file-selector-button {
-            background-color: var(--bg-card);
-            color: var(--text-main);
-            border: 1px solid var(--border-color);
-            margin-right: 10px;
-            padding: 4px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-    /* Предотвращение выхода текста за рамки */
-    .instruction-text-content {
+    .instruction-text {
         white-space: pre-wrap;
         word-break: break-word;
-        overflow-wrap: break-word;
-        font-family: sans-serif;
-        line-height: 1.6;
-        color: #ffffff !important;
+        line-height: 1.7;
+        color: var(--text-light);
+        font-size: 0.95rem;
     }
 
-    .badge-cyber {
-        font-family: monospace;
-        font-size: 0.75rem;
-        padding: 4px 8px;
-        border-radius: 3px;
-        font-weight: bold;
+    .attachments-section {
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px dashed var(--border-color);
+    }
+
+    .attachments-label {
+        color: var(--text-muted);
+        font-size: 0.8rem;
         text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+        font-weight: 600;
     }
 
-    .bg-info-cyber {
-        background: rgba(0, 229, 255, 0.1);
-        color: #00e5ff !important;
-        border: 1px solid rgba(0, 229, 255, 0.3);
-    }
-
-    .rules-card {
-        background-color: #161b22;
-        border: 1px solid #30363d;
+    .attachment-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(78, 195, 209, 0.1);
+        color: var(--accent-cyan);
+        border: 1px solid rgba(78, 195, 209, 0.3);
+        padding: 6px 14px;
         border-radius: 6px;
-        color: #ffffff !important;
+        text-decoration: none;
+        font-size: 0.85rem;
+        margin-right: 8px;
+        margin-bottom: 8px;
+        transition: all 0.2s;
+        font-weight: 500;
     }
 
-    .admin-control-panel {
-        background: rgba(179, 136, 255, 0.05);
-        border: 1px dashed var(--accent-purple);
+        .attachment-link:hover {
+            background: rgba(78, 195, 209, 0.2);
+            border-color: var(--accent-cyan);
+        }
+
+    /* Режим редактирования */
+    .edit-mode .instruction-text {
+        display: none;
+    }
+
+    .edit-textarea {
+        width: 100%;
+        min-height: 120px;
+        background-color: var(--bg-input) !important;
+        border: 1px solid var(--accent-cyan) !important;
+        color: var(--text-light) !important;
+        border-radius: 6px !important;
+        padding: 12px;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        font-size: 0.95rem;
+        line-height: 1.7;
+        resize: vertical;
+    }
+
+    .edit-title-input {
+        background-color: var(--bg-input) !important;
+        border: 1px solid var(--accent-cyan) !important;
+        color: var(--text-light) !important;
+        border-radius: 6px !important;
+        padding: 8px 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .side-panel {
+        background: linear-gradient(135deg, #1a2332 0%, #1e2d3d 100%);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 25px;
+        position: sticky;
+        top: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .side-panel-title {
+        color: var(--accent-cyan);
+        font-weight: 600;
+        margin-bottom: 18px;
+        font-size: 1rem;
+        letter-spacing: 0.5px;
+    }
+
+    .side-panel-text {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        line-height: 1.7;
+    }
+
+    .side-panel-divider {
+        border-color: var(--border-color);
+        margin: 15px 0;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(152, 195, 121, 0.1);
+        color: var(--success-color);
+        border: 1px solid rgba(152, 195, 121, 0.3);
+        padding: 8px 16px;
         border-radius: 6px;
-    }
-</style>
-
-<style>
-    .rz-dropdown-panel {
-        background-color: #161b22 !important;
-        border: 1px solid #30363d !important;
+        font-size: 0.85rem;
+        font-weight: 600;
     }
 
-    .rz-dropdown-items {
-        background-color: #161b22 !important;
+    .empty-state {
+        text-align: center;
+        padding: 50px 20px;
+        border: 2px dashed var(--border-color);
+        border-radius: 10px;
+        background: rgba(26, 35, 50, 0.5);
     }
 
-    .rz-dropdown-item {
-        color: #ffffff !important;
-        background-color: transparent !important;
+    .loading-container {
+        text-align: center;
+        padding: 60px 20px;
     }
 
-        .rz-dropdown-item:hover,
-        .rz-dropdown-item.rz-state-highlight {
-            background-color: #30363d !important;
-            color: #00e5ff !important;
+    .validation-message {
+        color: var(--accent-cyan) !important;
+        font-size: 0.8rem;
+        margin-top: 4px;
+    }
+
+    .move-buttons {
+        display: flex;
+        gap: 4px;
+    }
+
+    ::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: var(--bg-main);
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 3px;
+    }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
         }
 </style>
 
 <div class="instruction-container p-4">
-    <div class="d-flex align-items-center justify-content-between mb-4 header-block pb-3">
-        <div class="d-flex align-items-center gap-3">
-            <RadzenIcon Icon="help_center" Style="color: var(--accent-blue); font-size: 2rem;" />
-            <div>
-                <h1 class="page-title m-0">Руководство оператора киберполигона</h1>
-                <p class="text-muted m-0" style="font-size: 0.85rem; font-family: monospace;">
-                    ИНФОРМАЦИОННО-АНАЛИТИЧЕСКИЙ ДЕПАРТАМЕНТ // ИНСТРУКЦИИ ПО РАБОТЕ С СИСТЕМОЙ
-                </p>
-            </div>
+    <div class="page-header">
+        <div class="header-text">
+            <h1>Руководство оператора киберполигона</h1>
+            <p>Информационно-аналитический департамент // Инструкции по работе с системой</p>
         </div>
 
         <AuthorizeView Roles="Admin" Context="authHeaderContext">
@@ -198,49 +506,48 @@
     <AuthorizeView Roles="Admin" Context="authFormContext">
         @if (showAdminPanel)
         {
-            <div class="admin-control-panel p-4 mb-4">
-                <h4 class="text-white mb-3" style="font-family: monospace; color: var(--accent-purple) !important;">
+            <div class="admin-panel">
+                <h4 class="admin-panel-title">
                     <RadzenIcon Icon="add_moderator" class="me-2" /> РЕЖИМ МОДИФИКАЦИИ БАЗЫ ЗНАНИЙ
                 </h4>
 
                 <RadzenTemplateForm TItem="InstructionModel" Data="@newInstruction" Submit="HandleSubmit">
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="text-muted small d-block mb-1">НАЗВАНИЕ ИНСТРУКЦИИ</label>
-                            <RadzenTextBox @bind-Value="@newInstruction.Title" Name="Title" class="w-100" />
-                            <RadzenRequiredValidator Component="Title" Text="Укажите название" Popup="false" Style="color: var(--accent-purple); font-size:0.8rem; font-family: monospace;" />
+                            <label class="cyber-label">НАЗВАНИЕ ИНСТРУКЦИИ</label>
+                            <RadzenTextBox @bind-Value="@newInstruction.Title" Name="Title" class="w-100 dark-input" />
+                            <RadzenRequiredValidator Component="Title" Text="Укажите название" Popup="false" Style="color: var(--accent-cyan); font-size:0.8rem;" />
                         </div>
 
                         <div class="col-md-6 mb-3">
-                            <label class="text-muted small d-block mb-1">СИСТЕМНАЯ ИКОНКА (MATERIAL ICON)</label>
-                            <RadzenDropDown @bind-Value="@newInstruction.IconName" Data="@availableIcons" class="w-100" />
+                            <label class="cyber-label">СИСТЕМНАЯ ИКОНКА (MATERIAL ICON)</label>
+                            <RadzenDropDown @bind-Value="@newInstruction.IconName" Data="@availableIcons" class="w-100 dark-input" />
                         </div>
                     </div>
 
                     <div class="mb-3">
-                        <label class="text-muted small d-block mb-1">СОДЕРЖАНИЕ / ИНСТРУКЦИЯ (ПОДДЕРЖИВАЕТСЯ ПЕРЕНОС СТРОК)</label>
-                        <RadzenTextArea @bind-Value="@newInstruction.Description" Name="Description" Rows="4" class="w-100" Style="font-family: monospace;" />
-                        <RadzenRequiredValidator Component="Description" Text="Заполните описание" Popup="false" Style="color: var(--accent-purple); font-size:0.8rem; font-family: monospace;" />
+                        <label class="cyber-label">СОДЕРЖАНИЕ / ИНСТРУКЦИЯ</label>
+                        <RadzenTextArea @bind-Value="@newInstruction.Description" Name="Description" Rows="4" class="w-100 dark-input" />
+                        <RadzenRequiredValidator Component="Description" Text="Заполните описание" Popup="false" Style="color: var(--accent-cyan); font-size:0.8rem;" />
                     </div>
 
                     <div class="row align-items-start mb-3">
                         <div class="col-md-8">
-                            <label class="text-muted small d-block mb-1">ВЛОЖЕНИЯ (МОЖНО ВЫБРАТЬ НЕСКОЛЬКО ФАЙЛОВ)</label>
-                            <InputFile OnChange="LoadFiles" multiple class="form-control" style="font-family: monospace;" />
+                            <label class="cyber-label">ВЛОЖЕНИЯ (МОЖНО ВЫБРАТЬ НЕСКОЛЬКО ФАЙЛОВ)</label>
+                            <InputFile OnChange="LoadFiles" multiple class="file-input" />
 
                             @if (uploadedFiles.Any())
                             {
-                                <div class="mt-2 p-2" style="background: rgba(22, 27, 34, 0.8); border: 1px dashed var(--border-color); border-radius: 4px;">
-                                    <span class="text-muted small d-block mb-1">Готовы к загрузке (@uploadedFiles.Count):</span>
-                                    <ul class="list-unstyled m-0 small">
-                                        @foreach (var file in uploadedFiles)
-                                        {
-                                            <li class="mb-1" style="color: var(--accent-blue);">
-                                                <RadzenIcon Icon="attach_file" Style="font-size: 1rem; vertical-align: middle;" /> @file.Name
-                                                <span class="text-muted ms-2">(@(file.Size / 1024) KB)</span>
-                                            </li>
-                                        }
-                                    </ul>
+                                <div class="uploaded-files-list">
+                                    <span style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 8px;">Готовы к загрузке (@uploadedFiles.Count):</span>
+                                    @foreach (var file in uploadedFiles)
+                                    {
+                                        <div class="file-item">
+                                            <RadzenIcon Icon="attach_file" style="font-size: 0.9rem;" />
+                                            @file.Name
+                                            <span style="color: var(--text-muted); font-size: 0.75rem;">(@(file.Size / 1024) KB)</span>
+                                        </div>
+                                    }
                                 </div>
                             }
                         </div>
@@ -253,52 +560,85 @@
         }
     </AuthorizeView>
 
-    <div class="row">
-        <div class="col-lg-8 mb-4">
+    <div class="content-layout">
+        <div>
             @if (isLoading)
             {
-                <div class="text-center p-5">
-                    <RadzenProgressBar Mode="ProgressBarMode.Indeterminate" ButtonStyle="ButtonStyle.Info" />
-                    <p class="text-muted mt-2 small">ЧТЕНИЕ ДАННЫХ ИЗ РЕПОЗИТОРИЯ...</p>
+                <div class="loading-container">
+                    <RadzenProgressBar Mode="ProgressBarMode.Indeterminate" Style="background-color: var(--border-color);" />
+                    <p style="color: var(--text-muted); margin-top: 15px; font-size: 0.9rem;">ЧТЕНИЕ ДАННЫХ ИЗ РЕПОЗИТОРИЯ...</p>
                 </div>
             }
             else if (!instructions.Any())
             {
-                <div class="text-center p-5 rules-card">
-                    <RadzenIcon Icon="folder_open" Style="font-size: 3rem; color: var(--text-muted);" />
-                    <p class="text-muted mt-2">База знаний пуста. Добавьте первую инструкцию через терминал управления.</p>
+                <div class="empty-state">
+                    <RadzenIcon Icon="folder_open" Style="font-size: 3rem; color: var(--border-color); margin-bottom: 15px;" />
+                    <p style="color: var(--text-muted); font-size: 0.95rem;">База знаний пуста. Добавьте первую инструкцию через терминал управления.</p>
                 </div>
             }
             else
             {
                 <RadzenAccordion Multiple="true" class="cyber-accordion">
                     <Items>
-                        @foreach (var item in instructions)
+                        @for (int i = 0; i < instructions.Count; i++)
                         {
-                            <RadzenAccordionItem Text="@item.Title" Icon="@item.IconName">
-                                <div class="position-relative">
-                                    <AuthorizeView Roles="Admin" Context="authDeleteContext">
-                                        <div class="position-absolute top-0 end-0">
-                                            <RadzenButton Icon="delete" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Danger"
-                                                          Variant="Variant.Outlined" Tooltip="Удалить инструкцию"
-                                                          Click="@(() => DeleteInstruction(item.Id))" />
+                            var item = instructions[i];
+                            var index = i;
+                            var isEditing = editingItemId == item.Id;
+
+                            <RadzenAccordionItem Text="@(isEditing ? "[РЕДАКТИРОВАНИЕ] " + item.Title : item.Title)" Icon="@item.IconName">
+                                <div class="instruction-item">
+                                    <AuthorizeView Roles="Admin">
+                                        <div class="instruction-actions">
+                                            @if (isEditing)
+                                            {
+                                                <button class="btn-icon save" title="Сохранить" @onclick="@(async () => await SaveEdit(item))">
+                                                    <RadzenIcon Icon="save" />
+                                                </button>
+                                                <button class="btn-icon delete" title="Отмена" @onclick="@(() => CancelEdit())">
+                                                    <RadzenIcon Icon="close" />
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <div class="move-buttons">
+                                                    <button class="btn-icon move" title="Вверх" disabled="@(index == 0)" @onclick="@(() => MoveInstruction(index, -1))">
+                                                        <RadzenIcon Icon="arrow_upward" />
+                                                    </button>
+                                                    <button class="btn-icon move" title="Вниз" disabled="@(index == instructions.Count - 1)" @onclick="@(() => MoveInstruction(index, 1))">
+                                                        <RadzenIcon Icon="arrow_downward" />
+                                                    </button>
+                                                </div>
+                                                <button class="btn-icon edit" title="Редактировать" @onclick="@(() => StartEdit(item))">
+                                                    <RadzenIcon Icon="edit" />
+                                                </button>
+                                                <button class="btn-icon delete" title="Удалить" @onclick="@(() => DeleteInstruction(item.Id))">
+                                                    <RadzenIcon Icon="delete" />
+                                                </button>
+                                            }
                                         </div>
                                     </AuthorizeView>
 
-                                    <div class="pe-5">
-                                        <p class="instruction-text-content">
-                                            @item.Description
-                                        </p>
+                                    <div class="pe-5" style="@(isEditing ? "" : "")">
+                                        @if (isEditing)
+                                        {
+                                            <input class="edit-title-input" @bind="editTitle" placeholder="Название инструкции" />
+                                            <textarea class="edit-textarea" @bind="editDescription" placeholder="Содержание инструкции"></textarea>
+                                        }
+                                        else
+                                        {
+                                            <p class="instruction-text">@item.Description</p>
+                                        }
 
                                         @if (item.Attachments != null && item.Attachments.Any())
                                         {
-                                            <div class="mt-3 pt-3" style="border-top: 1px dashed var(--border-color);">
-                                                <span class="text-muted small d-block mb-2" style="font-family: monospace;">СВЯЗАННЫЕ ФАЙЛЫ:</span>
-                                                <div class="d-flex flex-wrap gap-2">
+                                            <div class="attachments-section">
+                                                <div class="attachments-label">СВЯЗАННЫЕ ФАЙЛЫ:</div>
+                                                <div>
                                                     @foreach (var file in item.Attachments)
                                                     {
-                                                        <a href="@file.FilePath" download="@file.FileName" class="badge-cyber bg-info-cyber text-decoration-none" style="cursor: pointer;">
-                                                            <RadzenIcon Icon="file_download" Style="font-size: 0.9rem; vertical-align: middle;" class="me-1" />
+                                                        <a href="@file.FilePath" download="@file.FileName" class="attachment-link">
+                                                            <RadzenIcon Icon="file_download" style="font-size: 0.9rem;" />
                                                             @file.FileName
                                                         </a>
                                                     }
@@ -314,20 +654,16 @@
             }
         </div>
 
-        <div class="col-lg-4">
-            <div class="rules-card p-4">
-                <h5 class="rules-title mb-3" style="color: var(--accent-blue); font-weight: bold; font-family: monospace;">
-                    // ОБЩИЙ РЕГЛАМЕНТ ТЕСТИРОВАНИЯ
-                </h5>
-                <div class="text-muted small" style="font-family: monospace; line-height: 1.5;">
-                    <p>1. Перед началом выполнения сценария убедитесь, что выделенный VPN-туннель стабилен и логи пишутся в SIEM.</p>
-                    <p>2. Любые действия, выходящие за рамки ТЗ сценария (сканирование подсетей департамента, брутфорс смежных узлов), классифицируются как нарушение регламента.</p>
-                    <p>3. Время прохождения попытки фиксируется автоматически. Кнопка «Завершить» отправляет слепок вашей сессии на проверку.</p>
-                    <hr style="border-color: var(--border-color);" />
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="badge-cyber bg-info-cyber">СТАТУС ИАО.БЕЗ</span>
-                        <span class="text-white">АКТИВЕН</span>
-                    </div>
+        <div class="side-panel">
+            <h5 class="side-panel-title">// ОБЩИЙ РЕГЛАМЕНТ ТЕСТИРОВАНИЯ</h5>
+            <div class="side-panel-text">
+                <p>1. Перед началом выполнения сценария убедитесь, что выделенный VPN-туннель стабилен и логи пишутся в SIEM.</p>
+                <p>2. Любые действия, выходящие за рамки ТЗ сценария (сканирование подсетей департамента, брутфорс смежных узлов), классифицируются как нарушение регламента.</p>
+                <p>3. Время прохождения попытки фиксируется автоматически. Кнопка «Завершить» отправляет слепок вашей сессии на проверку.</p>
+                <hr class="side-panel-divider" />
+                <div class="status-badge">
+                    <RadzenIcon Icon="verified" style="font-size: 1rem;" />
+                    СТАТУС ИАО.БЕЗ АКТИВЕН
                 </div>
             </div>
         </div>
@@ -340,10 +676,14 @@
     private bool isLoading = true;
     private bool showAdminPanel = false;
 
-    // ИЗМЕНЕНИЕ: Теперь это список файлов
     private IReadOnlyList<IBrowserFile> uploadedFiles = new List<IBrowserFile>();
     private int maxAllowedFiles = 10;
-    private long maxFileSize = 1024 * 1024 * 30; // 30 MB на один файл
+    private long maxFileSize = 1024 * 1024 * 30;
+
+    // Переменные для редактирования
+    private int? editingItemId = null;
+    private string editTitle = string.Empty;
+    private string editDescription = string.Empty;
 
     private readonly List<string> availableIcons = new()
     {
@@ -362,6 +702,8 @@
         try
         {
             instructions = await InstructionService.GetAllAsync();
+            // Сортируем по Order, если поле есть
+            instructions = instructions.OrderBy(i => i.Order).ToList();
         }
         catch (Exception ex)
         {
@@ -373,7 +715,6 @@
         }
     }
 
-    // ИЗМЕНЕНИЕ: Обработка нескольких файлов
     private void LoadFiles(InputFileChangeEventArgs e)
     {
         uploadedFiles = e.GetMultipleFiles(maxAllowedFiles);
@@ -383,13 +724,13 @@
     {
         try
         {
-            // Передаем коллекцию файлов в сервис
+            newInstruction.Order = instructions.Any() ? instructions.Max(i => i.Order) + 1 : 1;
             await InstructionService.AddAsync(newInstruction, uploadedFiles);
 
             NotificationService.Notify(NotificationSeverity.Success, "Система", "Новая инструкция успешно интегрирована.");
 
             newInstruction = new InstructionModel();
-            uploadedFiles = new List<IBrowserFile>(); // Сбрасываем список
+            uploadedFiles = new List<IBrowserFile>();
             showAdminPanel = false;
 
             await LoadData();
@@ -399,6 +740,77 @@
             NotificationService.Notify(NotificationSeverity.Error, "Критическая ошибка", ex.Message);
         }
     }
+
+    // === РЕДАКТИРОВАНИЕ ===
+
+    private void StartEdit(InstructionModel item)
+    {
+        editingItemId = item.Id;
+        editTitle = item.Title;
+        editDescription = item.Description;
+    }
+
+    private void CancelEdit()
+    {
+        editingItemId = null;
+        editTitle = string.Empty;
+        editDescription = string.Empty;
+    }
+
+    private async Task SaveEdit(InstructionModel item)
+    {
+        if (string.IsNullOrWhiteSpace(editTitle))
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Ошибка", "Название не может быть пустым");
+            return;
+        }
+
+        try
+        {
+            item.Title = editTitle;
+            item.Description = editDescription;
+            await InstructionService.UpdateAsync(item);
+
+            NotificationService.Notify(NotificationSeverity.Success, "Система", "Инструкция обновлена.");
+            CancelEdit();
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Ошибка", ex.Message);
+        }
+    }
+
+    // === ПЕРЕМЕЩЕНИЕ ===
+
+    private async Task MoveInstruction(int currentIndex, int direction)
+    {
+        if (currentIndex + direction < 0 || currentIndex + direction >= instructions.Count)
+            return;
+
+        var currentItem = instructions[currentIndex];
+        var swapItem = instructions[currentIndex + direction];
+
+        // Меняем Order местами
+        var tempOrder = currentItem.Order;
+        currentItem.Order = swapItem.Order;
+        swapItem.Order = tempOrder;
+
+        try
+        {
+            await InstructionService.UpdateOrderAsync(currentItem);
+            await InstructionService.UpdateOrderAsync(swapItem);
+
+            NotificationService.Notify(NotificationSeverity.Success, "Система", "Порядок инструкций обновлён.");
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Ошибка", ex.Message);
+        }
+    }
+
+    // === УДАЛЕНИЕ ===
 
     private async Task DeleteInstruction(int id)
     {

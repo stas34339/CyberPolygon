@@ -27,14 +27,20 @@ namespace CyberPolygon.Services
         {
             using var ctx = await _contextFactory.CreateDbContextAsync();
             return await ctx.Set<InstructionModel>()
-                            .Include(i => i.Attachments) // Обязательно подтягиваем файлы
-                            .OrderByDescending(i => i.Id)
+                            .Include(i => i.Attachments)
+                            .OrderBy(i => i.Order)
+                            .ThenBy(i => i.Id)
                             .ToListAsync();
         }
 
         // 2. Добавление инструкции и загрузка списка файлов
         public async Task AddAsync(InstructionModel instruction, IReadOnlyList<IBrowserFile> files)
         {
+            // Устанавливаем порядок (в конец списка)
+            using var ctx = await _contextFactory.CreateDbContextAsync();
+            var maxOrder = await ctx.Set<InstructionModel>().MaxAsync(i => (int?)i.Order) ?? 0;
+            instruction.Order = maxOrder + 1;
+
             // Папка для загрузки
             var uploadFolder = Path.Combine(_env.WebRootPath, "uploads", "instructions");
             if (!Directory.Exists(uploadFolder))
@@ -47,39 +53,64 @@ namespace CyberPolygon.Services
             {
                 foreach (var file in files)
                 {
-                    // Генерируем уникальное имя файла, чтобы избежать перезаписи (Guid + оригинальное имя)
                     var uniqueFileName = $"{Guid.NewGuid()}_{Path.GetFileName(file.Name)}";
                     var fullPath = Path.Combine(uploadFolder, uniqueFileName);
 
-                    // Сохраняем физический файл на диск сервера (Лимит 30 МБ)
                     await using (var fs = new FileStream(fullPath, FileMode.Create))
                     {
                         await file.OpenReadStream(maxAllowedSize: 1024 * 1024 * 30).CopyToAsync(fs);
                     }
 
-                    // Создаем запись о вложении и добавляем в коллекцию инструкции
                     var attachment = new InstructionAttachment
                     {
-                        FileName = file.Name, // Оригинальное имя для отображения пользователю
-                        FilePath = $"/uploads/instructions/{uniqueFileName}" // Путь для скачивания
+                        FileName = file.Name,
+                        FilePath = $"/uploads/instructions/{uniqueFileName}"
                     };
 
                     instruction.Attachments.Add(attachment);
                 }
             }
 
-            // Сохраняем инструкцию (EF Core автоматически сохранит и все объекты в Attachments)
-            using var ctx = await _contextFactory.CreateDbContextAsync();
             ctx.Set<InstructionModel>().Add(instruction);
             await ctx.SaveChangesAsync();
         }
 
-        // 3. Удаление инструкции и очистка диска от файлов
+        // 3. Обновление инструкции (название, описание, иконка)
+        public async Task UpdateAsync(InstructionModel updated)
+        {
+            using var ctx = await _contextFactory.CreateDbContextAsync();
+            var existing = await ctx.Set<InstructionModel>()
+                .FirstOrDefaultAsync(i => i.Id == updated.Id);
+
+            if (existing == null)
+                throw new InvalidOperationException("Инструкция не найдена");
+
+            existing.Title = updated.Title;
+            existing.Description = updated.Description;
+            existing.IconName = updated.IconName;
+
+            await ctx.SaveChangesAsync();
+        }
+
+        // 4. Обновление только порядка инструкции
+        public async Task UpdateOrderAsync(InstructionModel instruction)
+        {
+            using var ctx = await _contextFactory.CreateDbContextAsync();
+            var existing = await ctx.Set<InstructionModel>()
+                .FirstOrDefaultAsync(i => i.Id == instruction.Id);
+
+            if (existing == null)
+                throw new InvalidOperationException("Инструкция не найдена");
+
+            existing.Order = instruction.Order;
+            await ctx.SaveChangesAsync();
+        }
+
+        // 5. Удаление инструкции и очистка диска от файлов
         public async Task DeleteAsync(int id)
         {
             using var ctx = await _contextFactory.CreateDbContextAsync();
 
-            // Находим инструкцию вместе с ее файлами
             var item = await ctx.Set<InstructionModel>()
                                 .Include(i => i.Attachments)
                                 .FirstOrDefaultAsync(i => i.Id == id);
@@ -102,7 +133,6 @@ namespace CyberPolygon.Services
                     }
                 }
 
-                // Удаляем саму инструкцию из БД (EF Core каскадно удалит и записи из таблицы Attachments)
                 ctx.Set<InstructionModel>().Remove(item);
                 await ctx.SaveChangesAsync();
             }

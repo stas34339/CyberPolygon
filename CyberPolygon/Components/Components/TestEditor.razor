@@ -1,7 +1,6 @@
-﻿@using Microsoft.EntityFrameworkCore
-@using CyberPolygon.Data
-
-@inject ScenarioService ScenarioService
+﻿@using CyberPolygon.Data
+@using Microsoft.EntityFrameworkCore
+@inject TestService TestService
 @inject DialogService DialogService
 @inject NotificationService NotificationService
 @inject ApplicationDbContext DbContext
@@ -29,6 +28,7 @@
         padding: 20px;
     }
 
+    /* Инпуты */
     .dark-input,
     .dark-input input,
     .rz-textbox,
@@ -56,10 +56,12 @@
             box-shadow: 0 0 10px rgba(78, 195, 209, 0.15) !important;
         }
 
+    /* Плейсхолдеры */
     .rz-dropdown-label.rz-placeholder {
         color: var(--text-muted) !important;
     }
 
+    /* Выпадающий список */
     .rz-dropdown-panel {
         background-color: var(--bg-card) !important;
         border: 1px solid var(--border-color) !important;
@@ -74,11 +76,13 @@
         color: var(--text-light) !important;
     }
 
-        .rz-dropdown-item:hover, .rz-dropdown-item.rz-state-highlight {
+        .rz-dropdown-item:hover,
+        .rz-dropdown-item.rz-state-highlight {
             background-color: rgba(78, 195, 209, 0.1) !important;
             color: var(--accent-cyan) !important;
         }
 
+    /* Метки */
     .cyber-label {
         color: var(--accent-cyan) !important;
         font-size: 0.85rem;
@@ -97,6 +101,7 @@
         letter-spacing: 0.5px;
     }
 
+    /* Переключатель */
     .rz-switch {
         background-color: var(--border-color) !important;
     }
@@ -105,6 +110,7 @@
         background-color: var(--accent-cyan) !important;
     }
 
+    /* Карточка вопроса */
     .question-card {
         background: var(--bg-card);
         border: 1px solid var(--border-color);
@@ -118,6 +124,7 @@
             border-color: rgba(78, 195, 209, 0.3);
         }
 
+    /* Табы */
     .custom-tabs .rz-tabview-nav {
         background: transparent !important;
         border-bottom: 2px solid var(--border-color) !important;
@@ -139,6 +146,7 @@
             border-bottom: 2px solid var(--accent-cyan) !important;
         }
 
+    /* Бейджи */
     .badge-info {
         background: rgba(78, 195, 209, 0.1);
         color: var(--accent-cyan);
@@ -152,6 +160,7 @@
         gap: 6px;
     }
 
+    /* Кнопки */
     .btn-primary-gradient {
         background: linear-gradient(135deg, #4ec3d1 0%, #5ba3e3 100%);
         color: #1a1d21;
@@ -224,10 +233,28 @@
             border-color: var(--danger-color);
         }
 
+    .btn-option-delete {
+        background: transparent;
+        color: var(--danger-color);
+        border: 1px solid rgba(224, 108, 117, 0.2);
+        border-radius: 4px;
+        padding: 4px 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.8rem;
+    }
+
+        .btn-option-delete:hover {
+            background: rgba(224, 108, 117, 0.1);
+            border-color: rgba(224, 108, 117, 0.4);
+        }
+
+    /* Разделители */
     .divider {
         border-color: var(--border-color) !important;
     }
 
+    /* Блок с dashed border */
     .dashed-block {
         background: rgba(0, 0, 0, 0.2);
         border: 1px dashed var(--border-color);
@@ -235,6 +262,7 @@
         padding: 18px;
     }
 
+    /* Блок предупреждения */
     .warning-block {
         border: 2px dashed rgba(224, 108, 117, 0.4);
         border-radius: 8px;
@@ -243,6 +271,7 @@
         padding: 30px 20px;
     }
 
+    /* Файловый инпут */
     .file-input {
         background-color: var(--bg-input) !important;
         border: 1px solid var(--border-color) !important;
@@ -256,6 +285,7 @@
         border-color: var(--success-color) !important;
     }
 
+    /* Скроллбар */
     ::-webkit-scrollbar {
         width: 6px;
     }
@@ -275,14 +305,14 @@
 </style>
 
 <div class="editor-container">
-    <RadzenTemplateForm TItem="CyberScenario" Data="@Item" Submit="@OnSave">
+    <RadzenTemplateForm TItem="CyberTest" Data="@Item" Submit="@OnSave">
         <RadzenTabs class="w-100 custom-tabs">
             <Tabs>
                 <RadzenTabsItem Text="Основная информация" Icon="settings">
                     <div class="row" style="padding-right: 10px;">
                         <div class="col-md-9 mb-3">
-                            <label class="cyber-label">Название сценария</label>
-                            <RadzenTextBox @bind-Value="@Item.Title" class="w-100 dark-input" Placeholder="Введите название сценария..." />
+                            <label class="cyber-label">Название теста</label>
+                            <RadzenTextBox @bind-Value="@Item.Title" class="w-100 dark-input" Placeholder="Введите название теста..." />
                         </div>
                         <div class="col-md-3 mb-3 d-flex flex-column justify-content-end">
                             <label class="cyber-label">Опубликован</label>
@@ -293,25 +323,28 @@
 
                         <div class="col-12 mb-3">
                             <label class="cyber-label">Краткое описание (для карточки)</label>
-                            <RadzenTextArea @bind-Value="@Item.Description" class="w-100 dark-input" Rows="2" Placeholder="Краткое описание сценария..." />
+                            <RadzenTextArea @bind-Value="@Item.ShortDescription" class="w-100 dark-input" Rows="2" Placeholder="Краткое описание теста..." />
                         </div>
 
                         <div class="col-md-4 mb-3">
-                            <label class="cyber-label">Режим выполнения</label>
-                            <RadzenDropDown @bind-Value="@Item.GameMode" TValue="ScenarioGameMode" Data="@(Enum.GetValues(typeof(ScenarioGameMode)))" class="w-100 dark-input">
-                                <Template Context="mode">
+                            <label class="cyber-label">Сложность</label>
+                            <RadzenDropDown @bind-Value="@Item.Difficulty" TValue="TestDifficulty" Data="@(Enum.GetValues(typeof(TestDifficulty)))" class="w-100 dark-input">
+                                <Template Context="diff">
                                     @{
-                                        var gameMode = (ScenarioGameMode)mode;
-                                        switch (gameMode)
+                                        var difficulty = (TestDifficulty)diff;
+                                        switch (difficulty)
                                         {
-                                            case ScenarioGameMode.AllAtOnce:
-                                                <span style="color: #7ec8f8;">Все задания сразу</span>
+                                            case TestDifficulty.Easy:
+                                                <span style="color: #7ec8f8;">Легкий</span>
                                                 break;
-                                            case ScenarioGameMode.OneByOne:
-                                                <span style="color: #e5c07b;">Последовательно</span>
+                                            case TestDifficulty.Medium:
+                                                <span style="color: #5ba3e3;">Средний</span>
+                                                break;
+                                            case TestDifficulty.Hard:
+                                                <span style="color: #4ec3d1;">Сложный</span>
                                                 break;
                                             default:
-                                                <span>@gameMode.ToString()</span>
+                                                <span>@difficulty.ToString()</span>
                                                 break;
                                         }
                                     }
@@ -370,25 +403,14 @@
                             <div class="col-12 mb-3">
                                 <div class="badge-info">
                                     <RadzenIcon Icon="info" style="font-size: 1rem;" />
-                                    Сценарий будет доступен в общем списке для всех курсантов.
+                                    Тест будет доступен в общем списке для всех пользователей.
                                 </div>
                             </div>
                         }
 
                         <div class="col-12 mb-3">
-                            <label class="cyber-label">Схема сети (файл)</label>
-                            <InputFile OnChange="HandleFileUpload" class="file-input" style="width: 100%;" />
-                            @if (!string.IsNullOrEmpty(Item.SchemaPath))
-                            {
-                                <span style="font-size: 0.8rem; color: var(--success-color); display: block; margin-top: 5px;">
-                                    <RadzenIcon Icon="check_circle" style="vertical-align: middle;" /> Загружено: @Item.SchemaPath
-                                </span>
-                            }
-                        </div>
-
-                        <div class="col-12 mb-3">
-                            <label class="cyber-label">Легенда сценария</label>
-                            <RadzenHtmlEditor @bind-Value="@Item.Legend" style="height: 220px;" class="dark-input" />
+                            <label class="cyber-label">Полное описание</label>
+                            <RadzenHtmlEditor @bind-Value="@Item.FullDescription" style="height: 220px;" class="dark-input" />
                         </div>
                     </div>
                 </RadzenTabsItem>
@@ -406,10 +428,10 @@
                         <div class="warning-block">
                             <RadzenIcon Icon="warning" style="color: #e06c75; font-size: 2.5rem; margin-bottom: 12px;" />
                             <p style="color: #e06c75; margin: 0; font-size: 1rem; font-weight: 600;">
-                                Внимание: Не добавлено ни одного задания.
+                                Внимание: Не добавлено ни одного вопроса.
                             </p>
                             <p style="color: var(--text-muted); margin: 8px 0 0 0; font-size: 0.85rem;">
-                                Сохранение сценария заблокировано до добавления минимум одного задания.
+                                Сохранение теста заблокировано до добавления минимум одного задания.
                             </p>
                         </div>
                     }
@@ -419,29 +441,69 @@
                         var qIndex = Item.Questions.IndexOf(q);
                         <div class="question-card">
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                <span style="color: var(--accent-cyan); font-weight: bold; font-size: 0.95rem; letter-spacing: 0.5px;">ЗАДАНИЕ №@(qIndex + 1)</span>
+                                <span style="color: var(--accent-cyan); font-weight: bold; font-size: 0.95rem; letter-spacing: 0.5px;">ВОПРОС №@(qIndex + 1)</span>
                                 <button type="button" class="btn-delete-icon" @onclick="@(() => Item.Questions.Remove(q))">
                                     <RadzenIcon Icon="delete" />
                                 </button>
                             </div>
 
                             <div class="row mb-3">
-                                <div class="col-12 mb-3">
-                                    <label class="cyber-sub-label">Формулировка задания</label>
-                                    <RadzenTextBox @bind-Value="@q.Text" class="w-100 dark-input" Placeholder="Например: Какой порт использует SSH?" />
+                                <div class="col-md-9">
+                                    <label class="cyber-sub-label">Текст вопроса</label>
+                                    <RadzenTextBox @bind-Value="@q.Text" class="w-100 dark-input" Placeholder="Введите текст вопроса..." />
                                 </div>
-                                <div class="col-md-6 mb-2">
-                                    <label class="cyber-sub-label" style="color: var(--success-color) !important;">Эталонный ответ (флаг)</label>
-                                    <RadzenTextBox @bind-Value="@q.CorrectAnswer" class="w-100 dark-input success-border" Placeholder="Например: 22" />
+                                <div class="col-md-3">
+                                    <label class="cyber-sub-label">Тип</label>
+                                    <RadzenDropDown @bind-Value="@q.Type" TValue="QuestionType" Data="@(Enum.GetValues(typeof(QuestionType)))" class="w-100 dark-input">
+                                        <Template Context="type">
+                                            @{
+                                                var questionType = (QuestionType)type;
+                                                switch (questionType)
+                                                {
+                                                    case QuestionType.ManualText:
+                                                        <span style="color: #98c379;">Ручной ввод</span>
+                                                        break;
+                                                    case QuestionType.MultipleChoice:
+                                                        <span style="color: #7ec8f8;">Множественный выбор</span>
+                                                        break;
+                                                    case QuestionType.SingleChoice:
+                                                        <span style="color: #e5c07b;">Одиночный выбор</span>
+                                                        break;
+                                                    default:
+                                                        <span>@questionType.ToString()</span>
+                                                        break;
+                                                }
+                                            }
+                                        </Template>
+                                    </RadzenDropDown>
                                 </div>
-                                <div class="col-md-3 mb-2">
-                                    <label class="cyber-sub-label" style="color: var(--warning-color) !important;">Награда (+ баллы)</label>
-                                    <RadzenNumeric @bind-Value="@q.AwardPoints" Min="1" Max="1000" class="w-100 dark-input" />
-                                </div>
-                                <div class="col-md-3 mb-2">
-                                    <label class="cyber-sub-label" style="color: var(--danger-color) !important;">Штраф (- баллы)</label>
-                                    <RadzenNumeric @bind-Value="@q.PenaltyPoints" Min="0" Max="100" class="w-100 dark-input" />
-                                </div>
+                            </div>
+
+                            <div class="dashed-block">
+                                @if (q.Type == QuestionType.ManualText)
+                                {
+                                    <label class="cyber-label" style="font-size:0.75rem; color: var(--success-color) !important;">Правильный ответ (Флаг)</label>
+                                    <RadzenTextBox @bind-Value="@q.CorrectTextAnswer" class="w-100 dark-input success-border" Placeholder="Введите правильный ответ..." />
+                                }
+                                else
+                                {
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <span style="font-size: 0.8rem; color: var(--text-muted);">Варианты ответов:</span>
+                                        <button type="button" class="btn-add" style="font-size: 0.75rem; padding: 4px 12px;" @onclick="@(() => q.Options.Add(new TestOption()))">
+                                            <RadzenIcon Icon="add" /> Вариант
+                                        </button>
+                                    </div>
+                                    @foreach (var opt in q.Options)
+                                    {
+                                        <div class="d-flex align-items-center gap-2 mb-2">
+                                            <RadzenCheckBox @bind-Value="@opt.IsCorrect" TValue="bool" />
+                                            <RadzenTextBox @bind-Value="@opt.Text" class="w-100 dark-input" Placeholder="Текст варианта..." />
+                                            <button type="button" class="btn-option-delete" @onclick="@(() => q.Options.Remove(opt))">
+                                                <RadzenIcon Icon="close" />
+                                            </button>
+                                        </div>
+                                    }
+                                }
                             </div>
                         </div>
                     }
@@ -449,22 +511,16 @@
 
                 <RadzenTabsItem Text="Документы" Icon="description">
                     <div class="mb-3">
-                        <button type="button" class="btn-add" @onclick="@(() => Item.Documents.Add(new ScenarioDocument()))">
-                            <RadzenIcon Icon="add" /> Добавить документ
+                        <button type="button" class="btn-add" @onclick="@(() => Item.Documents.Add(new TestDocument()))">
+                            <RadzenIcon Icon="add" /> Добавить инструкцию
                         </button>
                     </div>
 
                     @foreach (var doc in Item.Documents)
                     {
                         <div class="d-flex gap-3 mb-3 p-3 align-items-center" style="border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-card);">
-                            <RadzenTextBox @bind-Value="@doc.Title" Placeholder="Название документа" class="dark-input" style="flex: 1;" />
-                            <InputFile OnChange="@(async e => await UploadDocumentAsync(e, doc))" class="file-input" style="flex: 1;" />
-                            @if (!string.IsNullOrEmpty(doc.FilePath))
-                            {
-                                <span style="color: var(--success-color); font-size: 0.8rem; flex: 1;">
-                                    <RadzenIcon Icon="check_circle" style="vertical-align: middle;" /> @doc.FilePath
-                                </span>
-                            }
+                            <RadzenTextBox @bind-Value="@doc.Title" Placeholder="Название файла" class="dark-input" style="flex: 1;" />
+                            <InputFile OnChange="@(async e => await UploadDocAsync(e, doc))" class="file-input" style="flex: 1;" />
                             <button type="button" class="btn-delete-icon" @onclick="@(() => Item.Documents.Remove(doc))">
                                 <RadzenIcon Icon="delete" />
                             </button>
@@ -476,20 +532,21 @@
 
         <div class="mt-4 d-flex justify-content-end gap-3 pt-3 divider" style="border-top: 1px solid var(--border-color);">
             <button type="button" class="btn-outline-light" @onclick="@(() => DialogService.Close(false))">Отмена</button>
-            <button type="submit" class="btn-primary-gradient">Сохранить сценарий</button>
+            <button type="submit" class="btn-primary-gradient">Сохранить тест</button>
         </div>
     </RadzenTemplateForm>
 </div>
 
 @code {
-    [Parameter] public CyberScenario Item { get; set; } = new();
+    [Parameter] public CyberTest Item { get; set; } = new();
+
     private IEnumerable<UserGroup> groups = new List<UserGroup>();
     private IEnumerable<UserTeam> teams = new List<UserTeam>();
 
     protected override async Task OnInitializedAsync()
     {
-        Item.Questions ??= new List<ScenarioQuestion>();
-        Item.Documents ??= new List<ScenarioDocument>();
+        Item.Questions ??= new();
+        Item.Documents ??= new();
 
         try
         {
@@ -507,7 +564,7 @@
         }
     }
 
-    private void AddQuestion() => Item.Questions.Add(new ScenarioQuestion { AwardPoints = 10, PenaltyPoints = 5 });
+    private void AddQuestion() => Item.Questions.Add(new TestQuestion { Type = QuestionType.ManualText, Options = new() });
 
     private void OnScopeChanged()
     {
@@ -526,29 +583,23 @@
         }
     }
 
-    private async Task HandleFileUpload(InputFileChangeEventArgs e)
+    private async Task UploadDocAsync(InputFileChangeEventArgs e, TestDocument doc)
     {
-        Item.SchemaPath = await ScenarioService.UploadSchemaAsync(e.File);
-    }
-
-    private async Task UploadDocumentAsync(InputFileChangeEventArgs e, ScenarioDocument doc)
-    {
-        doc.FilePath = await ScenarioService.UploadSchemaAsync(e.File);
-        if (string.IsNullOrWhiteSpace(doc.Title))
-            doc.Title = e.File.Name;
+        doc.FilePath = await TestService.UploadDocumentAsync(e.File);
+        if (string.IsNullOrWhiteSpace(doc.Title)) doc.Title = e.File.Name;
     }
 
     private async Task OnSave()
     {
         if (string.IsNullOrWhiteSpace(Item.Title))
         {
-            NotificationService.Notify(NotificationSeverity.Warning, "Ошибка", "Укажите название сценария");
+            NotificationService.Notify(NotificationSeverity.Warning, "Ошибка", "Укажите название теста");
             return;
         }
 
         if (Item.Questions == null || !Item.Questions.Any())
         {
-            NotificationService.Notify(NotificationSeverity.Warning, "Ошибка", "Добавьте хотя бы одно задание перед сохранением");
+            NotificationService.Notify(NotificationSeverity.Warning, "Ошибка", "Добавьте хотя бы один вопрос перед сохранением");
             return;
         }
 
@@ -564,7 +615,7 @@
             return;
         }
 
-        await ScenarioService.SaveAsync(Item);
+        await TestService.SaveAsync(Item);
         DialogService.Close(true);
     }
 }

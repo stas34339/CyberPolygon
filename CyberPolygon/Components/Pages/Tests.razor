@@ -1,15 +1,13 @@
-﻿@page "/scenario"
+﻿@page "/tests"
 @using CyberPolygon.Components.Components
-@using Microsoft.EntityFrameworkCore
 @using CyberPolygon.Data
 @rendermode InteractiveServer
 
-@inject ScenarioService ScenarioService
+@inject TestService TestService
 @inject DialogService DialogService
-@inject NotificationService NotificationService
 @inject NavigationManager NavigationManager
+@inject NotificationService NotificationService
 @inject AuthenticationStateProvider AuthStateProvider
-@inject IDbContextFactory<CyberPolygon.Data.ApplicationDbContext> ContextFactory
 
 <style>
     :root {
@@ -23,12 +21,9 @@
         --accent-light-blue: #7ec8f8;
         --border-color: #2a3a4a;
         --border-glow: #4ec3d1;
-        --success-color: #98c379;
-        --danger-color: #e06c75;
-        --warning-color: #e5c07b;
     }
 
-    .scenarios-container {
+    .tests-container {
         background-color: var(--bg-main);
         min-height: calc(100vh - 60px);
         color: var(--text-muted);
@@ -95,6 +90,39 @@
             background: linear-gradient(135deg, #5fd4e0 0%, #6fb3f0 100%);
         }
 
+    .difficulty-section {
+        margin-bottom: 55px;
+    }
+
+    .section-title {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 30px;
+        padding-bottom: 18px;
+        border-bottom: 2px solid var(--border-color);
+        position: relative;
+    }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 80px;
+            height: 2px;
+            background: var(--accent-cyan);
+            box-shadow: 0 0 10px rgba(78, 195, 209, 0.5);
+        }
+
+        .section-title h2 {
+            margin: 0;
+            font-size: 1.3rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
     .cards-list {
         display: flex;
         flex-direction: column;
@@ -143,6 +171,7 @@
         border-radius: 6px;
         letter-spacing: 0.5px;
         backdrop-filter: blur(10px);
+        order: -1;
     }
 
     .status-published {
@@ -155,6 +184,34 @@
         background: rgba(143, 160, 181, 0.15);
         color: var(--text-muted);
         border: 1px solid var(--border-color);
+    }
+
+    .difficulty-badge {
+        font-size: 0.7rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        padding: 5px 12px;
+        border-radius: 6px;
+        letter-spacing: 1.5px;
+        display: inline-block;
+    }
+
+    .diff-easy {
+        background: rgba(126, 200, 248, 0.15);
+        color: #7ec8f8;
+        border: 1px solid rgba(126, 200, 248, 0.4);
+    }
+
+    .diff-medium {
+        background: rgba(91, 163, 227, 0.15);
+        color: #5ba3e3;
+        border: 1px solid rgba(91, 163, 227, 0.4);
+    }
+
+    .diff-hard {
+        background: rgba(78, 195, 209, 0.15);
+        color: #4ec3d1;
+        border: 1px solid rgba(78, 195, 209, 0.4);
     }
 
     .card-title {
@@ -237,17 +294,16 @@
             }
 
     .card-details {
-        margin-top: 0;
+        margin-top: 20px;
         padding: 20px;
-        border-radius: 0 0 10px 10px;
+        border-radius: 8px;
         background: rgba(0, 0, 0, 0.3);
         border: 1px solid var(--border-color);
-        border-top: none;
         color: var(--text-light);
         width: 100%;
     }
 
-        .card-details .legend {
+        .card-details .description {
             font-size: 0.85rem;
             margin-bottom: 15px;
             line-height: 1.6;
@@ -422,141 +478,150 @@
             border-color: var(--text-muted);
             background: rgba(143, 160, 181, 0.1);
         }
+
+    /* Кастомизация Radzen */
+    .rz-dialog {
+        background-color: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
+    }
+
+    .rz-dialog-titlebar {
+        background-color: var(--bg-main) !important;
+        color: var(--text-light) !important;
+        border-bottom: 1px solid var(--border-color) !important;
+    }
+
+    .rz-dialog-content {
+        color: var(--text-light) !important;
+    }
 </style>
 
 <RadzenComponents />
-<PageTitle>Сценарии | Киберполигон</PageTitle>
+<PageTitle>Обучение на киберполигоне</PageTitle>
 
-<div class="scenarios-container">
+<div class="tests-container">
     <div class="page-header">
         <div class="header-text">
-            <h1>Боевые сценарии</h1>
-            <p>Практические симуляции кибератак для отработки навыков защиты в условиях, приближенных к реальным.</p>
+            <h1>Обучение на киберполигоне</h1>
+            <p>Тестовые задания для обучения и повышения навыков в сфере кибербезопасности.</p>
         </div>
 
         <AuthorizeView Roles="Admin">
             <div class="header-actions">
-                <button class="create-btn" @onclick="@(() => OpenEditDialog(new CyberScenario()))">
-                    <RadzenIcon Icon="add" Style="vertical-align: middle; margin-right: 6px;" /> Новый сценарий
+                <button class="create-btn" @onclick="@(() => OpenEditDialog(new CyberTest()))">
+                    <RadzenIcon Icon="add" Style="vertical-align: middle; margin-right: 6px;" /> Создать тест
                 </button>
             </div>
         </AuthorizeView>
     </div>
 
-    @if (scenarios == null)
+    @if (tests == null)
     {
         <div class="loading-container">
             <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" Style="background-color: var(--border-color);" />
         </div>
     }
-    else if (!scenarios.Any())
+    else if (!tests.Any())
     {
         <div class="empty-state">
             <RadzenIcon Icon="school" Style="font-size: 3rem; color: var(--border-color); margin-bottom: 20px;" />
-            <p style="font-size: 1.1rem; margin: 0;">База данных пуста. Сценарии не обнаружены.</p>
+            <p style="font-size: 1.1rem; margin: 0;">База данных тестов пуста.</p>
         </div>
     }
     else
     {
-        <div class="cards-list">
-            @foreach (var item in scenarios)
-            {
-                bool isExpanded = expandedCards.ContainsKey(item.Id) && expandedCards[item.Id];
-                bool hasProgress = userProgresses.TryGetValue(item.Id, out var status);
-                bool isCompleted = hasProgress && status == AttemptStatus.Completed;
-                bool isFailed = hasProgress && status == AttemptStatus.Failed;
-                bool isStarted = hasProgress && status == AttemptStatus.InProgress;
+        var difficulties = new[] { TestDifficulty.Easy, TestDifficulty.Medium, TestDifficulty.Hard };
+        var difficultyNames = new Dictionary<TestDifficulty, string>
+        {
+            { TestDifficulty.Easy, "Начальный уровень" },
+            { TestDifficulty.Medium, "Средний уровень" },
+            { TestDifficulty.Hard, "Продвинутый уровень" }
+        };
+        foreach (var diff in difficulties)
+        {
+            var filteredTests = tests.Where(t => t.Difficulty == diff).ToList();
+            if (!filteredTests.Any()) continue;
 
-                <div>
-                    <div class="cyber-card">
-                        <div class="card-main">
-                            <div class="card-header">
-                                <h3 class="card-title">@item.Title</h3>
+            <div class="difficulty-section">
+                <div class="section-title">
+                    <span class="difficulty-badge @GetDifficultyClass(diff)" style="margin-bottom:0;">@GetDifficultyText(diff)</span>
+                    <h2 style="color: @GetDifficultyColor(diff);">@difficultyNames[diff]</h2>
+                </div>
 
-                                @if (isStarted)
-                                {
-                                    <span class="status-badge" style="background: rgba(229, 192, 123, 0.15); color: #e5c07b; border: 1px solid rgba(229, 192, 123, 0.4);">В процессе</span>
-                                }
-                                else if (isCompleted)
-                                {
-                                    <span class="status-badge" style="background: rgba(152, 195, 121, 0.15); color: #98c379; border: 1px solid rgba(152, 195, 121, 0.4);">Завершен</span>
-                                }
-                                else if (isFailed)
-                                {
-                                    <span class="status-badge" style="background: rgba(224, 108, 117, 0.15); color: #e06c75; border: 1px solid rgba(224, 108, 117, 0.4);">Неудача</span>
-                                }
+                <div class="cards-list">
+                    @foreach (var test in filteredTests)
+                    {
+                        bool isExpanded = expandedCards.ContainsKey(test.Id) && expandedCards[test.Id];
 
-                                <AuthorizeView Roles="Admin">
-                                    <span class="status-badge @(item.IsVisible ? "status-published" : "status-draft")">
-                                        @(item.IsVisible ? "Открыт" : "Черновик")
-                                    </span>
-                                </AuthorizeView>
-                            </div>
-                            <p class="card-description">@item.Description</p>
-                        </div>
+                        // Логика проверки статуса
+                        bool hasProgress = userProgresses.TryGetValue(test.Id, out var status);
+                        bool isCompleted = hasProgress && status == AttemptStatus.Completed;
+                        bool isStarted = hasProgress && status != AttemptStatus.Completed && status != AttemptStatus.NotStarted;
 
-                        <div class="card-actions">
-                            <button class="btn-details" @onclick="@(() => ToggleCard(item.Id))">
-                                <RadzenIcon Icon="@(isExpanded ? "expand_less" : "expand_more")" />
-                                @(isExpanded ? "Скрыть" : "Подробнее")
-                            </button>
+                        <div>
+                            <div class="cyber-card">
+                                <div class="card-main">
+                                    <div class="card-header">
+                                        <span class="difficulty-badge @GetDifficultyClass(test.Difficulty)">@GetDifficultyText(test.Difficulty)</span>
+                                        <h3 class="card-title">@test.Title</h3>
 
-                            <AuthorizeView Roles="Admin">
-                                <div class="admin-actions">
-                                    <button class="btn-icon edit" @onclick="@(() => OpenEditDialog(item))">
-                                        <RadzenIcon Icon="edit" />
+                                        @if (isStarted)
+                                        {
+                                            <span class="status-badge" style="background: rgba(229, 192, 123, 0.15); color: #e5c07b; border: 1px solid rgba(229, 192, 123, 0.4);">В процессе</span>
+                                        }
+                                        else if (isCompleted)
+                                        {
+                                            <span class="status-badge" style="background: rgba(152, 195, 121, 0.15); color: #98c379; border: 1px solid rgba(152, 195, 121, 0.4);">Завершен</span>
+                                        }
+
+                                        <AuthorizeView Roles="Admin">
+                                            <span class="status-badge @(test.IsVisible ? "status-published" : "status-draft")">
+                                                @(test.IsVisible ? "Открыт" : "Черновик")
+                                            </span>
+                                        </AuthorizeView>
+                                    </div>
+                                    <p class="card-description">@test.ShortDescription</p>
+                                </div>
+
+                                <div class="card-actions">
+                                    <button class="btn-details" @onclick="@(() => ToggleCard(test.Id))">
+                                        <RadzenIcon Icon="@(isExpanded ? "expand_less" : "expand_more")" />
+                                        @(isExpanded ? "Скрыть" : "Подробнее")
                                     </button>
-                                    <button class="btn-icon delete" @onclick="@(() => DeleteItem(item.Id))">
-                                        <RadzenIcon Icon="delete" />
+
+                                    <AuthorizeView Roles="Admin">
+                                        <div class="admin-actions">
+                                            <button class="btn-icon edit" @onclick="@(() => OpenEditDialog(test))">
+                                                <RadzenIcon Icon="edit" />
+                                            </button>
+                                            <button class="btn-icon delete" @onclick="@(() => DeleteItem(test.Id))">
+                                                <RadzenIcon Icon="delete" />
+                                            </button>
+                                        </div>
+                                    </AuthorizeView>
+                                </div>
+                            </div>
+
+                            @if (isExpanded)
+                            {
+                                <div class="card-details">
+                                    <div class="description">@((MarkupString)test.FullDescription)</div>
+
+                                    <div class="card-stats">
+                                        <span><RadzenIcon Icon="schedule" /> @test.DurationInMinutes мин.</span>
+                                        <span><RadzenIcon Icon="quiz" /> @test.Questions.Count вопр.</span>
+                                    </div>
+
+                                    <button class="btn-start" @onclick="@(() => NavigationManager.NavigateTo($"/test/{test.Id}/workspace"))">
+                                        @(isCompleted ? "ПРОСМОТРЕТЬ РЕЗУЛЬТАТ" : (isStarted ? "ПРОДОЛЖИТЬ" : "НАЧАТЬ ТЕСТИРОВАНИЕ"))
                                     </button>
                                 </div>
-                            </AuthorizeView>
-                        </div>
-                    </div>
-
-                    @if (isExpanded)
-                    {
-                        <div class="card-details">
-                            <div class="legend">@((MarkupString)item.Legend)</div>
-
-                            <div class="card-stats">
-                                <span><RadzenIcon Icon="schedule" /> @(item.DurationInMinutes > 0 ? $"{item.DurationInMinutes} мин." : "Без ограничений")</span>
-                                <span><RadzenIcon Icon="flag" /> Заданий: @(item.Questions?.Count ?? 0)</span>
-                            </div>
-
-                            @{
-                                string btnText;
-                                string btnColor = "";
-
-                                if (isCompleted)
-                                {
-                                    btnText = "ПРОСМОТРЕТЬ РЕЗУЛЬТАТ";
-                                    btnColor = "#98c379";
-                                }
-                                else if (isFailed)
-                                {
-                                    btnText = "ПРОЙТИ ПОВТОРНО";
-                                    btnColor = "#e06c75";
-                                }
-                                else if (isStarted)
-                                {
-                                    btnText = "ПРОДОЛЖИТЬ";
-                                    btnColor = "#e5c07b";
-                                }
-                                else
-                                {
-                                    btnText = "НАЧАТЬ СЦЕНАРИЙ";
-                                }
                             }
-                            <button class="btn-start" style="@(string.IsNullOrEmpty(btnColor) ? "" : $"background: {btnColor}; box-shadow: none;")"
-                                    @onclick="@(() => NavigationManager.NavigateTo($"/scenario/{item.Id}/workspace"))">
-                                @btnText
-                            </button>
                         </div>
                     }
                 </div>
-            }
-        </div>
+            </div>
+        }
     }
 </div>
 
@@ -569,7 +634,7 @@
                 <button class="modal-close" @onclick="CloseDeleteDialog">✕</button>
             </div>
             <div class="modal-body">
-                Вы уверены, что хотите навсегда удалить этот сценарий из базы данных?
+                Вы уверены, что хотите навсегда удалить этот тест из базы данных?
             </div>
             <div class="modal-footer">
                 <button class="btn-ok" @onclick="ConfirmDelete">ОК</button>
@@ -580,85 +645,26 @@
 }
 
 @code {
-    List<CyberScenario>? scenarios;
+    private List<CyberTest>? tests;
     private Dictionary<int, bool> expandedCards = new();
-    private Dictionary<int, AttemptStatus> userProgresses = new();
+
     private string currentUserId = string.Empty;
+    private Dictionary<int, AttemptStatus> userProgresses = new();
 
-    protected override async Task OnInitializedAsync() => await Refresh();
-
-    async Task Refresh()
+    protected override async Task OnInitializedAsync()
     {
-        var allScenarios = await ScenarioService.GetAllAsync();
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var userPrincipal = authState.User;
-        currentUserId = userPrincipal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+        currentUserId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+        await Refresh();
+    }
+
+    private async Task Refresh()
+    {
+        tests = await TestService.GetAllAsync();
 
         if (!string.IsNullOrEmpty(currentUserId))
         {
-            try
-            {
-                using var context = await ContextFactory.CreateDbContextAsync();
-                var progresses = await context.Set<UserScenarioProgress>()
-                    .Where(p => p.UserId == currentUserId)
-                    .ToListAsync();
-
-                foreach (var p in progresses)
-                {
-                    var prop = p.GetType().GetProperty("CyberScenarioId") ?? p.GetType().GetProperty("ScenarioId");
-                    if (prop != null)
-                    {
-                        int scenarioId = (int)prop.GetValue(p)!;
-
-                        if (p.Status == AttemptStatus.InProgress && p.TargetEndTime.HasValue)
-                        {
-                            if (DateTime.UtcNow >= p.TargetEndTime.Value)
-                            {
-                                p.Status = AttemptStatus.Failed;
-                                p.CompletedAt = DateTime.UtcNow;
-                                if (p.StartedAt.HasValue)
-                                    p.TimeSpent = p.CompletedAt.Value - p.StartedAt.Value;
-
-                                context.UserProgresses.Update(p);
-                                await context.SaveChangesAsync();
-                            }
-                        }
-
-                        userProgresses[scenarioId] = p.Status;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Ошибка загрузки прогресса: {ex.Message}");
-            }
-        }
-
-        if (userPrincipal.IsInRole("Admin"))
-        {
-            scenarios = allScenarios;
-        }
-        else
-        {
-            using var context = await ContextFactory.CreateDbContextAsync();
-            var dbUser = await context.Set<ApplicationUser>()
-                .Include(u => u.Teams)
-                .FirstOrDefaultAsync(u => u.Id == currentUserId);
-
-            if (dbUser == null)
-            {
-                scenarios = new List<CyberScenario>();
-                return;
-            }
-
-            int userGroupId = dbUser.GroupId ?? 0;
-            var userTeamIds = dbUser.Teams.Select(t => t.Id).ToList();
-
-            scenarios = allScenarios.Where(s => s.IsVisible && (
-                s.Scope == VisibilityScope.Public ||
-                (s.Scope == VisibilityScope.GroupOnly && s.TargetGroupId == userGroupId) ||
-                (s.Scope == VisibilityScope.TeamOnly && s.TargetTeamId.HasValue && userTeamIds.Contains(s.TargetTeamId.Value))
-            )).ToList();
+            userProgresses = await TestService.GetAllUserProgressesAsync(currentUserId);
         }
     }
 
@@ -668,38 +674,61 @@
         else expandedCards[id] = true;
     }
 
-    async Task OpenEditDialog(CyberScenario scenario)
+    private async Task OpenEditDialog(CyberTest test)
     {
-        var res = await DialogService.OpenAsync<ScenarioEditor>("Управление сценарием",
-                  new Dictionary<string, object> { { "Item", scenario } },
-                  new DialogOptions { Width = "900px", Height = "700px" });
+        var res = await DialogService.OpenAsync<TestEditor>(
+            test.Id == 0 ? "Создание нового теста" : "Редактирование теста",
+            new Dictionary<string, object> { { "Item", test } },
+            new DialogOptions { Width = "850px", Height = "700px", Resizable = false, Draggable = true }
+        );
         if (res == true) await Refresh();
     }
 
     bool isDeleteVisualDialogVisible = false;
-    int scenarioIdToDelete = 0;
+    int testIdToDelete = 0;
 
     void DeleteItem(int id)
     {
-        scenarioIdToDelete = id;
+        testIdToDelete = id;
         isDeleteVisualDialogVisible = true;
     }
 
     async Task ConfirmDelete()
     {
         isDeleteVisualDialogVisible = false;
-        if (scenarioIdToDelete != 0)
+        if (testIdToDelete != 0)
         {
-            await ScenarioService.DeleteAsync(scenarioIdToDelete);
+            await TestService.DeleteAsync(testIdToDelete);
             await Refresh();
-            NotificationService.Notify(NotificationSeverity.Success, "Система", "Данные удалены");
+            NotificationService.Notify(NotificationSeverity.Success, "Система", "Тест успешно удален.");
         }
-        scenarioIdToDelete = 0;
+        testIdToDelete = 0;
     }
 
     void CloseDeleteDialog()
     {
         isDeleteVisualDialogVisible = false;
-        scenarioIdToDelete = 0;
+        testIdToDelete = 0;
     }
+
+    private string GetDifficultyClass(TestDifficulty diff) => diff switch
+    {
+        TestDifficulty.Easy => "diff-easy",
+        TestDifficulty.Medium => "diff-medium",
+        _ => "diff-hard"
+    };
+
+    private string GetDifficultyText(TestDifficulty diff) => diff switch
+    {
+        TestDifficulty.Easy => "Легкий",
+        TestDifficulty.Medium => "Средний",
+        _ => "Сложный"
+    };
+
+    private string GetDifficultyColor(TestDifficulty diff) => diff switch
+    {
+        TestDifficulty.Easy => "#7ec8f8",
+        TestDifficulty.Medium => "#5ba3e3",
+        _ => "#4ec3d1"
+    };
 }

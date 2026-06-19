@@ -1,4 +1,5 @@
 using CyberPolygon.Data.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,9 +17,14 @@ namespace CyberPolygon.Data
         // Добавь это свойство к остальным DbSet
         public DbSet<UserAnswerProgress> UserAnswerProgresses { get; set; }
         public DbSet<InstructionModel> Instructions { get; set; }
-        
 
-
+       // Добавление таблиц для тестов
+        public DbSet<CyberTest> CyberTests { get; set; }
+        public DbSet<TestQuestion> TestQuestions { get; set; }
+        public DbSet<TestOption> TestOptions { get; set; }
+        public DbSet<TestDocument> TestDocuments { get; set; }
+        public DbSet<UserTestProgress> UserTestProgresses { get; set; }
+        public DbSet<UserTestAnswer> UserTestAnswers { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -47,6 +53,16 @@ namespace CyberPolygon.Data
 
             public bool IsCorrect { get; set; } = false;
             public int FailedAttempts { get; set; } = 0;
+
+            public string LastSubmittedAnswer { get; set; } = string.Empty;
+            public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        }
+        public class RussianIdentityErrorDescriber : IdentityErrorDescriber
+        {
+            public override IdentityError PasswordTooShort(int length) => new() { Code = nameof(PasswordTooShort), Description = $"Пароль должен содержать минимум {length} символов." };
+            public override IdentityError PasswordRequiresNonAlphanumeric() => new() { Code = nameof(PasswordRequiresNonAlphanumeric), Description = "Пароль должен содержать хотя бы один спецсимвол (например, !, @, #)." };
+            public override IdentityError PasswordRequiresUpper() => new() { Code = nameof(PasswordRequiresUpper), Description = "Пароль должен содержать хотя бы одну заглавную букву." };
+            public override IdentityError DuplicateUserName(string userName) => new() { Code = nameof(DuplicateUserName), Description = $"Пользователь '{userName}' уже существует." };
         }
 
     }

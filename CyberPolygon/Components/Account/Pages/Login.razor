@@ -191,9 +191,9 @@
                 <ValidationSummary class="text-danger mb-3" style="font-family: monospace; font-size: 0.85rem;" role="alert" />
 
                 <div class="form-floating mb-4">
-                    <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control cyber-input" autocomplete="username webauthn" aria-required="true" placeholder="name@example.com" />
+                    <InputText @bind-Value="Input.UserName" id="Input.UserName" class="form-control cyber-input" autocomplete="username webauthn" aria-required="true" placeholder="name@example.com" />
                     <label for="Input.Email">Логин (Идентификатор)</label>
-                    <ValidationMessage For="() => Input.Email" class="text-danger" style="font-size: 0.8rem; margin-top: 5px;" />
+                    <ValidationMessage For="() => Input.UserName" class="text-danger" style="font-size: 0.8rem; margin-top: 5px;" />
                 </div>
 
                 <div class="form-floating mb-4">
@@ -245,7 +245,6 @@
 
         if (HttpMethods.IsGet(HttpContext.Request.Method))
         {
-            // Clear the existing external cookie to ensure a clean login process
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
         }
     }
@@ -262,20 +261,25 @@
 
         if (!string.IsNullOrEmpty(Input.Passkey?.CredentialJson))
         {
-            // When performing passkey sign-in, don't perform form validation.
             result = await SignInManager.PasskeySignInAsync(Input.Passkey.CredentialJson);
         }
         else
         {
-            // If doing a password sign-in, validate the form.
             if (!editContext.Validate())
             {
                 return;
             }
 
-            // This doesn't count login failures towards account lockout
-            // To enable password failures to trigger account lockout, set lockoutOnFailure: true
-            result = await SignInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
+            // Добавляем домен @polygon.do автоматически
+            var fullEmail = Input.UserName.Contains("@")
+                ? Input.UserName
+                : $"{Input.UserName}@polygon.do";
+
+            result = await SignInManager.PasswordSignInAsync(
+                fullEmail,
+                Input.Password,
+                Input.RememberMe,
+                lockoutOnFailure: false);
         }
 
         if (result.Succeeded)
@@ -303,8 +307,8 @@
     private sealed class InputModel
     {
         [Required(ErrorMessage = "Поле Логин обязательно для заполнения.")]
-        [EmailAddress(ErrorMessage = "Некорректный формат адреса.")]
-        public string Email { get; set; } = "";
+        [Display(Name = "Логин")]
+        public string UserName { get; set; } = "";
 
         [Required(ErrorMessage = "Поле Пароль обязательно для заполнения.")]
         [DataType(DataType.Password)]

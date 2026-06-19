@@ -1,0 +1,749 @@
+﻿@page "/test/{Id:int}/workspace"
+@using System.Security.Claims
+@using CyberPolygon.Data
+@rendermode InteractiveServer
+
+@inject TestService TestService
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IJSRuntime JSRuntime
+
+<style>
+    :root {
+        --bg-main: #1e1e1e;
+        --bg-card: #1a2332;
+        --bg-input: #1a2332;
+        --border-color: #2a3a4a;
+        --text-muted: #8fa0b5;
+        --text-light: #cbe0f5;
+        --accent-cyan: #4ec3d1;
+        --accent-blue: #5ba3e3;
+        --accent-light-blue: #7ec8f8;
+        --success-color: #98c379;
+        --danger-color: #e06c75;
+        --warning-color: #e5c07b;
+    }
+
+    .workspace-container {
+        background-color: var(--bg-main);
+        min-height: calc(100vh - 60px);
+        color: var(--text-light);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 30px 20px;
+    }
+
+    .workspace-header {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid var(--border-color);
+        position: relative;
+    }
+
+        .workspace-header::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 60px;
+            height: 2px;
+            background: var(--accent-cyan);
+            box-shadow: 0 0 10px rgba(78, 195, 209, 0.5);
+        }
+
+    .btn-back {
+        background: transparent;
+        border: 1px solid var(--border-color);
+        color: var(--text-muted);
+        border-radius: 6px;
+        padding: 8px 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+    }
+
+        .btn-back:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+    .header-title {
+        flex: 1;
+    }
+
+        .header-title h2 {
+            color: var(--accent-light-blue);
+            margin: 0;
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+    .timer-box {
+        background: rgba(78, 195, 209, 0.08);
+        border: 1px solid rgba(78, 195, 209, 0.3);
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-family: monospace;
+        font-size: 1.3rem;
+        color: var(--accent-cyan);
+        font-weight: bold;
+        letter-spacing: 2px;
+        flex-shrink: 0;
+    }
+
+    .workspace-layout {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 25px;
+        align-items: start;
+    }
+
+    .panel-box {
+        background: linear-gradient(135deg, #1a2332 0%, #1e2d3d 100%);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 20px;
+        position: sticky;
+        top: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .panel-description {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-bottom: 20px;
+        line-height: 1.6;
+    }
+
+    .documents-section {
+        margin-bottom: 20px;
+    }
+
+    .documents-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: var(--accent-cyan);
+        font-weight: 600;
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+    }
+
+    .document-link {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 6px;
+        color: var(--accent-blue);
+        text-decoration: none;
+        font-size: 0.85rem;
+        transition: all 0.2s;
+        margin-bottom: 4px;
+    }
+
+        .document-link:hover {
+            background: rgba(91, 163, 227, 0.1);
+            color: var(--accent-light-blue);
+        }
+
+    .btn-primary-gradient {
+        width: 100%;
+        background: linear-gradient(135deg, #4ec3d1 0%, #5ba3e3 100%);
+        color: #1a1d21;
+        font-weight: bold;
+        border: none;
+        padding: 14px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-size: 0.9rem;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        box-shadow: 0 4px 15px rgba(78, 195, 209, 0.2);
+        margin-bottom: 10px;
+    }
+
+        .btn-primary-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(78, 195, 209, 0.4);
+        }
+
+    .btn-retry {
+        width: 100%;
+        background: linear-gradient(135deg, #e06c75 0%, #e06c75 100%);
+        color: white;
+        font-weight: bold;
+        border: none;
+        padding: 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-size: 0.85rem;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+
+        .btn-retry:hover {
+            box-shadow: 0 4px 15px rgba(224, 108, 117, 0.4);
+        }
+
+    .btn-outline-danger {
+        width: 100%;
+        background: transparent;
+        color: var(--danger-color);
+        border: 1px solid rgba(224, 108, 117, 0.4);
+        padding: 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+
+        .btn-outline-danger:hover {
+            background: rgba(224, 108, 117, 0.1);
+            border-color: var(--danger-color);
+        }
+
+    .progress-info {
+        padding: 12px;
+        border-radius: 8px;
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid var(--border-color);
+        margin-bottom: 15px;
+        text-align: center;
+        font-size: 0.9rem;
+        color: var(--text-muted);
+    }
+
+        .progress-info b {
+            color: var(--success-color);
+        }
+
+    .result-box {
+        padding: 20px;
+        border-radius: 8px;
+        background: rgba(152, 195, 121, 0.08);
+        border: 1px solid rgba(152, 195, 121, 0.3);
+        text-align: center;
+    }
+
+        .result-box h4 {
+            color: var(--success-color);
+            font-weight: bold;
+            margin: 0 0 10px 0;
+            font-size: 1.1rem;
+        }
+
+        .result-box p {
+            margin: 0 0 15px 0;
+            color: var(--text-light);
+            font-size: 0.95rem;
+        }
+
+        .result-box .score {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: var(--accent-light-blue);
+        }
+
+    .question-block {
+        background: linear-gradient(135deg, #1a2332 0%, #1e2d3d 100%);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 15px;
+        transition: all 0.2s;
+    }
+
+        .question-block:hover {
+            border-color: rgba(78, 195, 209, 0.3);
+        }
+
+    .q-correct {
+        border-color: var(--success-color) !important;
+        background: linear-gradient(135deg, rgba(152, 195, 121, 0.05) 0%, rgba(152, 195, 121, 0.02) 100%) !important;
+    }
+
+    .q-wrong {
+        border-color: var(--danger-color) !important;
+        background: linear-gradient(135deg, rgba(224, 108, 117, 0.05) 0%, rgba(224, 108, 117, 0.02) 100%) !important;
+        opacity: 0.7;
+    }
+
+    .question-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .question-number {
+        color: var(--accent-blue);
+        font-weight: bold;
+        font-size: 0.9rem;
+        letter-spacing: 0.5px;
+    }
+
+    .question-status {
+        font-weight: bold;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        padding: 3px 10px;
+        border-radius: 4px;
+    }
+
+    .status-correct {
+        color: var(--success-color);
+        background: rgba(152, 195, 121, 0.1);
+        border: 1px solid rgba(152, 195, 121, 0.3);
+    }
+
+    .status-wrong {
+        color: var(--danger-color);
+        background: rgba(224, 108, 117, 0.1);
+        border: 1px solid rgba(224, 108, 117, 0.3);
+    }
+
+    .question-text {
+        font-size: 1.05rem;
+        margin-bottom: 18px;
+        color: var(--text-light);
+        line-height: 1.5;
+    }
+
+    .dark-input, .dark-input input, .rz-textbox, .rz-textbox input {
+        background-color: var(--bg-input) !important;
+        border: 1px solid var(--border-color) !important;
+        color: var(--text-light) !important;
+        border-radius: 6px !important;
+    }
+
+        .dark-input:focus, .rz-textbox:focus-within {
+            border-color: var(--accent-cyan) !important;
+            box-shadow: 0 0 10px rgba(78, 195, 209, 0.15) !important;
+        }
+
+    .rz-radiobtn-box, .rz-chkbox-box {
+        background-color: var(--bg-input) !important;
+        border: 1px solid var(--border-color) !important;
+    }
+
+        .rz-radiobtn-box.rz-state-active, .rz-chkbox-box.rz-state-active {
+            background-color: var(--accent-cyan) !important;
+            border-color: var(--accent-cyan) !important;
+        }
+
+    .options-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 18px;
+    }
+
+    .option-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--text-light);
+        font-size: 0.95rem;
+    }
+
+    .btn-submit-answer {
+        background: linear-gradient(135deg, #4ec3d1 0%, #5ba3e3 100%);
+        color: #1a1d21;
+        font-weight: bold;
+        border: none;
+        padding: 8px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.8rem;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+    }
+
+        .btn-submit-answer:hover {
+            box-shadow: 0 4px 15px rgba(78, 195, 209, 0.4);
+            transform: translateY(-1px);
+        }
+
+    .blur-zone-wrapper {
+        position: relative;
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        overflow: hidden;
+        background: var(--bg-card);
+    }
+
+    .blur-overlay-content {
+        filter: blur(6px);
+        opacity: 0.2;
+        user-select: none;
+        pointer-events: none;
+        padding: 25px;
+    }
+
+    .lock-center-panel {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 5;
+        background: rgba(26, 35, 50, 0.7);
+        text-align: center;
+        padding: 20px;
+    }
+
+        .lock-center-panel h5 {
+            color: var(--accent-cyan);
+            font-weight: bold;
+            text-transform: uppercase;
+            margin: 15px 0 8px 0;
+            font-size: 1.1rem;
+        }
+
+        .lock-center-panel p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            max-width: 80%;
+            margin: 0;
+        }
+
+    .loading-container {
+        text-align: center;
+        padding: 80px 20px;
+    }
+</style>
+
+<RadzenComponents />
+<PageTitle>@(test?.Title ?? "Тестирование") | Киберполигон</PageTitle>
+
+<div class="workspace-container">
+    @if (test == null || activeStates == null)
+    {
+        <div class="loading-container"><RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" /></div>
+    }
+    else
+    {
+        <div class="workspace-header">
+            <button class="btn-back" @onclick="@(() => NavigationManager.NavigateTo("/tests"))"><RadzenIcon Icon="arrow_back" /> Назад</button>
+            <div class="header-title"><h2>@test.Title</h2></div>
+            @if (isTestStarted && !isTestFinished && test.DurationInMinutes > 0)
+            {
+                <div class="timer-box">@timeLeft.ToString(@"hh\:mm\:ss")</div>
+            }
+        </div>
+
+        <div class="workspace-layout">
+            <div class="panel-box">
+                <div class="panel-description">@((MarkupString)test.FullDescription)</div>
+
+                @if (test.Documents.Any())
+                {
+                    <div class="documents-section">
+                        <div class="documents-label">Материалы</div>
+                        @foreach (var doc in test.Documents)
+                        {
+                            <a href="@doc.FilePath" target="_blank" class="document-link"><RadzenIcon Icon="description" /> @doc.Title</a>
+                        }
+                    </div>
+                }
+
+                @if (!isTestStarted)
+                {
+                    <button class="btn-primary-gradient" @onclick="StartTest">АКТИВИРОВАТЬ ТЕСТ</button>
+                }
+                else if (!isTestFinished)
+                {
+                    <div class="progress-info">Выполнено: <b>@correctCount / @test.Questions.Count</b></div>
+                    <button class="btn-outline-danger" @onclick="FinishTestDialog">ЗАВЕРШИТЬ ТЕСТ</button>
+                }
+                else
+                {
+                    <div class="result-box">
+                        <h4>ТЕСТ ЗАВЕРШЕН</h4>
+                        <p>Результат: <span class="score">@correctCount</span> из <b>@test.Questions.Count</b></p>
+                        <button class="btn-retry" @onclick="RestartTest">ПРОЙТИ ПОВТОРНО</button>
+                    </div>
+                }
+            </div>
+
+            <div>
+                @if (!isTestStarted)
+                {
+                    <div class="blur-zone-wrapper">
+                        <div class="lock-center-panel">
+                            <RadzenIcon Icon="lock" Style="font-size: 3rem; color: var(--accent-cyan);" />
+                            <h5>Модуль заблокирован</h5>
+                            <p>Для просмотра вопросов запустите тест на левой панели управления.</p>
+                        </div>
+                        <div class="blur-overlay-content">
+                            <div class="question-block"><span class="question-number">ВОПРОС №1</span><p class="question-text">Пример вопроса...</p></div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var state in activeStates)
+                    {
+                        var index = activeStates.IndexOf(state);
+                        var blockClass = state.IsAnswered ? (state.IsCorrect ? "q-correct" : "q-wrong") : "";
+
+                        <div class="question-block @blockClass">
+                            <div class="question-header">
+                                <span class="question-number">ВОПРОС №@(index + 1)</span>
+                                @if (state.IsAnswered)
+                                {
+                                    <span class="question-status @(state.IsCorrect ? "status-correct" : "status-wrong")">
+                                        @(state.IsCorrect ? "ВЕРНО" : "НЕВЕРНО")
+                                    </span>
+                                }
+                            </div>
+                            <p class="question-text">@state.Question.Text</p>
+
+                            @if (!state.IsAnswered && !isTestFinished)
+                            {
+                                @if (state.Question.Type == QuestionType.ManualText)
+                                {
+                                    <RadzenTextBox @bind-Value="@state.UserTextAnswer" Placeholder="Введите ваш ответ здесь..." class="w-100 dark-input" style="margin-bottom: 15px;" />
+                                }
+                                else if (state.Question.Type == QuestionType.SingleChoice)
+                                {
+                                    <div class="options-list">
+                                        <RadzenRadioButtonList @bind-Value="@state.SelectedOptionId" TValue="int" Orientation="Orientation.Vertical" class="d-flex flex-column gap-2 text-light">
+                                            <Items>
+                                                @foreach (var opt in state.Question.Options)
+                                                {
+                                                    <RadzenRadioButtonListItem Text="@opt.Text" Value="@opt.Id" />
+                                                }
+                                            </Items>
+                                        </RadzenRadioButtonList>
+                                    </div>
+                                }
+                                else if (state.Question.Type == QuestionType.MultipleChoice)
+                                {
+                                    <div class="options-list">
+                                        @foreach (var opt in state.Question.Options)
+                                        {
+                                            var currentOpt = opt;
+                                            var currentState = state;
+                                            var optId = currentOpt.Id;
+                                            var isChecked = currentState.SelectedMultipleOptions.GetValueOrDefault(optId, false);
+                                            <div class="option-item">
+                                                <RadzenCheckBox @bind-Checked="@isChecked"
+                                                                Change="@((bool val) => { currentState.SelectedMultipleOptions[optId] = val; })" />
+                                                <span>@currentOpt.Text</span>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+
+                                <div style="text-align: right;">
+                                    <button class="btn-submit-answer" @onclick="@(async () => await ConfirmAnswer(state))">
+                                        ОТПРАВИТЬ ОТВЕТ
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private CyberTest? test;
+    private UserTestProgress? progress;
+    private List<QuestionUIState>? activeStates;
+    private string currentUserId = string.Empty;
+    private bool isTestStarted = false;
+    private bool isTestFinished = false;
+    private int correctCount = 0;
+
+    private System.Threading.Timer? _timer;
+    private TimeSpan timeLeft;
+
+    public class QuestionUIState
+    {
+        public TestQuestion Question { get; set; } = null!;
+        public bool IsAnswered { get; set; }
+        public bool IsCorrect { get; set; }
+        public string UserTextAnswer { get; set; } = string.Empty;
+        public int SelectedOptionId { get; set; }
+        public Dictionary<int, bool> SelectedMultipleOptions { get; set; } = new();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        currentUserId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+
+        test = await TestService.GetByIdAsync(Id);
+        if (test == null) { NavigationManager.NavigateTo("/tests"); return; }
+
+        await LoadProgress();
+    }
+
+    private async Task LoadProgress()
+    {
+        progress = await TestService.GetUserProgressAsync(currentUserId, Id);
+        activeStates = test!.Questions.Select(q =>
+        {
+            var state = new QuestionUIState { Question = q };
+            if (q.Type == QuestionType.MultipleChoice)
+                foreach (var opt in q.Options)
+                    state.SelectedMultipleOptions[opt.Id] = false;
+            return state;
+        }).ToList();
+
+        isTestStarted = false;
+        isTestFinished = false;
+        correctCount = 0;
+        _timer?.Dispose();
+
+        if (progress != null && progress.Status != AttemptStatus.NotStarted)
+        {
+            isTestStarted = true;
+            correctCount = progress.Score;
+
+            var correctIds = await TestService.GetAnsweredCorrectlyAsync(progress.Id);
+            var wrongIds = await TestService.GetAnsweredWrongAsync(progress.Id);
+
+            foreach (var state in activeStates)
+            {
+                if (correctIds.Contains(state.Question.Id)) { state.IsAnswered = true; state.IsCorrect = true; }
+                if (wrongIds.Contains(state.Question.Id)) { state.IsAnswered = true; state.IsCorrect = false; }
+            }
+
+            if (progress.Status == AttemptStatus.Completed)
+                isTestFinished = true;
+            else if (progress.TargetEndTime.HasValue)
+                StartTimer();
+        }
+    }
+
+    private async Task StartTest()
+    {
+        await TestService.StartTestAsync(currentUserId, Id, test!.DurationInMinutes);
+        await LoadProgress();
+        if (progress?.TargetEndTime.HasValue == true)
+            StartTimer();
+    }
+
+    private async Task RestartTest()
+    {
+        await TestService.RestartTestAsync(currentUserId, Id);
+        // Сразу начинаем новую попытку
+        await TestService.StartTestAsync(currentUserId, Id, test!.DurationInMinutes);
+        await LoadProgress();
+        if (progress?.TargetEndTime.HasValue == true)
+            StartTimer();
+    }
+
+    private async Task ConfirmAnswer(QuestionUIState state)
+    {
+        var result = await DialogService.Confirm(
+            "Вы уверены? Изменить ответ в рамках этой попытки будет невозможно.",
+            "Подтверждение ответа",
+            new ConfirmOptions() { OkButtonText = "Да, подтверждаю", CancelButtonText = "Отмена" });
+
+        if (result == true)
+        {
+            bool isRight = false;
+            string? selectedAnswer = null;
+
+            if (state.Question.Type == QuestionType.ManualText)
+            {
+                var correctAnswer = state.Question.CorrectTextAnswer?.Trim() ?? "";
+                isRight = string.Equals(state.UserTextAnswer.Trim(), correctAnswer, StringComparison.OrdinalIgnoreCase);
+                selectedAnswer = state.UserTextAnswer;
+            }
+            else if (state.Question.Type == QuestionType.SingleChoice)
+            {
+                var correctOpt = state.Question.Options.FirstOrDefault(o => o.IsCorrect == true);
+                isRight = correctOpt != null && correctOpt.Id == state.SelectedOptionId;
+                selectedAnswer = state.SelectedOptionId.ToString();
+            }
+            else if (state.Question.Type == QuestionType.MultipleChoice)
+            {
+                var correctIds = state.Question.Options.Where(o => o.IsCorrect == true).Select(o => o.Id).OrderBy(x => x).ToList();
+                var userSelectedIds = state.SelectedMultipleOptions.Where(kvp => kvp.Value).Select(kvp => kvp.Key).OrderBy(x => x).ToList();
+                isRight = correctIds.SequenceEqual(userSelectedIds);
+                selectedAnswer = string.Join(",", userSelectedIds);
+            }
+
+            await TestService.ProcessAnswerAsync(progress!.Id, state.Question.Id, isRight, selectedAnswer ?? "");
+            state.IsAnswered = true;
+            state.IsCorrect = isRight;
+            if (isRight) correctCount++;
+
+            if (activeStates!.All(s => s.IsAnswered))
+            {
+                await TestService.CompleteTestAsync(progress.Id);
+                isTestFinished = true;
+                _timer?.Dispose();
+                NotificationService.Notify(NotificationSeverity.Success, "Тест завершен", "Все вопросы отвечены!");
+            }
+        }
+    }
+
+    private async Task FinishTestDialog()
+    {
+        var result = await DialogService.Confirm(
+            "Вы действительно хотите досрочно завершить тестирование?",
+            "Завершение попытки",
+            new ConfirmOptions() { OkButtonText = "Да, завершить", CancelButtonText = "Продолжить тест" });
+
+        if (result == true)
+        {
+            _timer?.Dispose();
+            await TestService.CompleteTestAsync(progress!.Id);
+            isTestFinished = true;
+        }
+    }
+
+    private void StartTimer()
+    {
+        _timer?.Dispose();
+        _timer = new System.Threading.Timer(async _ => await InvokeAsync(TimerTick), null, 0, 1000);
+    }
+
+    private async Task TimerTick()
+    {
+        if (progress?.TargetEndTime != null)
+        {
+            timeLeft = progress.TargetEndTime.Value - DateTime.UtcNow;
+            if (timeLeft.TotalSeconds <= 0)
+            {
+                _timer?.Dispose();
+                await TestService.CompleteTestAsync(progress.Id);
+                isTestFinished = true;
+                NotificationService.Notify(NotificationSeverity.Error, "Время вышло", "Тестирование было автоматически завершено системой.");
+            }
+            StateHasChanged();
+        }
+    }
+}

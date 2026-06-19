@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Radzen;
+using static CyberPolygon.Data.ApplicationDbContext;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +22,10 @@ builder.Services.AddScoped<TooltipService>();
 builder.Services.AddSingleton<ScenarioSessionManager>();
 builder.Services.AddScoped<ContextMenuService>();
 builder.Services.AddScoped<InstructionService>();
+builder.Services.AddScoped<TestService>();
+builder.Services.AddScoped<UserManagementService>();
+
+
 builder.Services.AddRadzenCookieThemeService(options =>
 {
     options.Name = "ApplicationTheme";
@@ -57,6 +62,7 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => {
         options.SignIn.RequireConfirmedAccount = false;
         // Твои настройки паролей, если нужны
     })
+    .AddErrorDescriber<RussianIdentityErrorDescriber>()
     .AddRoles<IdentityRole>() // ВКЛЮЧАЕМ РОЛИ
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager()
@@ -133,57 +139,6 @@ using (var scope = app.Services.CreateScope())
         {
             Console.WriteLine($"====== [ОШИБКА] Не удалось создать администратора '{adminEmail1}': ======");
             foreach (var error in adminResult1.Errors) Console.WriteLine($"- {error.Description}");
-        }
-    }
-
-    // 3. СОЗДАНИЕ ВТОРОГО АДМИНИСТРАТОРА (skakalinma)
-    string adminEmail2 = "skakalinma1@gmail.COM";
-    var existingAdmin2 = await userManager.FindByEmailAsync(adminEmail2);
-    if (existingAdmin2 == null)
-    {
-        var newAdmin2 = new ApplicationUser
-        {
-            UserName = adminEmail2,
-            Email = adminEmail2,
-            EmailConfirmed = true
-        };
-
-        var adminResult2 = await userManager.CreateAsync(newAdmin2, adminEmail2);
-
-        if (adminResult2.Succeeded)
-        {
-            await userManager.AddToRoleAsync(newAdmin2, adminRoleName);
-            Console.WriteLine($"====== [УСПЕХ] Администратор '{adminEmail2}' создан и получил роль '{adminRoleName}'! ======");
-        }
-        else
-        {
-            Console.WriteLine($"====== [ОШИБКА] Не удалось создать администратора '{adminEmail2}': ======");
-            foreach (var error in adminResult2.Errors) Console.WriteLine($"- {error.Description}");
-        }
-    }
-
-    // 4. СОЗДАНИЕ ОБЫЧНОГО ПОЛЬЗОВАТЕЛЯ
-    string userEmail = "user@gmail.COM";
-    var existingUser = await userManager.FindByEmailAsync(userEmail);
-    if (existingUser == null)
-    {
-        var newUser = new ApplicationUser
-        {
-            UserName = userEmail,
-            Email = userEmail,
-            EmailConfirmed = true
-        };
-
-        var userResult = await userManager.CreateAsync(newUser, userEmail);
-
-        if (userResult.Succeeded)
-        {
-            Console.WriteLine($"====== [УСПЕХ] Обычный пользователь '{userEmail}' успешно создан! ======");
-        }
-        else
-        {
-            Console.WriteLine($"====== [ОШИБКА] Не удалось создать пользователя '{userEmail}': ======");
-            foreach (var error in userResult.Errors) Console.WriteLine($"- {error.Description}");
         }
     }
 }
