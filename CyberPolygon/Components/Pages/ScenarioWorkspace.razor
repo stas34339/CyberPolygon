@@ -393,6 +393,8 @@
 
             await LoadUserState();
         }
+
+        // Подписываемся на события команды
         SessionManager.TeamProgressChanged += OnTeamProgressChanged;
     }
 
@@ -412,7 +414,6 @@
 
         if (scenario!.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue)
         {
-            // Ищем строго по TeamId (UserId здесь больше не является якорем)
             query = query.Where(p => p.TeamId == currentTeamId.Value && p.IsTeamAttempt);
         }
         else
@@ -460,9 +461,14 @@
 
     private async void OnTeamProgressChanged(int teamId)
     {
+        // Когда другой тиммейт делает действие, загружаем новые данные и перерисовываем
         if (scenario?.Scope == VisibilityScope.TeamOnly && currentTeamId == teamId)
         {
-            await InvokeAsync(async () => { await LoadUserState(); StateHasChanged(); });
+            await InvokeAsync(async () =>
+            {
+                await LoadUserState();
+                StateHasChanged();
+            });
         }
     }
 
@@ -475,7 +481,7 @@
             var newProgress = new UserScenarioProgress
             {
                 CyberScenarioId = scenario!.Id,
-                UserId = scenario.Scope == VisibilityScope.TeamOnly ? null : currentUserId, // ВАЖНО: В командном режиме UserId сессии равен null, чтобы она принадлежала всей команде!
+                UserId = scenario.Scope == VisibilityScope.TeamOnly ? null : currentUserId,
                 TeamId = scenario.Scope == VisibilityScope.TeamOnly ? currentTeamId : null,
                 IsTeamAttempt = scenario.Scope == VisibilityScope.TeamOnly,
                 Status = AttemptStatus.InProgress,
@@ -491,6 +497,7 @@
 
             await LoadUserState();
 
+            // Оповещаем команду о старте
             if (scenario.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue)
                 SessionManager.NotifyTeamUpdate(currentTeamId.Value);
 
@@ -511,8 +518,23 @@
 
         if (!result.Success)
         {
-            if (result.AlreadySolved) { state.FeedbackMessage = "Задание уже было решено!"; state.IsCorrect = true; }
-            else { state.FailedAttempts++; state.FeedbackMessage = $"❌ Отказ системы. Потенциальная награда за вопрос снижена."; }
+            if (result.AlreadySolved)
+            {
+                state.FeedbackMessage = "Задание уже было решено!";
+                state.IsCorrect = true;
+            }
+            else
+            {
+                state.FailedAttempts++;
+                state.FeedbackMessage = $"❌ Отказ системы. Потенциальная награда за вопрос снижена.";
+            }
+
+            // ВАЖНОЕ ИЗМЕНЕНИЕ: Отправляем уведомление ВСЕГДА, даже при ошибке, чтобы у всех списались штрафные очки
+            if (scenario!.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue)
+            {
+                SessionManager.NotifyTeamUpdate(currentTeamId.Value);
+            }
+
             StateHasChanged();
             return;
         }
@@ -521,8 +543,11 @@
         state.IsCorrect = true;
         state.FeedbackMessage = $"✓ Флаг принят! Начислено: +{result.EarnedPoints} XP.";
 
+        // Оповещаем команду о сданном флаге
         if (scenario!.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue)
+        {
             SessionManager.NotifyTeamUpdate(currentTeamId.Value);
+        }
 
         StateHasChanged();
 
@@ -555,6 +580,7 @@
             await LoadUserState();
             NotificationService.Notify(NotificationSeverity.Success, "Успех", $"Сценарий завершен. Итоговый счет: {totalScore}");
 
+            // Оповещаем команду о финише
             if (scenario!.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue)
                 SessionManager.NotifyTeamUpdate(currentTeamId.Value);
 
@@ -616,6 +642,7 @@
             }
         }
         await InvokeAsync(async () => { await LoadUserState(); StateHasChanged(); });
+
         if (scenario!.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue)
             SessionManager.NotifyTeamUpdate(currentTeamId.Value);
     }

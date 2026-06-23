@@ -1,5 +1,5 @@
-﻿@page "/test/edit"
-@page "/test/edit/{Id:int}"
+﻿@page "/admin/test/edit"
+@page "/admin/test/edit/{Id:int}"
 @using Microsoft.EntityFrameworkCore
 @using CyberPolygon.Data
 @using CyberPolygon.Services
@@ -9,6 +9,7 @@
 @inject NavigationManager NavigationManager
 @inject NotificationService NotificationService
 @inject IDbContextFactory<ApplicationDbContext> ContextFactory
+@inject CatalogUpdateService CatalogUpdateService
 
 @rendermode InteractiveServer
 
@@ -464,7 +465,7 @@
 
     private async Task OnSave()
     {
-        Item.AllowedTeamIds = null; // ЖЕСТКО удаляем команды из тестов
+        Item.AllowedTeamIds = null;
         Item.AllowedUserIds = addedUsers.Any() ? string.Join(",", addedUsers.Select(u => u.Id)) : null;
         Item.Scope = string.IsNullOrEmpty(Item.AllowedUserIds) ? VisibilityScope.Public : VisibilityScope.GroupOnly;
 
@@ -474,7 +475,12 @@
         using var context = await ContextFactory.CreateDbContextAsync();
         if (Item.Id == 0) context.Set<CyberTest>().Add(Item); else context.Set<CyberTest>().Update(Item);
         await context.SaveChangesAsync();
-        NotificationService.Notify(NotificationSeverity.Success, "Успех", "Тест сохранен!"); NavigationManager.NavigateTo("tests");
+
+        // СИГНАЛ: Сообщаем каталогу, что нужно обновиться!
+        CatalogUpdateService.NotifyCatalogChanged();
+
+        NotificationService.Notify(NotificationSeverity.Success, "Успех", "Тест сохранен!");
+        NavigationManager.NavigateTo("tests");
     }
 
     private void Cancel() => NavigationManager.NavigateTo("tests");

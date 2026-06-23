@@ -2,15 +2,18 @@
 @using CyberPolygon.Components.Components
 @using Microsoft.EntityFrameworkCore
 @using CyberPolygon.Data
+@using CyberPolygon.Services
 @rendermode InteractiveServer
+
 @implements IDisposable
-@inject ScenarioSessionManager SessionManager
 @inject ScenarioService ScenarioService
 @inject DialogService DialogService
 @inject NotificationService NotificationService
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthStateProvider
 @inject IDbContextFactory<CyberPolygon.Data.ApplicationDbContext> ContextFactory
+@inject CatalogUpdateService CatalogUpdateService
+@inject ScenarioSessionManager SessionManager
 
 <style>
     :root {
@@ -247,6 +250,43 @@
         border: 1px solid rgba(78, 195, 209, 0.3);
         color: var(--accent-light-blue);
     }
+
+    .status-badge-mini {
+        font-size: 0.7rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        padding: 4px 8px;
+        border-radius: 4px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        border: 1px solid transparent;
+        flex-shrink: 0;
+    }
+
+    .status-in-progress {
+        background: rgba(78, 195, 209, 0.1);
+        color: var(--accent-cyan);
+        border-color: rgba(78, 195, 209, 0.3);
+    }
+
+    .status-completed {
+        background: rgba(152, 195, 121, 0.1);
+        color: var(--success-color);
+        border-color: rgba(152, 195, 121, 0.3);
+    }
+
+    .status-failed {
+        background: rgba(224, 108, 117, 0.1);
+        color: var(--danger-color);
+        border-color: rgba(224, 108, 117, 0.3);
+    }
+
+    .status-available {
+        background: rgba(143, 160, 181, 0.1);
+        color: var(--text-muted);
+        border-color: var(--border-color);
+    }
 </style>
 
 <div class="scenarios-container">
@@ -261,9 +301,7 @@
 
     @if (scenarios == null)
     {
-        <div class="text-center mt-5">
-            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
-        </div>
+        <div class="text-center mt-5"><RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" /></div>
     }
     else if (!scenarios.Any())
     {
@@ -275,17 +313,13 @@
     }
     else
     {
-        var groupedScenarios = scenarios
-            .GroupBy(s => string.IsNullOrWhiteSpace(s.Difficulty) ? "Без категории" : s.Difficulty)
-            .OrderBy(g => GetDifficultyOrder(g.Key));
+        var queuedGroups = scenarios.GroupBy(s => string.IsNullOrWhiteSpace(s.Difficulty) ? "Без категории" : s.Difficulty).OrderBy(g => GetDifficultyOrder(g.Key));
 
-        @foreach (var group in groupedScenarios)
+        @foreach (var group in queuedGroups)
         {
             <div class="difficulty-section" @key="group.Key">
                 <div class="section-title">
-                    <span class="cyber-badge section-badge @GetDifficultyClass(group.Key)">
-                        <RadzenIcon Icon="speed" Style="font-size: 1.1rem; margin-top: -2px;" /> Уровень: @group.Key
-                    </span>
+                    <span class="cyber-badge section-badge @GetDifficultyClass(group.Key)"><RadzenIcon Icon="speed" Style="font-size: 1.1rem; margin-top: -2px;" /> Уровень: @group.Key</span>
                     <h3 style="color: @GetDifficultyColor(group.Key);">Сценарии</h3>
                 </div>
 
@@ -297,54 +331,40 @@
                         <div class="scenario-card" @key="item.Id">
                             <AuthorizeView Roles="Admin">
                                 <div class="admin-actions">
-                                    <button class="btn-icon edit" @onclick="@(() => OpenEditDialog(item))" title="Редактировать">
-                                        <RadzenIcon Icon="edit" />
-                                    </button>
-                                    <button class="btn-icon delete" @onclick="@(() => DeleteItem(item.Id))" title="Удалить">
-                                        <RadzenIcon Icon="delete" />
-                                    </button>
+                                    <button class="btn-icon edit" @onclick="@(() => OpenEditDialog(item))" title="Редактировать"><RadzenIcon Icon="edit" /></button>
+                                    <button class="btn-icon delete" @onclick="@(() => DeleteItem(item.Id))" title="Удалить"><RadzenIcon Icon="delete" /></button>
                                 </div>
                             </AuthorizeView>
 
                             <h3 class="card-title" title="@item.Title">@item.Title</h3>
 
                             <div class="d-flex gap-2 mb-3 flex-wrap">
-                                @if (currentStatus == AttemptStatus.InProgress)
+                                @switch (currentStatus)
                                 {
-                                    <span class="cyber-badge" style="background: rgba(78, 195, 209, 0.15); color: var(--accent-cyan); border: 1px solid rgba(78, 195, 209, 0.4);">
-                                        <RadzenIcon Icon="play_circle_outline" Style="font-size: 0.9rem; margin-top: -2px;" /> В процессе
-                                    </span>
-                                }
-                                else if (currentStatus == AttemptStatus.Completed)
-                                {
-                                    <span class="cyber-badge" style="background: rgba(152, 195, 121, 0.15); color: var(--success-color); border: 1px solid rgba(152, 195, 121, 0.4);">
-                                        <RadzenIcon Icon="task_alt" Style="font-size: 0.9rem; margin-top: -2px;" /> Выполнено
-                                    </span>
-                                }
-                                else if (currentStatus == AttemptStatus.Failed)
-                                {
-                                    <span class="cyber-badge" style="background: rgba(224, 108, 117, 0.15); color: var(--danger-color); border: 1px solid rgba(224, 108, 117, 0.4);">
-                                        <RadzenIcon Icon="error_outline" Style="font-size: 0.9rem; margin-top: -2px;" /> Провалено
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="cyber-badge" style="background: rgba(143, 160, 181, 0.1); color: var(--text-muted); border: 1px solid var(--border-color);">
-                                        <RadzenIcon Icon="fiber_new" Style="font-size: 0.9rem; margin-top: -2px;" /> Доступно
-                                    </span>
+                                    case AttemptStatus.InProgress:
+                                        <span class="status-badge-mini status-in-progress"><RadzenIcon Icon="clock_loader_40" Style="font-size: 0.9rem;" /> В процессе</span>
+                                        break;
+                                    case AttemptStatus.Completed:
+
+                                        <span class="status-badge-mini status-completed"><RadzenIcon Icon="check" Style="font-size: 0.9rem;" /> Выполнено</span>
+                                        break;
+                                    case AttemptStatus.Failed:
+
+                                        <span class="status-badge-mini status-failed"><RadzenIcon Icon="error_outline" Style="font-size: 0.9rem;" /> Провалено</span>
+                                        break;
+                                    default:
+
+                                        <span class="status-badge-mini status-available"><RadzenIcon Icon="domain_verification" Style="font-size: 0.9rem;" /> Доступно</span>
+                                        break;
                                 }
 
                                 @if (item.Scope == VisibilityScope.TeamOnly)
                                 {
-                                    <span class="cyber-badge" style="background: rgba(229,192,123,0.1); border: 1px solid var(--warning-color); color: var(--warning-color);">
-                                        <RadzenIcon Icon="groups" Style="font-size: 0.9rem; margin-top: -2px;" /> Командный
-                                    </span>
+                                    <span class="cyber-badge" style="background: rgba(229,192,123,0.1); border: 1px solid var(--warning-color); color: var(--warning-color);"><RadzenIcon Icon="groups" Style="font-size: 0.9rem; margin-top: -2px;" /> Командный</span>
                                 }
                                 else
                                 {
-                                    <span class="cyber-badge" style="background: rgba(91,163,227,0.1); border: 1px solid var(--accent-blue); color: var(--accent-blue);">
-                                        <RadzenIcon Icon="person" Style="font-size: 0.9rem; margin-top: -2px;" /> Индивидуальный
-                                    </span>
+                                    <span class="cyber-badge" style="background: rgba(91,163,227,0.1); border: 1px solid var(--accent-blue); color: var(--accent-blue);"><RadzenIcon Icon="person" Style="font-size: 0.9rem; margin-top: -2px;" /> Индивидуальный</span>
                                 }
 
                                 @if (!string.IsNullOrEmpty(item.Tags))
@@ -366,10 +386,12 @@
                                     }
                                     else if (currentStatus == AttemptStatus.Completed || currentStatus == AttemptStatus.Failed)
                                     {
+
                                         <span><RadzenIcon Icon="visibility" Style="font-size: 1.2rem; margin-top: -2px;" /> Результаты</span>
                                     }
                                     else
                                     {
+
                                         <span><RadzenIcon Icon="terminal" Style="font-size: 1.2rem; margin-top: -2px;" /> Запустить терминал</span>
                                     }
                                 </button>
@@ -387,17 +409,9 @@
     <div class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 1050; position: fixed; top: 0; left: 0; right: 0; bottom: 0;">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content" style="background: var(--bg-card); border: 1px solid var(--border-color);">
-                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
-                    <h5 class="modal-title" style="color: var(--text-light);">Подтверждение удаления</h5>
-                    <button type="button" class="btn-close btn-close-white" @onclick="CloseDeleteDialog"></button>
-                </div>
-                <div class="modal-body">
-                    <p style="color: var(--text-muted);">Вы действительно хотите навсегда удалить этот scenario?</p>
-                </div>
-                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
-                    <button type="button" class="btn btn-secondary" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-light);" @onclick="CloseDeleteDialog">Отмена</button>
-                    <button type="button" class="btn btn-danger" style="background: var(--danger-color); border: none;" @onclick="ConfirmDelete">Удалить</button>
-                </div>
+                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);"><h5 class="modal-title" style="color: var(--text-light);">Подтверждение удаления</h5><button type="button" class="btn-close btn-close-white" @onclick="CloseDeleteDialog"></button></div>
+                <div class="modal-body"><p style="color: var(--text-muted);">Вы действительно хотите навсегда удалить этот сценарий?</p></div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);"><button type="button" class="btn btn-secondary" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-light);" @onclick="CloseDeleteDialog">Отмена</button><button type="button" class="btn btn-danger" style="background: var(--danger-color); border: none;" @onclick="ConfirmDelete">Удалить</button></div>
             </div>
         </div>
     </div>
@@ -408,12 +422,24 @@
     private Dictionary<int, AttemptStatus> userProgresses = new();
     private string currentUserId = string.Empty;
     private int? currentTeamId = null;
+    private bool isAdmin = false;
+    private readonly SemaphoreSlim _lock = new(1, 1);
 
     protected override async Task OnInitializedAsync()
     {
-        // Добавляем подписку на глобальные события, чтобы страница знала, когда команда обновила прогресс
+        CatalogUpdateService.OnCatalogChanged += HandleExternalUpdate;
         SessionManager.TeamProgressChanged += OnTeamProgressChanged;
+
         await Refresh();
+    }
+
+    private async void HandleExternalUpdate()
+    {
+        await InvokeAsync(async () =>
+        {
+            await Refresh();
+            StateHasChanged();
+        });
     }
 
     private async void OnTeamProgressChanged(int teamId)
@@ -430,80 +456,71 @@
 
     async Task Refresh()
     {
-        var allScenarios = await ScenarioService.GetAllAsync();
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var userPrincipal = authState.User;
-        currentUserId = userPrincipal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+        // Предотвращаем одновременные конкурентные запросы к контексту данных
+        if (!await _lock.WaitAsync(0)) return;
 
-        userProgresses.Clear();
-
-        if (!string.IsNullOrEmpty(currentUserId))
+        try
         {
-            using var context = await ContextFactory.CreateDbContextAsync();
+            var allScenarios = await ScenarioService.GetAllAsync();
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var userPrincipal = authState.User;
+            currentUserId = userPrincipal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+            isAdmin = userPrincipal.IsInRole("Admin");
 
-            // Сначала вытаскиваем команду пользователя
-            var dbUser = await context.Set<ApplicationUser>().Include(u => u.Teams).AsNoTracking().FirstOrDefaultAsync(u => u.Id == currentUserId);
-            currentTeamId = dbUser?.Teams?.FirstOrDefault()?.Id;
+            userProgresses.Clear();
 
-            // Загружаем прогресс
-            var progresses = await context.Set<UserScenarioProgress>()
-                .AsNoTracking()
-                .ToListAsync();
-
-            foreach (var item in allScenarios)
+            if (!string.IsNullOrEmpty(currentUserId))
             {
-                UserScenarioProgress? p = null;
+                using var context = await ContextFactory.CreateDbContextAsync();
+                var dbUser = await context.Set<ApplicationUser>().Include(u => u.Teams).AsNoTracking().FirstOrDefaultAsync(u => u.Id == currentUserId);
+                currentTeamId = dbUser?.Teams?.FirstOrDefault()?.Id;
 
-                // КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: разделяем сбор статусов для Командных и Одиночных
-                if (item.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue)
-                {
-                    p = progresses.FirstOrDefault(x => x.CyberScenarioId == item.Id && x.TeamId == currentTeamId.Value && x.IsTeamAttempt);
-                }
-                else
-                {
-                    p = progresses.FirstOrDefault(x => x.CyberScenarioId == item.Id && x.UserId == currentUserId && !x.IsTeamAttempt);
-                }
+                // ОПТИМИЗАЦИЯ: Извлекаем из БД строго записи текущего пользователя или его команды
+                var progresses = await context.Set<UserScenarioProgress>()
+                    .Where(p => p.UserId == currentUserId || (currentTeamId.HasValue && p.TeamId == currentTeamId.Value))
+                    .AsNoTracking()
+                    .ToListAsync();
 
-                if (p != null)
+                foreach (var item in allScenarios)
                 {
-                    userProgresses[item.Id] = p.Status;
+                    UserScenarioProgress? p = null;
+                    if (item.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue)
+                        p = progresses.FirstOrDefault(x => x.CyberScenarioId == item.Id && x.TeamId == currentTeamId.Value && x.IsTeamAttempt);
+                    else
+                        p = progresses.FirstOrDefault(x => x.CyberScenarioId == item.Id && x.UserId == currentUserId && !x.IsTeamAttempt);
+
+                    if (p != null) userProgresses[item.Id] = p.Status;
                 }
             }
-        }
 
-        if (userPrincipal.IsInRole("Admin"))
-        {
-            scenarios = allScenarios;
-        }
-        else
-        {
-            using var context = await ContextFactory.CreateDbContextAsync();
-            var dbUser = await context.Set<ApplicationUser>()
-                .Include(u => u.Teams)
-                .AsNoTracking()
-                .FirstOrDefaultAsync(u => u.Id == currentUserId);
-
-            if (dbUser == null)
+            if (isAdmin)
             {
-                scenarios = new List<CyberScenario>();
-                return;
+                scenarios = allScenarios;
             }
+            else
+            {
+                using var context = await ContextFactory.CreateDbContextAsync();
+                var dbUser = await context.Set<ApplicationUser>().Include(u => u.Teams).AsNoTracking().FirstOrDefaultAsync(u => u.Id == currentUserId);
+                if (dbUser == null) { scenarios = new List<CyberScenario>(); return; }
 
-            var userTeamIds = dbUser.Teams?.Select(t => t.Id).ToList() ?? new List<int>();
-
-            scenarios = allScenarios.Where(s => s.IsVisible && (
-                s.Scope == VisibilityScope.Public ||
-                (s.Scope == VisibilityScope.GroupOnly && !string.IsNullOrEmpty(s.AllowedUserIds) && s.AllowedUserIds.Contains(currentUserId)) ||
-                (s.Scope == VisibilityScope.TeamOnly && !string.IsNullOrEmpty(s.AllowedTeamIds) && userTeamIds.Any(t => s.AllowedTeamIds.Contains(t.ToString())))
-            )).ToList();
+                var userTeamIds = dbUser.Teams?.Select(t => t.Id).ToList() ?? new List<int>();
+                scenarios = allScenarios.Where(s => s.IsVisible && (s.Scope == VisibilityScope.Public || (s.Scope == VisibilityScope.GroupOnly && !string.IsNullOrEmpty(s.AllowedUserIds) && s.AllowedUserIds.Contains(currentUserId)) || (s.Scope == VisibilityScope.TeamOnly && !string.IsNullOrEmpty(s.AllowedTeamIds) && userTeamIds.Any(t => s.AllowedTeamIds.Contains(t.ToString()))))).ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка загрузки каталога сценариев: {ex.Message}");
+            scenarios ??= new List<CyberScenario>();
+        }
+        finally
+        {
+            _lock.Release();
         }
     }
 
     void OpenEditDialog(CyberScenario scenario) => NavigationManager.NavigateTo($"/scenario/edit/{scenario.Id}");
 
-    bool isDeleteVisualDialogVisible = false;
-    int scenarioIdToDelete = 0;
-
+    bool isDeleteVisualDialogVisible = false; int scenarioIdToDelete = 0;
     void DeleteItem(int id) { scenarioIdToDelete = id; isDeleteVisualDialogVisible = true; }
 
     async Task ConfirmDelete()
@@ -512,7 +529,7 @@
         if (scenarioIdToDelete != 0)
         {
             await ScenarioService.DeleteAsync(scenarioIdToDelete);
-            await Refresh();
+            CatalogUpdateService.NotifyCatalogChanged();
             NotificationService.Notify(NotificationSeverity.Success, "Система", "Данные удалены");
         }
         scenarioIdToDelete = 0;
@@ -524,5 +541,9 @@
     private string GetDifficultyClass(string difficulty) => difficulty switch { "Легкий" => "diff-easy", "Средний" => "diff-medium", "Сложный" => "diff-hard", _ => "diff-easy" };
     private string GetDifficultyColor(string difficulty) => difficulty switch { "Легкий" => "var(--success-color)", "Средний" => "var(--warning-color)", "Сложный" => "var(--danger-color)", _ => "var(--text-light)" };
 
-    public void Dispose() => SessionManager.TeamProgressChanged -= OnTeamProgressChanged;
+    public void Dispose()
+    {
+        CatalogUpdateService.OnCatalogChanged -= HandleExternalUpdate;
+        SessionManager.TeamProgressChanged -= OnTeamProgressChanged;
+    }
 }

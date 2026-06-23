@@ -19,12 +19,13 @@ builder.Services.AddRadzenComponents();
 builder.Services.AddScoped<DialogService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<TooltipService>();
-builder.Services.AddSingleton<ScenarioSessionManager>();
+
 builder.Services.AddScoped<ContextMenuService>();
 builder.Services.AddScoped<InstructionService>();
 builder.Services.AddScoped<TestService>();
 builder.Services.AddScoped<UserManagementService>();
-
+builder.Services.AddSingleton<CatalogUpdateService>();
+builder.Services.AddSingleton<ScenarioSessionManager>();
 
 builder.Services.AddRadzenCookieThemeService(options =>
 {

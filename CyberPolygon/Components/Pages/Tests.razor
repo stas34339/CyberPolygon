@@ -2,14 +2,17 @@
 @using CyberPolygon.Components.Components
 @using Microsoft.EntityFrameworkCore
 @using CyberPolygon.Data
+@using CyberPolygon.Services
 @rendermode InteractiveServer
 
+@implements IDisposable
 @inject TestService TestService
 @inject DialogService DialogService
 @inject NavigationManager NavigationManager
 @inject NotificationService NotificationService
 @inject AuthenticationStateProvider AuthStateProvider
 @inject IDbContextFactory<CyberPolygon.Data.ApplicationDbContext> ContextFactory
+@inject CatalogUpdateService CatalogUpdateService
 
 <style>
     :root {
@@ -31,8 +34,8 @@
         background-color: var(--bg-main);
         min-height: calc(100vh - 60px);
         color: var(--text-muted);
-        padding: 30px;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        padding: 30px;
     }
 
     .page-header {
@@ -44,7 +47,6 @@
         padding-bottom: 15px;
     }
 
-    /* === СЕКЦИИ СЛОЖНОСТИ === */
     .difficulty-section {
         margin-bottom: 50px;
     }
@@ -78,7 +80,6 @@
             letter-spacing: 1.5px;
         }
 
-    /* === СЕТКА И КАРТОЧКИ === */
     .tests-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
@@ -134,7 +135,6 @@
         text-overflow: ellipsis;
     }
 
-    /* Кнопки админа сверху справа */
     .admin-actions {
         position: absolute;
         top: 22px;
@@ -167,7 +167,6 @@
             border-color: var(--danger-color);
         }
 
-    /* Общие интерактивные элементы */
     .btn-primary-gradient {
         background: linear-gradient(135deg, #4ec3d1 0%, #5ba3e3 100%);
         color: #1a1d21;
@@ -208,7 +207,6 @@
             color: var(--accent-light-blue);
         }
 
-    /* Бейджи */
     .cyber-badge {
         padding: 4px 10px;
         border-radius: 6px;
@@ -252,7 +250,6 @@
         color: var(--accent-light-blue);
     }
 
-    /* СТАТУСЫ */
     .status-badge-mini {
         font-size: 0.7rem;
         font-weight: bold;
@@ -295,7 +292,7 @@
     <div class="page-header">
         <h2 style="color: var(--accent-light-blue); margin: 0; text-transform: uppercase; font-weight: 700;">Каталог тестирования</h2>
         <AuthorizeView Roles="Admin">
-            <button class="btn-primary-gradient" @onclick="@(() => NavigationManager.NavigateTo("/test/edit"))">
+            <button class="btn-primary-gradient" @onclick="@(() => NavigationManager.NavigateTo("/admin/test/edit"))">
                 <RadzenIcon Icon="add" Style="vertical-align: middle;" /> Новый тест
             </button>
         </AuthorizeView>
@@ -303,23 +300,19 @@
 
     @if (tests == null)
     {
-        <div class="text-center mt-5">
-            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
-        </div>
+        <div class="text-center mt-5"><RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" /></div>
     }
     else if (!tests.Any())
     {
         <div class="text-center mt-5">
             <RadzenIcon Icon="assignment_late" Style="font-size: 4rem; color: var(--border-color);" />
-            <h4 class="mt-3">Нет доступных тестов</h4>
+            <h4 class="mt-3" style="color: var(--text-light);">Нет доступных тестов</h4>
             <p>В данный момент вам не назначено ни одного тестирования.</p>
         </div>
     }
     else
     {
-        var groupedTests = tests
-            .GroupBy(t => t.Difficulty)
-            .OrderBy(g => (int)g.Key);
+        var groupedTests = tests.GroupBy(t => t.Difficulty).OrderBy(g => (int)g.Key);
 
         @foreach (var group in groupedTests)
         {
@@ -339,12 +332,8 @@
                         <div class="test-card" @key="item.Id">
                             <AuthorizeView Roles="Admin">
                                 <div class="admin-actions">
-                                    <button class="btn-icon edit" @onclick="@(() => NavigationManager.NavigateTo($"/test/edit/{item.Id}"))" title="Редактировать">
-                                        <RadzenIcon Icon="edit" />
-                                    </button>
-                                    <button class="btn-icon delete" @onclick="@(() => DeleteItem(item.Id))" title="Удалить">
-                                        <RadzenIcon Icon="delete" />
-                                    </button>
+                                    <button class="btn-icon edit" @onclick="@(() => NavigationManager.NavigateTo($"/admin/test/edit/{item.Id}"))" title="Редактировать"><RadzenIcon Icon="edit" /></button>
+                                    <button class="btn-icon delete" @onclick="@(() => DeleteItem(item.Id))" title="Удалить"><RadzenIcon Icon="delete" /></button>
                                 </div>
                             </AuthorizeView>
 
@@ -353,49 +342,33 @@
                             <div class="d-flex gap-2 mb-3 flex-wrap">
                                 @if (currentStatus == AttemptStatus.InProgress)
                                 {
-                                    <span class="cyber-badge" style="background: rgba(78, 195, 209, 0.15); color: var(--accent-cyan); border: 1px solid rgba(78, 195, 209, 0.4);">
-                                        <RadzenIcon Icon="play_circle_outline" Style="font-size: 0.9rem; margin-top: -2px;" /> В процессе
-                                    </span>
+                                    <span class="status-badge-mini status-in-progress"><RadzenIcon Icon="clock_loader_40" Style="font-size: 0.9rem;" /> В процессе</span>
                                 }
                                 else if (currentStatus == AttemptStatus.Completed)
                                 {
-                                    <span class="cyber-badge" style="background: rgba(152, 195, 121, 0.15); color: var(--success-color); border: 1px solid rgba(152, 195, 121, 0.4);">
-                                        <RadzenIcon Icon="task_alt" Style="font-size: 0.9rem; margin-top: -2px;" /> Выполнено
-                                    </span>
+
+                                    <span class="status-badge-mini status-completed"><RadzenIcon Icon="check" Style="font-size: 0.9rem;" /> Выполнено</span>
                                 }
                                 else if (currentStatus == AttemptStatus.Failed)
                                 {
-                                    <span class="cyber-badge" style="background: rgba(224, 108, 117, 0.15); color: var(--danger-color); border: 1px solid rgba(224, 108, 117, 0.4);">
-                                        <RadzenIcon Icon="error_outline" Style="font-size: 0.9rem; margin-top: -2px;" /> Провалено
-                                    </span>
+
+                                    <span class="status-badge-mini status-failed"><RadzenIcon Icon="error_outline" Style="font-size: 0.9rem;" /> Провалено</span>
                                 }
                                 else
                                 {
-                                    <span class="cyber-badge" style="background: rgba(143, 160, 181, 0.1); color: var(--text-muted); border: 1px solid var(--border-color);">
-                                        <RadzenIcon Icon="fiber_new" Style="font-size: 0.9rem; margin-top: -2px;" /> Доступно
-                                    </span>
+
+                                    <span class="status-badge-mini status-available"><RadzenIcon Icon="domain_verification" Style="font-size: 0.9rem;" /> Доступно</span>
                                 }
 
-                                @if (item.Scope == VisibilityScope.TeamOnly)
-                                {
-                                    <span class="cyber-badge" style="background: rgba(229,192,123,0.1); border: 1px solid var(--warning-color); color: var(--warning-color);">
-                                        <RadzenIcon Icon="groups" Style="font-size: 0.9rem; margin-top: -2px;" /> Командный
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="cyber-badge" style="background: rgba(91,163,227,0.1); border: 1px solid var(--accent-blue); color: var(--accent-blue);">
-                                        <RadzenIcon Icon="person" Style="font-size: 0.9rem; margin-top: -2px;" /> Индивидуальный
-                                    </span>
-                                }
+                                <span class="cyber-badge" style="background: rgba(91,163,227,0.1); border: 1px solid var(--accent-blue); color: var(--accent-blue);">
+                                    <RadzenIcon Icon="person" Style="font-size: 0.9rem; margin-top: -2px;" /> Индивидуальный
+                                </span>
 
                                 @if (!string.IsNullOrEmpty(item.Tags))
                                 {
                                     @foreach (var tag in item.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries))
                                     {
-                                        <span class="cyber-badge cyber-tag">
-                                            <RadzenIcon Icon="sell" Style="font-size: 0.9rem; margin-top: -2px;" /> @tag.Trim()
-                                        </span>
+                                        <span class="cyber-badge cyber-tag"><RadzenIcon Icon="sell" Style="font-size: 0.9rem; margin-top: -2px;" /> @tag.Trim()</span>
                                     }
                                 }
                             </div>
@@ -410,10 +383,12 @@
                                     }
                                     else if (currentStatus == AttemptStatus.Completed || currentStatus == AttemptStatus.Failed)
                                     {
+
                                         <span><RadzenIcon Icon="visibility" Style="font-size: 1.2rem; margin-top: -2px;" /> Результаты</span>
                                     }
                                     else
                                     {
+
                                         <span><RadzenIcon Icon="play_arrow" Style="font-size: 1.2rem; margin-top: -2px;" /> Начать тестирование</span>
                                     }
                                 </button>
@@ -431,17 +406,9 @@
     <div class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 1050; position: fixed; top: 0; left: 0; right: 0; bottom: 0;">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content" style="background: var(--bg-card); border: 1px solid var(--border-color);">
-                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
-                    <h5 class="modal-title" style="color: var(--text-light);">Подтверждение удаления</h5>
-                    <button type="button" class="btn-close btn-close-white" @onclick="CloseDeleteDialog"></button>
-                </div>
-                <div class="modal-body">
-                    <p style="color: var(--text-muted);">Вы действительно хотите навсегда удалить этот тест?</p>
-                </div>
-                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
-                    <button type="button" class="btn btn-secondary" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-light);" @onclick="CloseDeleteDialog">Отмена</button>
-                    <button type="button" class="btn btn-danger" style="background: var(--danger-color); border: none;" @onclick="ConfirmDelete">Удалить</button>
-                </div>
+                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);"><h5 class="modal-title" style="color: var(--text-light);">Подтверждение удаления</h5><button type="button" class="btn-close btn-close-white" @onclick="CloseDeleteDialog"></button></div>
+                <div class="modal-body"><p style="color: var(--text-muted);">Вы действительно хотите удалить этот тест?</p></div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);"><button type="button" class="btn btn-secondary" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-light);" @onclick="CloseDeleteDialog">Отмена</button><button type="button" class="btn btn-danger" style="background: var(--danger-color); border: none;" @onclick="ConfirmDelete">Удалить</button></div>
             </div>
         </div>
     </div>
@@ -452,88 +419,84 @@
     private Dictionary<int, AttemptStatus> userProgresses = new();
     private string currentUserId = string.Empty;
     private bool isAdmin = false;
+    private readonly SemaphoreSlim _lock = new(1, 1);
 
-    protected override async Task OnInitializedAsync() => await Refresh();
+    protected override async Task OnInitializedAsync()
+    {
+        CatalogUpdateService.OnCatalogChanged += HandleCatalogChanged;
+        await Refresh();
+    }
+
+    private async void HandleCatalogChanged()
+    {
+        await InvokeAsync(async () =>
+        {
+            await Refresh();
+            StateHasChanged();
+        });
+    }
 
     async Task Refresh()
     {
-        var allTests = await TestService.GetAllAsync();
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var userPrincipal = authState.User;
-        currentUserId = userPrincipal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
-        isAdmin = userPrincipal.IsInRole("Admin");
+        if (!await _lock.WaitAsync(0)) return;
 
-        userProgresses.Clear();
-
-        if (!string.IsNullOrEmpty(currentUserId))
+        try
         {
-            using var context = await ContextFactory.CreateDbContextAsync();
+            var allTests = await TestService.GetAllAsync();
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var userPrincipal = authState.User;
+            currentUserId = userPrincipal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+            isAdmin = userPrincipal.IsInRole("Admin");
 
-            // Используем AsNoTracking для быстрого и безопасного чтения
-            var progresses = await context.Set<UserTestProgress>()
-                .Where(p => p.UserId == currentUserId)
-                .AsNoTracking()
-                .ToListAsync();
+            userProgresses.Clear();
 
-            foreach (var p in progresses)
+            if (!string.IsNullOrEmpty(currentUserId))
             {
-                if (p.Status == AttemptStatus.InProgress && p.TargetEndTime.HasValue)
-                {
-                    if (DateTime.UtcNow >= p.TargetEndTime.Value)
-                    {
-                        p.Status = AttemptStatus.Failed;
-                        p.CompletedAt = DateTime.UtcNow;
+                using var context = await ContextFactory.CreateDbContextAsync();
+                var progresses = await context.Set<UserTestProgress>()
+                    .Where(p => p.UserId == currentUserId)
+                    .AsNoTracking()
+                    .ToListAsync();
 
-                        // Безопасное обновление статуса
-                        context.Set<UserTestProgress>().Update(p);
-                        await context.SaveChangesAsync();
+                foreach (var p in progresses)
+                {
+                    if (p.Status == AttemptStatus.InProgress && p.TargetEndTime.HasValue && DateTime.UtcNow >= p.TargetEndTime.Value)
+                    {
+                        p.Status = AttemptStatus.Failed; p.CompletedAt = DateTime.UtcNow;
+                        context.Set<UserTestProgress>().Update(p); await context.SaveChangesAsync();
+                    }
+                    if (!userProgresses.ContainsKey(p.CyberTestId) || p.Status == AttemptStatus.InProgress)
+                    {
+                        userProgresses[p.CyberTestId] = p.Status;
                     }
                 }
-
-                // Записываем статус. Если есть InProgress - он в приоритете
-                if (!userProgresses.ContainsKey(p.CyberTestId) || p.Status == AttemptStatus.InProgress)
-                {
-                    userProgresses[p.CyberTestId] = p.Status;
-                }
             }
-        }
 
-        if (isAdmin)
-        {
-            tests = allTests;
-        }
-        else
-        {
-            using var context = await ContextFactory.CreateDbContextAsync();
-            var dbUser = await context.Set<ApplicationUser>()
-                .Include(u => u.Teams)
-                .AsNoTracking()
-                .FirstOrDefaultAsync(u => u.Id == currentUserId);
-
-            if (dbUser == null)
+            if (isAdmin)
             {
-                tests = new List<CyberTest>();
-                return;
+                tests = allTests;
             }
-
-            var userTeamIds = dbUser.Teams?.Select(t => t.Id).ToList() ?? new List<int>();
-
-            tests = allTests.Where(t => t.IsVisible && (
-                t.Scope == VisibilityScope.Public ||
-                (t.Scope == VisibilityScope.GroupOnly && !string.IsNullOrEmpty(t.AllowedUserIds) && t.AllowedUserIds.Contains(currentUserId)) ||
-                (t.Scope == VisibilityScope.TeamOnly && !string.IsNullOrEmpty(t.AllowedTeamIds) && userTeamIds.Any(team => t.AllowedTeamIds.Contains(team.ToString())))
-            )).ToList();
+            else
+            {
+                tests = allTests.Where(t => t.IsVisible && (
+                    t.Scope == VisibilityScope.Public ||
+                    (t.Scope == VisibilityScope.GroupOnly && !string.IsNullOrEmpty(t.AllowedUserIds) && t.AllowedUserIds.Contains(currentUserId))
+                )).ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка загрузки каталога тестов: {ex.Message}");
+            tests ??= new List<CyberTest>();
+        }
+        finally
+        {
+            _lock.Release();
         }
     }
 
-    bool isDeleteVisualDialogVisible = false;
-    int testIdToDelete = 0;
-
-    void DeleteItem(int id)
-    {
-        testIdToDelete = id;
-        isDeleteVisualDialogVisible = true;
-    }
+    bool isDeleteVisualDialogVisible = false; int testIdToDelete = 0;
+    void DeleteItem(int id) { testIdToDelete = id; isDeleteVisualDialogVisible = true; }
 
     async Task ConfirmDelete()
     {
@@ -541,36 +504,22 @@
         if (testIdToDelete != 0)
         {
             await TestService.DeleteAsync(testIdToDelete);
-            await Refresh();
+
+            // СИГНАЛ: Сообщаем всем, что тест удален!
+            CatalogUpdateService.NotifyCatalogChanged();
+
             NotificationService.Notify(NotificationSeverity.Success, "Система", "Тест успешно удален.");
         }
         testIdToDelete = 0;
     }
+    void CloseDeleteDialog() { isDeleteVisualDialogVisible = false; testIdToDelete = 0; }
 
-    void CloseDeleteDialog()
+    private string GetDifficultyClass(TestDifficulty diff) => diff switch { TestDifficulty.Easy => "diff-easy", TestDifficulty.Medium => "diff-medium", _ => "diff-hard" };
+    private string GetDifficultyText(TestDifficulty diff) => diff switch { TestDifficulty.Easy => "Легкий", TestDifficulty.Medium => "Средний", _ => "Сложный" };
+    private string GetDifficultyColor(TestDifficulty diff) => diff switch { TestDifficulty.Easy => "var(--success-color)", TestDifficulty.Medium => "var(--warning-color)", _ => "var(--danger-color)" };
+
+    public void Dispose()
     {
-        isDeleteVisualDialogVisible = false;
-        testIdToDelete = 0;
+        CatalogUpdateService.OnCatalogChanged -= HandleCatalogChanged;
     }
-
-    private string GetDifficultyClass(TestDifficulty diff) => diff switch
-    {
-        TestDifficulty.Easy => "diff-easy",
-        TestDifficulty.Medium => "diff-medium",
-        _ => "diff-hard"
-    };
-
-    private string GetDifficultyText(TestDifficulty diff) => diff switch
-    {
-        TestDifficulty.Easy => "Легкий",
-        TestDifficulty.Medium => "Средний",
-        _ => "Сложный"
-    };
-
-    private string GetDifficultyColor(TestDifficulty diff) => diff switch
-    {
-        TestDifficulty.Easy => "var(--success-color)",
-        TestDifficulty.Medium => "var(--warning-color)",
-        _ => "var(--danger-color)"
-    };
 }
