@@ -1,5 +1,6 @@
 ﻿@page "/tests"
 @using CyberPolygon.Components.Components
+@using Microsoft.EntityFrameworkCore
 @using CyberPolygon.Data
 @rendermode InteractiveServer
 
@@ -8,6 +9,7 @@
 @inject NavigationManager NavigationManager
 @inject NotificationService NotificationService
 @inject AuthenticationStateProvider AuthStateProvider
+@inject IDbContextFactory<CyberPolygon.Data.ApplicationDbContext> ContextFactory
 
 <style>
     :root {
@@ -20,78 +22,31 @@
         --accent-cyan: #4ec3d1;
         --accent-light-blue: #7ec8f8;
         --border-color: #2a3a4a;
-        --border-glow: #4ec3d1;
+        --success-color: #98c379;
+        --danger-color: #e06c75;
+        --warning-color: #e5c07b;
     }
 
     .tests-container {
         background-color: var(--bg-main);
         min-height: calc(100vh - 60px);
         color: var(--text-muted);
+        padding: 30px;
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        max-width: 1300px;
-        margin: 0 auto;
-        padding: 40px 20px;
     }
 
     .page-header {
         display: flex;
         justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 50px;
-        gap: 30px;
-    }
-
-    .header-text {
-        flex: 1;
-    }
-
-        .header-text h1 {
-            color: var(--accent-light-blue);
-            font-weight: 700;
-            text-transform: uppercase;
-            margin: 0 0 12px 0;
-            font-size: 2.4rem;
-            letter-spacing: 2px;
-            text-shadow: 0 0 20px rgba(126, 200, 248, 0.3);
-        }
-
-        .header-text p {
-            color: var(--text-muted);
-            font-size: 1.1rem;
-            margin: 0;
-            line-height: 1.6;
-            max-width: 600px;
-        }
-
-    .header-actions {
-        display: flex;
         align-items: center;
-        gap: 15px;
+        margin-bottom: 40px;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 15px;
     }
 
-    .create-btn {
-        background: linear-gradient(135deg, #4ec3d1 0%, #5ba3e3 100%);
-        color: #1a1d21;
-        font-weight: bold;
-        border: none;
-        padding: 12px 28px;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.3s;
-        font-size: 0.95rem;
-        letter-spacing: 0.5px;
-        box-shadow: 0 4px 15px rgba(78, 195, 209, 0.2);
-        white-space: nowrap;
-    }
-
-        .create-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 25px rgba(78, 195, 209, 0.4);
-            background: linear-gradient(135deg, #5fd4e0 0%, #6fb3f0 100%);
-        }
-
+    /* === СЕКЦИИ СЛОЖНОСТИ === */
     .difficulty-section {
-        margin-bottom: 55px;
+        margin-bottom: 50px;
     }
 
     .section-title {
@@ -115,508 +70,354 @@
             box-shadow: 0 0 10px rgba(78, 195, 209, 0.5);
         }
 
-        .section-title h2 {
+        .section-title h3 {
             margin: 0;
             font-size: 1.3rem;
-            font-weight: 600;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1.5px;
         }
 
-    .cards-list {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
+    /* === СЕТКА И КАРТОЧКИ === */
+    .tests-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 25px;
     }
 
-    .cyber-card {
-        background: linear-gradient(135deg, #1a2332 0%, #1e2d3d 100%);
+    .test-card {
+        background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-card-hover) 100%);
         border: 1px solid var(--border-color);
         border-radius: 10px;
-        padding: 25px 30px;
-        transition: all 0.3s ease;
+        padding: 25px;
         position: relative;
+        transition: 0.3s;
         display: flex;
-        align-items: center;
-        gap: 30px;
+        flex-direction: column;
+        overflow: hidden;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     }
 
-        .cyber-card:hover {
+        .test-card:hover {
             border-color: var(--accent-cyan);
-            transform: translateX(5px);
-            box-shadow: 0 8px 30px rgba(78, 195, 209, 0.15), 0 0 20px rgba(78, 195, 209, 0.05);
-            background: linear-gradient(135deg, #1e2d3d 0%, #223548 100%);
+            box-shadow: 0 0 15px rgba(78, 195, 209, 0.2);
+            transform: translateY(-5px);
         }
-
-    .card-main {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .card-header {
-        position: relative;
-        margin-bottom: 10px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        flex-wrap: wrap;
-    }
-
-    .status-badge {
-        font-size: 0.7rem;
-        font-weight: bold;
-        text-transform: uppercase;
-        padding: 4px 10px;
-        border-radius: 6px;
-        letter-spacing: 0.5px;
-        backdrop-filter: blur(10px);
-        order: -1;
-    }
-
-    .status-published {
-        background: rgba(78, 195, 209, 0.2);
-        color: var(--accent-cyan);
-        border: 1px solid rgba(78, 195, 209, 0.4);
-    }
-
-    .status-draft {
-        background: rgba(143, 160, 181, 0.15);
-        color: var(--text-muted);
-        border: 1px solid var(--border-color);
-    }
-
-    .difficulty-badge {
-        font-size: 0.7rem;
-        font-weight: bold;
-        text-transform: uppercase;
-        padding: 5px 12px;
-        border-radius: 6px;
-        letter-spacing: 1.5px;
-        display: inline-block;
-    }
-
-    .diff-easy {
-        background: rgba(126, 200, 248, 0.15);
-        color: #7ec8f8;
-        border: 1px solid rgba(126, 200, 248, 0.4);
-    }
-
-    .diff-medium {
-        background: rgba(91, 163, 227, 0.15);
-        color: #5ba3e3;
-        border: 1px solid rgba(91, 163, 227, 0.4);
-    }
-
-    .diff-hard {
-        background: rgba(78, 195, 209, 0.15);
-        color: #4ec3d1;
-        border: 1px solid rgba(78, 195, 209, 0.4);
-    }
 
     .card-title {
-        color: var(--accent-light-blue);
-        margin: 0;
-        font-size: 1.2rem;
+        color: var(--text-light);
+        margin-bottom: 15px;
         font-weight: bold;
-        letter-spacing: 0.3px;
-    }
-
-    .card-description {
-        color: var(--text-muted);
-        font-size: 0.92rem;
-        line-height: 1.6;
-        margin: 0;
+        font-size: 1.25rem;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
         overflow: hidden;
         text-overflow: ellipsis;
-        white-space: nowrap;
+        padding-right: 70px;
     }
 
-    .card-actions {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        flex-shrink: 0;
+    .card-desc {
+        font-size: 0.95rem;
+        line-height: 1.5;
+        margin-bottom: 20px;
+        color: var(--text-muted);
+        flex-grow: 1;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        display: -webkit-box;
+        -webkit-line-clamp: 4;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
-    .btn-details {
-        background: none;
-        border: 1px solid rgba(78, 195, 209, 0.3);
-        color: var(--accent-cyan);
-        cursor: pointer;
-        padding: 8px 18px;
-        border-radius: 6px;
-        font-size: 0.85rem;
-        transition: all 0.2s;
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        white-space: nowrap;
-    }
-
-        .btn-details:hover {
-            background: rgba(78, 195, 209, 0.1);
-            border-color: var(--accent-cyan);
-        }
-
+    /* Кнопки админа сверху справа */
     .admin-actions {
+        position: absolute;
+        top: 22px;
+        right: 20px;
         display: flex;
         gap: 8px;
+        z-index: 10;
     }
 
     .btn-icon {
         background: transparent;
         border: 1px solid var(--border-color);
         border-radius: 6px;
-        padding: 6px 10px;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-        .btn-icon.edit {
-            color: var(--accent-light-blue);
-            border-color: rgba(126, 200, 248, 0.3);
-        }
-
-            .btn-icon.edit:hover {
-                background: rgba(126, 200, 248, 0.1);
-                border-color: var(--accent-light-blue);
-            }
-
-        .btn-icon.delete {
-            color: #e06c75;
-            border-color: rgba(224, 108, 117, 0.3);
-        }
-
-            .btn-icon.delete:hover {
-                background: rgba(224, 108, 117, 0.1);
-                border-color: #e06c75;
-            }
-
-    .card-details {
-        margin-top: 20px;
-        padding: 20px;
-        border-radius: 8px;
-        background: rgba(0, 0, 0, 0.3);
-        border: 1px solid var(--border-color);
-        color: var(--text-light);
-        width: 100%;
-    }
-
-        .card-details .description {
-            font-size: 0.85rem;
-            margin-bottom: 15px;
-            line-height: 1.6;
-        }
-
-    .card-stats {
-        display: flex;
-        gap: 25px;
-        margin-bottom: 18px;
-        font-family: monospace;
-        font-size: 0.85rem;
-        color: var(--accent-cyan);
-    }
-
-        .card-stats span {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-    .btn-start {
-        width: 100%;
-        background: linear-gradient(135deg, #4ec3d1 0%, #5ba3e3 100%);
-        color: #1a1d21;
-        font-weight: bold;
-        letter-spacing: 1.5px;
-        padding: 12px;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.3s;
-        font-size: 0.9rem;
-        text-transform: uppercase;
-        box-shadow: 0 4px 15px rgba(78, 195, 209, 0.2);
-    }
-
-        .btn-start:hover {
-            box-shadow: 0 6px 25px rgba(78, 195, 209, 0.4);
-            background: linear-gradient(135deg, #5fd4e0 0%, #6fb3f0 100%);
-            transform: translateY(-1px);
-        }
-
-    .empty-state {
-        text-align: center;
-        padding: 60px 20px;
-        border: 2px dashed var(--border-color);
-        border-radius: 12px;
-        color: var(--text-muted);
-        background: rgba(26, 35, 50, 0.5);
-    }
-
-    .loading-container {
-        text-align: center;
-        padding: 60px;
-    }
-
-    /* Модальное окно удаления */
-    .modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        background: rgba(0,0,0,0.85);
-        backdrop-filter: blur(6px);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-        animation: fadeIn 0.2s ease;
-    }
-
-    @@keyframes fadeIn {
-        from {
-            opacity: 0;
-        }
-
-        to {
-            opacity: 1;
-        }
-    }
-
-    .modal-box {
-        background: linear-gradient(135deg, #1a2332 0%, #1e2d3d 100%);
-        border: 1px solid var(--border-color);
-        box-shadow: 0 0 40px rgba(91, 163, 227, 0.2);
-        border-radius: 12px;
-        width: 450px;
-        max-width: 90%;
-        padding: 30px;
-    }
-
-    .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 25px;
-    }
-
-        .modal-header h3 {
-            color: var(--accent-light-blue);
-            margin: 0;
-            font-size: 1.2rem;
-            font-weight: bold;
-            letter-spacing: 0.5px;
-        }
-
-    .modal-close {
-        background: none;
-        border: 1px solid var(--border-color);
         color: var(--text-muted);
         cursor: pointer;
-        font-size: 1.2rem;
-        width: 30px;
-        height: 30px;
-        border-radius: 6px;
+        padding: 6px;
+        transition: 0.2s;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: all 0.2s;
     }
 
-        .modal-close:hover {
-            border-color: var(--accent-cyan);
+        .btn-icon:hover {
             color: var(--accent-cyan);
+            border-color: var(--accent-cyan);
         }
 
-    .modal-body {
-        text-align: center;
-        margin-bottom: 30px;
-        color: #e06c75;
-        font-size: 1.05rem;
-        line-height: 1.5;
-        padding: 10px 0;
-    }
+        .btn-icon.delete:hover {
+            color: var(--danger-color);
+            border-color: var(--danger-color);
+        }
 
-    .modal-footer {
-        display: flex;
-        justify-content: center;
-        gap: 12px;
-    }
-
-    .btn-ok {
+    /* Общие интерактивные элементы */
+    .btn-primary-gradient {
         background: linear-gradient(135deg, #4ec3d1 0%, #5ba3e3 100%);
         color: #1a1d21;
         border: none;
-        padding: 10px 35px;
+        padding: 10px 20px;
         border-radius: 8px;
         font-weight: bold;
         cursor: pointer;
-        letter-spacing: 0.5px;
-        transition: all 0.2s;
+        transition: 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
     }
 
-        .btn-ok:hover {
-            box-shadow: 0 4px 15px rgba(78, 195, 209, 0.4);
+        .btn-primary-gradient:hover {
+            box-shadow: 0 5px 15px rgba(78, 195, 209, 0.4);
+            transform: translateY(-2px);
         }
 
-    .btn-cancel {
+    .btn-outline-light {
         background: transparent;
         color: var(--text-light);
         border: 1px solid var(--border-color);
-        padding: 10px 35px;
+        padding: 10px 24px;
         border-radius: 8px;
-        font-weight: bold;
         cursor: pointer;
-        letter-spacing: 0.5px;
-        transition: all 0.2s;
+        transition: 0.3s;
+        width: 100%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
     }
 
-        .btn-cancel:hover {
-            border-color: var(--text-muted);
-            background: rgba(143, 160, 181, 0.1);
+        .btn-outline-light:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: var(--accent-light-blue);
+            color: var(--accent-light-blue);
         }
 
-    /* Кастомизация Radzen */
-    .rz-dialog {
-        background-color: var(--bg-card) !important;
-        border: 1px solid var(--border-color) !important;
+    /* Бейджи */
+    .cyber-badge {
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        white-space: nowrap;
     }
 
-    .rz-dialog-titlebar {
-        background-color: var(--bg-main) !important;
-        color: var(--text-light) !important;
-        border-bottom: 1px solid var(--border-color) !important;
+        .cyber-badge.section-badge {
+            padding: 6px 14px;
+            font-size: 0.85rem;
+            margin: 0;
+        }
+
+    .diff-easy {
+        background: rgba(152, 195, 121, 0.15);
+        border: 1px solid rgba(152, 195, 121, 0.5);
+        color: var(--success-color);
     }
 
-    .rz-dialog-content {
-        color: var(--text-light) !important;
+    .diff-medium {
+        background: rgba(229, 192, 123, 0.15);
+        border: 1px solid rgba(229, 192, 123, 0.5);
+        color: var(--warning-color);
+    }
+
+    .diff-hard {
+        background: rgba(224, 108, 117, 0.15);
+        border: 1px solid rgba(224, 108, 117, 0.5);
+        color: var(--danger-color);
+    }
+
+    .cyber-tag {
+        background: rgba(78, 195, 209, 0.1);
+        border: 1px solid rgba(78, 195, 209, 0.3);
+        color: var(--accent-light-blue);
+    }
+
+    /* СТАТУСЫ */
+    .status-badge-mini {
+        font-size: 0.7rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        padding: 4px 8px;
+        border-radius: 4px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        border: 1px solid transparent;
+        flex-shrink: 0;
+    }
+
+    .status-in-progress {
+        background: rgba(78, 195, 209, 0.1);
+        color: var(--accent-cyan);
+        border-color: rgba(78, 195, 209, 0.3);
+    }
+
+    .status-completed {
+        background: rgba(152, 195, 121, 0.1);
+        color: var(--success-color);
+        border-color: rgba(152, 195, 121, 0.3);
+    }
+
+    .status-failed {
+        background: rgba(224, 108, 117, 0.1);
+        color: var(--danger-color);
+        border-color: rgba(224, 108, 117, 0.3);
+    }
+
+    .status-available {
+        background: rgba(143, 160, 181, 0.1);
+        color: var(--text-muted);
+        border-color: var(--border-color);
     }
 </style>
 
-<RadzenComponents />
-<PageTitle>Обучение на киберполигоне</PageTitle>
-
 <div class="tests-container">
     <div class="page-header">
-        <div class="header-text">
-            <h1>Обучение на киберполигоне</h1>
-            <p>Тестовые задания для обучения и повышения навыков в сфере кибербезопасности.</p>
-        </div>
-
+        <h2 style="color: var(--accent-light-blue); margin: 0; text-transform: uppercase; font-weight: 700;">Каталог тестирования</h2>
         <AuthorizeView Roles="Admin">
-            <div class="header-actions">
-                <button class="create-btn" @onclick="@(() => OpenEditDialog(new CyberTest()))">
-                    <RadzenIcon Icon="add" Style="vertical-align: middle; margin-right: 6px;" /> Создать тест
-                </button>
-            </div>
+            <button class="btn-primary-gradient" @onclick="@(() => NavigationManager.NavigateTo("/test/edit"))">
+                <RadzenIcon Icon="add" Style="vertical-align: middle;" /> Новый тест
+            </button>
         </AuthorizeView>
     </div>
 
     @if (tests == null)
     {
-        <div class="loading-container">
-            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" Style="background-color: var(--border-color);" />
+        <div class="text-center mt-5">
+            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
         </div>
     }
     else if (!tests.Any())
     {
-        <div class="empty-state">
-            <RadzenIcon Icon="school" Style="font-size: 3rem; color: var(--border-color); margin-bottom: 20px;" />
-            <p style="font-size: 1.1rem; margin: 0;">База данных тестов пуста.</p>
+        <div class="text-center mt-5">
+            <RadzenIcon Icon="assignment_late" Style="font-size: 4rem; color: var(--border-color);" />
+            <h4 class="mt-3">Нет доступных тестов</h4>
+            <p>В данный момент вам не назначено ни одного тестирования.</p>
         </div>
     }
     else
     {
-        var difficulties = new[] { TestDifficulty.Easy, TestDifficulty.Medium, TestDifficulty.Hard };
-        var difficultyNames = new Dictionary<TestDifficulty, string>
-        {
-            { TestDifficulty.Easy, "Начальный уровень" },
-            { TestDifficulty.Medium, "Средний уровень" },
-            { TestDifficulty.Hard, "Продвинутый уровень" }
-        };
-        foreach (var diff in difficulties)
-        {
-            var filteredTests = tests.Where(t => t.Difficulty == diff).ToList();
-            if (!filteredTests.Any()) continue;
+        var groupedTests = tests
+            .GroupBy(t => t.Difficulty)
+            .OrderBy(g => (int)g.Key);
 
-            <div class="difficulty-section">
+        @foreach (var group in groupedTests)
+        {
+            <div class="difficulty-section" @key="group.Key">
                 <div class="section-title">
-                    <span class="difficulty-badge @GetDifficultyClass(diff)" style="margin-bottom:0;">@GetDifficultyText(diff)</span>
-                    <h2 style="color: @GetDifficultyColor(diff);">@difficultyNames[diff]</h2>
+                    <span class="cyber-badge section-badge @GetDifficultyClass(group.Key)">
+                        <RadzenIcon Icon="speed" Style="font-size: 1.1rem; margin-top: -2px;" /> Уровень: @GetDifficultyText(group.Key)
+                    </span>
+                    <h3 style="color: @GetDifficultyColor(group.Key);">Тесты</h3>
                 </div>
 
-                <div class="cards-list">
-                    @foreach (var test in filteredTests)
+                <div class="tests-grid">
+                    @foreach (var item in group)
                     {
-                        bool isExpanded = expandedCards.ContainsKey(test.Id) && expandedCards[test.Id];
+                        var currentStatus = userProgresses.ContainsKey(item.Id) ? userProgresses[item.Id] : AttemptStatus.NotStarted;
 
-                        // Логика проверки статуса
-                        bool hasProgress = userProgresses.TryGetValue(test.Id, out var status);
-                        bool isCompleted = hasProgress && status == AttemptStatus.Completed;
-                        bool isStarted = hasProgress && status != AttemptStatus.Completed && status != AttemptStatus.NotStarted;
-
-                        <div>
-                            <div class="cyber-card">
-                                <div class="card-main">
-                                    <div class="card-header">
-                                        <span class="difficulty-badge @GetDifficultyClass(test.Difficulty)">@GetDifficultyText(test.Difficulty)</span>
-                                        <h3 class="card-title">@test.Title</h3>
-
-                                        @if (isStarted)
-                                        {
-                                            <span class="status-badge" style="background: rgba(229, 192, 123, 0.15); color: #e5c07b; border: 1px solid rgba(229, 192, 123, 0.4);">В процессе</span>
-                                        }
-                                        else if (isCompleted)
-                                        {
-                                            <span class="status-badge" style="background: rgba(152, 195, 121, 0.15); color: #98c379; border: 1px solid rgba(152, 195, 121, 0.4);">Завершен</span>
-                                        }
-
-                                        <AuthorizeView Roles="Admin">
-                                            <span class="status-badge @(test.IsVisible ? "status-published" : "status-draft")">
-                                                @(test.IsVisible ? "Открыт" : "Черновик")
-                                            </span>
-                                        </AuthorizeView>
-                                    </div>
-                                    <p class="card-description">@test.ShortDescription</p>
-                                </div>
-
-                                <div class="card-actions">
-                                    <button class="btn-details" @onclick="@(() => ToggleCard(test.Id))">
-                                        <RadzenIcon Icon="@(isExpanded ? "expand_less" : "expand_more")" />
-                                        @(isExpanded ? "Скрыть" : "Подробнее")
+                        <div class="test-card" @key="item.Id">
+                            <AuthorizeView Roles="Admin">
+                                <div class="admin-actions">
+                                    <button class="btn-icon edit" @onclick="@(() => NavigationManager.NavigateTo($"/test/edit/{item.Id}"))" title="Редактировать">
+                                        <RadzenIcon Icon="edit" />
                                     </button>
-
-                                    <AuthorizeView Roles="Admin">
-                                        <div class="admin-actions">
-                                            <button class="btn-icon edit" @onclick="@(() => OpenEditDialog(test))">
-                                                <RadzenIcon Icon="edit" />
-                                            </button>
-                                            <button class="btn-icon delete" @onclick="@(() => DeleteItem(test.Id))">
-                                                <RadzenIcon Icon="delete" />
-                                            </button>
-                                        </div>
-                                    </AuthorizeView>
+                                    <button class="btn-icon delete" @onclick="@(() => DeleteItem(item.Id))" title="Удалить">
+                                        <RadzenIcon Icon="delete" />
+                                    </button>
                                 </div>
+                            </AuthorizeView>
+
+                            <h3 class="card-title" title="@item.Title">@item.Title</h3>
+
+                            <div class="d-flex gap-2 mb-3 flex-wrap">
+                                @if (currentStatus == AttemptStatus.InProgress)
+                                {
+                                    <span class="cyber-badge" style="background: rgba(78, 195, 209, 0.15); color: var(--accent-cyan); border: 1px solid rgba(78, 195, 209, 0.4);">
+                                        <RadzenIcon Icon="play_circle_outline" Style="font-size: 0.9rem; margin-top: -2px;" /> В процессе
+                                    </span>
+                                }
+                                else if (currentStatus == AttemptStatus.Completed)
+                                {
+                                    <span class="cyber-badge" style="background: rgba(152, 195, 121, 0.15); color: var(--success-color); border: 1px solid rgba(152, 195, 121, 0.4);">
+                                        <RadzenIcon Icon="task_alt" Style="font-size: 0.9rem; margin-top: -2px;" /> Выполнено
+                                    </span>
+                                }
+                                else if (currentStatus == AttemptStatus.Failed)
+                                {
+                                    <span class="cyber-badge" style="background: rgba(224, 108, 117, 0.15); color: var(--danger-color); border: 1px solid rgba(224, 108, 117, 0.4);">
+                                        <RadzenIcon Icon="error_outline" Style="font-size: 0.9rem; margin-top: -2px;" /> Провалено
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="cyber-badge" style="background: rgba(143, 160, 181, 0.1); color: var(--text-muted); border: 1px solid var(--border-color);">
+                                        <RadzenIcon Icon="fiber_new" Style="font-size: 0.9rem; margin-top: -2px;" /> Доступно
+                                    </span>
+                                }
+
+                                @if (item.Scope == VisibilityScope.TeamOnly)
+                                {
+                                    <span class="cyber-badge" style="background: rgba(229,192,123,0.1); border: 1px solid var(--warning-color); color: var(--warning-color);">
+                                        <RadzenIcon Icon="groups" Style="font-size: 0.9rem; margin-top: -2px;" /> Командный
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="cyber-badge" style="background: rgba(91,163,227,0.1); border: 1px solid var(--accent-blue); color: var(--accent-blue);">
+                                        <RadzenIcon Icon="person" Style="font-size: 0.9rem; margin-top: -2px;" /> Индивидуальный
+                                    </span>
+                                }
+
+                                @if (!string.IsNullOrEmpty(item.Tags))
+                                {
+                                    @foreach (var tag in item.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                                    {
+                                        <span class="cyber-badge cyber-tag">
+                                            <RadzenIcon Icon="sell" Style="font-size: 0.9rem; margin-top: -2px;" /> @tag.Trim()
+                                        </span>
+                                    }
+                                }
                             </div>
 
-                            @if (isExpanded)
-                            {
-                                <div class="card-details">
-                                    <div class="description">@((MarkupString)test.FullDescription)</div>
+                            <p class="card-desc" title="@item.ShortDescription">@(string.IsNullOrWhiteSpace(item.ShortDescription) ? "Описание отсутствует." : item.ShortDescription)</p>
 
-                                    <div class="card-stats">
-                                        <span><RadzenIcon Icon="schedule" /> @test.DurationInMinutes мин.</span>
-                                        <span><RadzenIcon Icon="quiz" /> @test.Questions.Count вопр.</span>
-                                    </div>
-
-                                    <button class="btn-start" @onclick="@(() => NavigationManager.NavigateTo($"/test/{test.Id}/workspace"))">
-                                        @(isCompleted ? "ПРОСМОТРЕТЬ РЕЗУЛЬТАТ" : (isStarted ? "ПРОДОЛЖИТЬ" : "НАЧАТЬ ТЕСТИРОВАНИЕ"))
-                                    </button>
-                                </div>
-                            }
+                            <div class="mt-auto pt-3" style="border-top: 1px solid var(--border-color);">
+                                <button class="btn-outline-light" @onclick="@(() => NavigationManager.NavigateTo($"/test/{item.Id}/workspace"))">
+                                    @if (currentStatus == AttemptStatus.InProgress)
+                                    {
+                                        <span><RadzenIcon Icon="play_arrow" Style="font-size: 1.2rem; margin-top: -2px;" /> Продолжить</span>
+                                    }
+                                    else if (currentStatus == AttemptStatus.Completed || currentStatus == AttemptStatus.Failed)
+                                    {
+                                        <span><RadzenIcon Icon="visibility" Style="font-size: 1.2rem; margin-top: -2px;" /> Результаты</span>
+                                    }
+                                    else
+                                    {
+                                        <span><RadzenIcon Icon="play_arrow" Style="font-size: 1.2rem; margin-top: -2px;" /> Начать тестирование</span>
+                                    }
+                                </button>
+                            </div>
                         </div>
                     }
                 </div>
@@ -627,61 +428,102 @@
 
 @if (isDeleteVisualDialogVisible)
 {
-    <div class="modal-overlay">
-        <div class="modal-box">
-            <div class="modal-header">
-                <h3>Предупреждение системы</h3>
-                <button class="modal-close" @onclick="CloseDeleteDialog">✕</button>
-            </div>
-            <div class="modal-body">
-                Вы уверены, что хотите навсегда удалить этот тест из базы данных?
-            </div>
-            <div class="modal-footer">
-                <button class="btn-ok" @onclick="ConfirmDelete">ОК</button>
-                <button class="btn-cancel" @onclick="CloseDeleteDialog">ОТМЕНА</button>
+    <div class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 1050; position: fixed; top: 0; left: 0; right: 0; bottom: 0;">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background: var(--bg-card); border: 1px solid var(--border-color);">
+                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);">
+                    <h5 class="modal-title" style="color: var(--text-light);">Подтверждение удаления</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CloseDeleteDialog"></button>
+                </div>
+                <div class="modal-body">
+                    <p style="color: var(--text-muted);">Вы действительно хотите навсегда удалить этот тест?</p>
+                </div>
+                <div class="modal-footer" style="border-top: 1px solid var(--border-color);">
+                    <button type="button" class="btn btn-secondary" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-light);" @onclick="CloseDeleteDialog">Отмена</button>
+                    <button type="button" class="btn btn-danger" style="background: var(--danger-color); border: none;" @onclick="ConfirmDelete">Удалить</button>
+                </div>
             </div>
         </div>
     </div>
 }
 
 @code {
-    private List<CyberTest>? tests;
-    private Dictionary<int, bool> expandedCards = new();
-
-    private string currentUserId = string.Empty;
+    List<CyberTest>? tests;
     private Dictionary<int, AttemptStatus> userProgresses = new();
+    private string currentUserId = string.Empty;
+    private bool isAdmin = false;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync() => await Refresh();
+
+    async Task Refresh()
     {
+        var allTests = await TestService.GetAllAsync();
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        currentUserId = authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
-        await Refresh();
-    }
+        var userPrincipal = authState.User;
+        currentUserId = userPrincipal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+        isAdmin = userPrincipal.IsInRole("Admin");
 
-    private async Task Refresh()
-    {
-        tests = await TestService.GetAllAsync();
+        userProgresses.Clear();
 
         if (!string.IsNullOrEmpty(currentUserId))
         {
-            userProgresses = await TestService.GetAllUserProgressesAsync(currentUserId);
+            using var context = await ContextFactory.CreateDbContextAsync();
+
+            // Используем AsNoTracking для быстрого и безопасного чтения
+            var progresses = await context.Set<UserTestProgress>()
+                .Where(p => p.UserId == currentUserId)
+                .AsNoTracking()
+                .ToListAsync();
+
+            foreach (var p in progresses)
+            {
+                if (p.Status == AttemptStatus.InProgress && p.TargetEndTime.HasValue)
+                {
+                    if (DateTime.UtcNow >= p.TargetEndTime.Value)
+                    {
+                        p.Status = AttemptStatus.Failed;
+                        p.CompletedAt = DateTime.UtcNow;
+
+                        // Безопасное обновление статуса
+                        context.Set<UserTestProgress>().Update(p);
+                        await context.SaveChangesAsync();
+                    }
+                }
+
+                // Записываем статус. Если есть InProgress - он в приоритете
+                if (!userProgresses.ContainsKey(p.CyberTestId) || p.Status == AttemptStatus.InProgress)
+                {
+                    userProgresses[p.CyberTestId] = p.Status;
+                }
+            }
         }
-    }
 
-    private void ToggleCard(int id)
-    {
-        if (expandedCards.ContainsKey(id)) expandedCards[id] = !expandedCards[id];
-        else expandedCards[id] = true;
-    }
+        if (isAdmin)
+        {
+            tests = allTests;
+        }
+        else
+        {
+            using var context = await ContextFactory.CreateDbContextAsync();
+            var dbUser = await context.Set<ApplicationUser>()
+                .Include(u => u.Teams)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == currentUserId);
 
-    private async Task OpenEditDialog(CyberTest test)
-    {
-        var res = await DialogService.OpenAsync<TestEditor>(
-            test.Id == 0 ? "Создание нового теста" : "Редактирование теста",
-            new Dictionary<string, object> { { "Item", test } },
-            new DialogOptions { Width = "850px", Height = "700px", Resizable = false, Draggable = true }
-        );
-        if (res == true) await Refresh();
+            if (dbUser == null)
+            {
+                tests = new List<CyberTest>();
+                return;
+            }
+
+            var userTeamIds = dbUser.Teams?.Select(t => t.Id).ToList() ?? new List<int>();
+
+            tests = allTests.Where(t => t.IsVisible && (
+                t.Scope == VisibilityScope.Public ||
+                (t.Scope == VisibilityScope.GroupOnly && !string.IsNullOrEmpty(t.AllowedUserIds) && t.AllowedUserIds.Contains(currentUserId)) ||
+                (t.Scope == VisibilityScope.TeamOnly && !string.IsNullOrEmpty(t.AllowedTeamIds) && userTeamIds.Any(team => t.AllowedTeamIds.Contains(team.ToString())))
+            )).ToList();
+        }
     }
 
     bool isDeleteVisualDialogVisible = false;
@@ -727,8 +569,8 @@
 
     private string GetDifficultyColor(TestDifficulty diff) => diff switch
     {
-        TestDifficulty.Easy => "#7ec8f8",
-        TestDifficulty.Medium => "#5ba3e3",
-        _ => "#4ec3d1"
+        TestDifficulty.Easy => "var(--success-color)",
+        TestDifficulty.Medium => "var(--warning-color)",
+        _ => "var(--danger-color)"
     };
 }

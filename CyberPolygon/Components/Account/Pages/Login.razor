@@ -15,12 +15,18 @@
 
 <style>
     :root {
-        --bg-main: #0d1117;
-        --bg-card: #161b22;
-        --accent-cyan: #00e5ff;
-        --border-color: #30363d;
-        --text-light: #ffffff;
-        --text-muted: #8b949e;
+        --bg-main: #1e1e1e;
+        --bg-card: #1a2332;
+        --bg-input: #131924;
+        --text-muted: #8fa0b5;
+        --text-light: #cbe0f5;
+        --accent-blue: #5ba3e3;
+        --accent-cyan: #4ec3d1;
+        --accent-light-blue: #7ec8f8;
+        --border-color: #2a3a4a;
+        --success-color: #98c379;
+        --warning-color: #e5c07b;
+        --danger-color: #e06c75;
     }
 
     /* Обертка на весь экран */
@@ -31,15 +37,15 @@
         align-items: center;
         justify-content: center;
         padding: 20px;
-        font-family: sans-serif;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
     /* Основной контейнер авторизации */
     .cyber-login-container {
         background-color: var(--bg-card);
         border: 1px solid var(--border-color);
-        border-radius: 8px;
-        box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+        border-radius: 12px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
         overflow: hidden;
         width: 100%;
         max-width: 1000px;
@@ -48,7 +54,7 @@
 
     /* Левая панель с логотипом */
     .cyber-left-panel {
-        background: linear-gradient(135deg, #090c10 0%, #161b22 100%);
+        background: linear-gradient(135deg, #1a2332 0%, #131924 100%);
         border-right: 1px solid var(--border-color);
         display: flex;
         flex-direction: column;
@@ -60,7 +66,6 @@
     }
 
     .cyber-title {
-        font-family: 'Courier New', Courier, monospace;
         color: var(--text-light);
         font-weight: bold;
         letter-spacing: 1px;
@@ -76,26 +81,27 @@
     }
 
     .form-header {
-        font-family: 'Courier New', Courier, monospace;
-        color: var(--accent-cyan);
+        color: var(--accent-light-blue);
         margin-bottom: 20px;
         display: flex;
         align-items: center;
         gap: 10px;
+        font-weight: bold;
+        text-transform: uppercase;
     }
 
-    /* Стилизация полей ввода (переопределение Bootstrap) */
+    /* Стилизация полей ввода */
     .form-floating > .form-control.cyber-input {
-        background-color: var(--bg-main);
+        background-color: var(--bg-input);
         border: 1px solid var(--border-color);
         color: var(--text-light);
-        border-radius: 4px;
+        border-radius: 8px;
         transition: all 0.3s ease;
     }
 
         .form-floating > .form-control.cyber-input:focus {
             border-color: var(--accent-cyan);
-            box-shadow: 0 0 8px rgba(0, 229, 255, 0.15);
+            box-shadow: 0 0 10px rgba(78, 195, 209, 0.2);
         }
 
     .form-floating > label {
@@ -108,18 +114,21 @@
         opacity: 0.9;
     }
 
-    /* Автозаполнение браузера (чтобы не ломало темную тему) */
+    /* Автозаполнение браузера */
     .form-floating > .form-control.cyber-input:-webkit-autofill {
-        -webkit-box-shadow: 0 0 0 1000px var(--bg-main) inset !important;
+        -webkit-box-shadow: 0 0 0 1000px var(--bg-input) inset !important;
         -webkit-text-fill-color: var(--text-light) !important;
         transition: background-color 5000s ease-in-out 0s;
     }
 
     /* Чекбокс */
     .cyber-checkbox {
-        background-color: var(--bg-main);
+        background-color: var(--bg-input);
         border: 1px solid var(--border-color);
         cursor: pointer;
+        width: 18px;
+        height: 18px;
+        border-radius: 4px;
     }
 
         .cyber-checkbox:checked {
@@ -131,31 +140,48 @@
         color: var(--text-muted);
         cursor: pointer;
         user-select: none;
+        font-size: 0.95rem;
     }
 
     /* Кнопка входа */
-    .btn-cyber {
-        background-color: rgba(0, 229, 255, 0.05);
-        border: 1px solid var(--accent-cyan);
-        color: var(--accent-cyan);
-        font-family: 'Courier New', Courier, monospace;
+    .btn-primary-gradient {
+        background: linear-gradient(135deg, #4ec3d1 0%, #5ba3e3 100%);
+        color: #1a1d21;
         font-weight: bold;
+        border: none;
+        padding: 14px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s;
         text-transform: uppercase;
-        letter-spacing: 2px;
-        border-radius: 4px;
-        padding: 12px;
-        transition: all 0.3s ease;
+        letter-spacing: 1px;
+        width: 100%;
+        margin-top: 10px;
     }
 
-        .btn-cyber:hover {
-            background-color: var(--accent-cyan);
-            color: #0d1117;
-            box-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
+        .btn-primary-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(78, 195, 209, 0.4);
         }
 
     .cyber-hr {
-        border-top: 1px dashed var(--border-color);
+        border-top: 1px solid var(--border-color);
         margin: 20px 0;
+    }
+
+    /* Блок вывода ошибки */
+    .error-alert {
+        background-color: rgba(224, 108, 117, 0.1);
+        border: 1px solid var(--danger-color);
+        color: var(--danger-color);
+        padding: 12px 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.9rem;
+        font-weight: 500;
     }
 </style>
 
@@ -168,10 +194,10 @@
                 <img src="images/logo.png" alt="Logo" style="max-width: 280px; height: auto;" />
             </div>
 
-            <h2 class="cyber-title mb-2" style="font-size: 2.2rem;">Добро пожаловать!</h2>
-            <h3 class="cyber-title mb-4" style="font-size: 1.5rem; color: var(--text-muted);">В КиберПолигон</h3>
+            <h2 class="cyber-title mb-2" style="font-size: 2.2rem; text-transform: uppercase;">Добро пожаловать</h2>
+            <h3 class="cyber-title mb-4" style="font-size: 1.5rem; color: var(--accent-light-blue);">В КиберПолигон</h3>
 
-            <p style="color: var(--text-muted); font-size: 0.95rem; font-family: monospace;">
+            <p style="color: var(--text-muted); font-size: 0.95rem;">
                 СИСТЕМА АВТОРИЗАЦИИ // ИАО<br />
                 Введите свои учетные данные для доступа к инфраструктуре.
             </p>
@@ -188,18 +214,27 @@
 
                 <hr class="cyber-hr" />
 
-                <ValidationSummary class="text-danger mb-3" style="font-family: monospace; font-size: 0.85rem;" role="alert" />
+                @* ВЫВОД ОШИБКИ АВТОРИЗАЦИИ *@
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="error-alert">
+                        <RadzenIcon Icon="error_outline" Style="font-size: 1.2rem;" />
+                        <span>@errorMessage</span>
+                    </div>
+                }
+
+                <ValidationSummary class="mb-3" style="color: var(--danger-color); font-size: 0.85rem;" role="alert" />
 
                 <div class="form-floating mb-4">
                     <InputText @bind-Value="Input.UserName" id="Input.UserName" class="form-control cyber-input" autocomplete="username webauthn" aria-required="true" placeholder="name@example.com" />
-                    <label for="Input.Email">Логин (Идентификатор)</label>
-                    <ValidationMessage For="() => Input.UserName" class="text-danger" style="font-size: 0.8rem; margin-top: 5px;" />
+                    <label for="Input.UserName">Логин (Идентификатор)</label>
+                    <ValidationMessage For="() => Input.UserName" style="color: var(--danger-color); font-size: 0.8rem; margin-top: 5px;" />
                 </div>
 
                 <div class="form-floating mb-4">
                     <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control cyber-input" autocomplete="current-password" aria-required="true" placeholder="пароль" />
                     <label for="Input.Password">Ключ доступа (Пароль)</label>
-                    <ValidationMessage For="() => Input.Password" class="text-danger" style="font-size: 0.8rem; margin-top: 5px;" />
+                    <ValidationMessage For="() => Input.Password" style="color: var(--danger-color); font-size: 0.8rem; margin-top: 5px;" />
                 </div>
 
                 <div class="checkbox mb-4 d-flex align-items-center gap-2">
@@ -210,15 +245,9 @@
                 </div>
 
                 <div class="mt-2">
-                    <button type="submit" class="w-100 btn btn-cyber">Инициализировать соединение</button>
+                    <button type="submit" class="btn-primary-gradient">Инициализировать соединение</button>
                 </div>
 
-                @* Закомментированный блок ссылок (адаптирован под стилистику на будущее)
-                 <div class="mt-4 text-center" style="font-family: monospace; font-size: 0.85rem;">
-                    <p class="mb-1"><a href="Account/ForgotPassword" style="color: var(--text-muted); text-decoration: none;">Забыли пароль?</a></p>
-                    <p class="mb-1"><a href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))" style="color: var(--accent-cyan); text-decoration: none;">Регистрация агента</a></p>
-                 </div>
-                *@
             </EditForm>
         </RadzenColumn>
 
@@ -251,14 +280,16 @@
 
     public async Task LoginUser()
     {
+        // Очищаем предыдущую ошибку при новой попытке
+        errorMessage = null;
+
         if (!string.IsNullOrEmpty(Input.Passkey?.Error))
         {
-            errorMessage = $"Error: {Input.Passkey.Error}";
+            errorMessage = $"Ошибка: {Input.Passkey.Error}";
             return;
         }
 
         SignInResult result;
-
         if (!string.IsNullOrEmpty(Input.Passkey?.CredentialJson))
         {
             result = await SignInManager.PasskeySignInAsync(Input.Passkey.CredentialJson);
@@ -300,7 +331,8 @@
         }
         else
         {
-            errorMessage = "Error: Invalid login attempt.";
+            // Здесь устанавливаем текст ошибки для пользователя
+            errorMessage = "Неверный логин или пароль. Доступ запрещен.";
         }
     }
 

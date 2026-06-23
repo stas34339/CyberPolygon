@@ -3,6 +3,7 @@ using System;
 using CyberPolygon.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CyberPolygon.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260619075235_FilesToDb")]
+    partial class FilesToDb
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -216,17 +219,7 @@ namespace CyberPolygon.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("AllowedTeamIds")
-                        .HasColumnType("text");
-
-                    b.Property<string>("AllowedUserIds")
-                        .HasColumnType("text");
-
                     b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Difficulty")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -249,15 +242,17 @@ namespace CyberPolygon.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<byte[]>("SchemaFileData")
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("SchemaFileName")
+                        .HasColumnType("text");
+
                     b.Property<string>("SchemaPath")
                         .HasColumnType("text");
 
                     b.Property<int>("Scope")
                         .HasColumnType("integer");
-
-                    b.Property<string>("Tags")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<int?>("TargetGroupId")
                         .HasColumnType("integer");
@@ -286,12 +281,6 @@ namespace CyberPolygon.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("AllowedTeamIds")
-                        .HasColumnType("text");
-
-                    b.Property<string>("AllowedUserIds")
-                        .HasColumnType("text");
-
                     b.Property<int>("Difficulty")
                         .HasColumnType("integer");
 
@@ -310,9 +299,6 @@ namespace CyberPolygon.Migrations
 
                     b.Property<string>("ShortDescription")
                         .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Tags")
                         .HasColumnType("text");
 
                     b.Property<int?>("TargetGroupId")
@@ -473,6 +459,12 @@ namespace CyberPolygon.Migrations
                     b.Property<int>("CyberScenarioId")
                         .HasColumnType("integer");
 
+                    b.Property<byte[]>("FileData")
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("FileName")
+                        .HasColumnType("text");
+
                     b.Property<string>("FilePath")
                         .IsRequired()
                         .HasColumnType("text");
@@ -505,10 +497,6 @@ namespace CyberPolygon.Migrations
 
                     b.Property<int>("CyberScenarioId")
                         .HasColumnType("integer");
-
-                    b.Property<string>("ExampleAnswer")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<int>("PenaltyPoints")
                         .HasColumnType("integer");

@@ -22,6 +22,10 @@ public class CyberTest
     // Внутри класса CyberTest
     public List<TestQuestion> Questions { get; set; } = new List<TestQuestion>();
     public List<TestDocument> Documents { get; set; } = new();
+
+    public string? Tags { get; set; } = string.Empty; // Если нужны теги
+    public string? AllowedUserIds { get; set; }
+    public string? AllowedTeamIds { get; set; }
 }
 
 public class TestQuestion

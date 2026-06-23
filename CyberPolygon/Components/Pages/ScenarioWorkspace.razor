@@ -2,6 +2,8 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 @using System.Threading
+@using Microsoft.EntityFrameworkCore
+@using CyberPolygon.Data
 @implements IDisposable
 @rendermode InteractiveServer
 
@@ -12,6 +14,7 @@
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 @inject IWebHostEnvironment Env
+@inject IDbContextFactory<CyberPolygon.Data.ApplicationDbContext> ContextFactory
 
 <PageTitle>Терминал: @(scenario?.Title ?? "Загрузка...")</PageTitle>
 <RadzenComponents />
@@ -56,11 +59,17 @@
         border-radius: 6px;
         padding: 20px;
         margin-bottom: 20px;
+        transition: all 0.3s ease;
     }
 
     .f-correct {
         border-color: var(--success-color) !important;
         background: rgba(152, 195, 121, 0.05);
+    }
+
+    .f-failed {
+        border-color: var(--danger-color) !important;
+        background: rgba(224, 108, 117, 0.05);
     }
 
     .dark-input {
@@ -75,7 +84,6 @@
             border-color: var(--accent-cyan) !important;
         }
 
-    /* Блюр зона */
     .blur-zone-wrapper {
         position: relative;
         border: 1px solid var(--border-color);
@@ -138,50 +146,6 @@
             border-color: var(--accent-cyan);
             color: var(--accent-cyan);
         }
-
-    /* Таблица админа */
-    .rz-datagrid {
-        background-color: var(--bg-card) !important;
-        border: 1px solid var(--border-color) !important;
-        border-radius: 8px !important;
-    }
-
-    .rz-grid-table thead th {
-        background-color: #1a1d21 !important;
-        color: var(--accent-cyan) !important;
-        border-bottom: 1px solid var(--border-color) !important;
-        border-right: 1px solid var(--border-color) !important;
-    }
-
-    .rz-grid-table tbody tr {
-        background-color: var(--bg-card) !important;
-        color: #8fa0b5 !important;
-    }
-
-        .rz-grid-table tbody tr:hover {
-            background-color: #1e2d3d !important;
-        }
-
-    .rz-grid-table td {
-        border-bottom: 1px solid var(--border-color) !important;
-        border-right: 1px solid var(--border-color) !important;
-    }
-
-    .rz-pager {
-        background-color: #1a1d21 !important;
-        border-top: 1px solid var(--border-color) !important;
-        color: #8fa0b5 !important;
-    }
-
-    .rz-pager-button {
-        background: transparent !important;
-        color: #8fa0b5 !important;
-    }
-
-        .rz-pager-button.rz-state-active {
-            background-color: var(--accent-cyan) !important;
-            color: #1e1e1e !important;
-        }
 </style>
 
 <div class="workspace-container p-4">
@@ -197,6 +161,11 @@
                     <RadzenButton Icon="arrow_back" ButtonStyle="ButtonStyle.Secondary" Variant="Variant.Outlined" class="mb-4" Click="@(() => NavigationManager.NavigateTo("scenario"))" Style="color: #8fa0b5; border-color: var(--border-color);" />
 
                     <h3 style="color: var(--accent-cyan); font-weight: bold; margin-bottom: 15px;">@scenario.Title</h3>
+
+                    @if (scenario.Scope == VisibilityScope.TeamOnly)
+                    {
+                        <div class="mb-3"><span class="badge" style="background: rgba(229,192,123,0.1); border: 1px solid var(--warning-color); color: var(--warning-color); padding: 6px 12px;"><RadzenIcon Icon="groups" Style="font-size: 1rem; margin-top: -2px; margin-right: 5px;" /> КОМАНДНЫЙ РЕЖИМ</span></div>
+                    }
 
                     @if (currentUserProgress.Status == AttemptStatus.InProgress && scenario.DurationInMinutes > 0)
                     {
@@ -225,12 +194,12 @@
                     else if (currentUserProgress.Status == AttemptStatus.InProgress)
                     {
                         <div class="p-3 mb-3 rounded text-center" style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color);">Текущий счет: <b style="color: var(--accent-cyan); font-size: 1.2rem;">@totalScore XP</b></div>
-                        <RadzenButton Text="ЗАВЕРШИТЬ И ОТПРАВИТЬ ОТЧЕТ" class="w-100 py-2" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Outlined" Click="CompleteScenario" />
+                        <RadzenButton Text="ЗАВЕРШИТЬ МИССИЮ" class="w-100 py-2" ButtonStyle="ButtonStyle.Danger" Variant="Variant.Outlined" Click="CompleteScenario" />
                     }
                     else if (currentUserProgress.Status == AttemptStatus.Completed)
                     {
                         <div class="p-4 text-center rounded" style="border: 1px solid var(--success-color); background: rgba(152,195,121,0.1);">
-                            <h4 style="color: var(--success-color); font-weight: bold; margin-bottom: 5px;">СЦЕНАРИЙ УСПЕШНО ЗАВЕРШЕН</h4>
+                            <h4 style="color: var(--success-color); font-weight: bold; margin-bottom: 5px;">СЦЕНАРИЙ ЗАВЕРШЕН</h4>
                             <p style="margin: 0; color: #cbe0f5;">Итоговый счет: <b style="font-size: 1.2rem;">@currentUserProgress.Score XP</b></p>
                         </div>
                     }
@@ -301,29 +270,60 @@
                         @foreach (var qState in questionStates)
                         {
                             var index = questionStates.IndexOf(qState);
+                            bool isLocked = !qState.IsCorrect && qState.Question.PenaltyPoints > 0 && qState.CurrentAward <= 0;
+
                             @if (scenario.GameMode == ScenarioGameMode.AllAtOnce || index == 0 || questionStates[index - 1].IsCorrect)
                             {
-                                <div class="flag-block @(qState.IsCorrect ? "f-correct" : "")">
+                                <div class="flag-block @(qState.IsCorrect ? "f-correct" : (isLocked ? "f-failed" : ""))" @key="qState.Question.Id">
                                     <div class="d-flex justify-content-between mb-3">
                                         <span style="color: var(--accent-blue); font-weight: bold;">ЗАДАНИЕ №@(index + 1)</span>
                                         <div style="font-family: monospace; font-size: 0.85rem;">
-                                            <span style="color: var(--success-color);">+@qState.CurrentAward XP</span> | <span style="color: var(--danger-color);">-@qState.Question.PenaltyPoints XP</span>
+                                            @if (isLocked)
+                                            {
+                                                <span style="color: var(--danger-color); font-weight: bold;">0 XP</span>
+                                            }
+                                            else
+                                            {
+                                                <span style="color: var(--success-color);">+@qState.CurrentAward XP</span>
+                                                @if (qState.Question.PenaltyPoints > 0)
+                                                {
+                                                    <span style="color: var(--text-muted);"> | </span> <span style="color: var(--danger-color);">-@qState.Question.PenaltyPoints XP</span>
+                                                }
+                                            }
                                         </div>
                                     </div>
 
                                     <p style="font-size: 1rem; margin-bottom: 15px; color: #cbe0f5;">@qState.Question.Text</p>
 
                                     <div class="d-flex gap-2 align-items-center">
-                                        <RadzenTextBox @bind-Value="@qState.UserAnswer" Disabled="@qState.IsCorrect" Placeholder="@(qState.IsCorrect ? "Ответ принят" : "Введите ваш ответ или флаг...")" class="w-100 dark-input" @onkeypress="@(async (e) => await HandleKeyPress(e, qState))" />
-                                        @if (!qState.IsCorrect)
+                                        <RadzenTextBox @bind-Value="@qState.UserAnswer"
+                                                       Disabled="@(qState.IsCorrect || isLocked)"
+                                                       Placeholder="@(qState.IsCorrect ? "Ответ принят" : (isLocked ? "Заблокировано (попытки исчерпаны)" : "Введите ваш ответ или флаг..."))"
+                                                       class="w-100 dark-input"
+                                                       @onkeypress="@(async (e) => await HandleKeyPress(e, qState))" />
+
+                                        @if (!qState.IsCorrect && !isLocked)
                                         {
                                             <button class="btn-action" style="padding: 8px 16px; font-size: 0.85rem;" @onclick="@(async () => await CheckAnswer(qState))">ПРОВЕРИТЬ</button>
                                         }
-                                        else
+                                        else if (qState.IsCorrect)
                                         {
                                             <RadzenIcon Icon="check_circle" Style="color: var(--success-color); font-size: 2rem;" />
                                         }
+                                        else if (isLocked)
+                                        {
+                                            <RadzenIcon Icon="lock" Style="color: var(--danger-color); font-size: 2rem;" title="Попытки исчерпаны" />
+                                        }
                                     </div>
+
+                                    @if (!qState.IsCorrect && !isLocked && !string.IsNullOrEmpty(qState.Question.ExampleAnswer))
+                                    {
+                                        <div style="margin-top: 6px; font-size: 0.8rem; color: var(--text-muted); padding-left: 5px; font-family: monospace;">
+                                            <RadzenIcon Icon="help_outline" Style="font-size: 0.9rem; vertical-align: middle; margin-right: 4px; color: var(--accent-cyan);" />
+                                            Формат ответа: <span style="color: var(--text-light);">@qState.Question.ExampleAnswer</span>
+                                        </div>
+                                    }
+
                                     @if (!string.IsNullOrEmpty(qState.FeedbackMessage))
                                     {
                                         <div style="margin-top: 10px; font-size: 0.9rem; font-family: monospace; color: @(qState.IsCorrect ? "var(--success-color)" : "var(--danger-color)");">@qState.FeedbackMessage</div>
@@ -331,72 +331,6 @@
                                 </div>
                             }
                         }
-
-                        @* БЛОК АДМИНА НИЖЕ ЗАДАНИЙ *@
-                        <AuthorizeView Roles="Admin">
-                            <Authorized>
-                                <div class="mt-5 p-4" style="background: rgba(224, 108, 117, 0.02); border: 1px solid rgba(224, 108, 117, 0.2); border-radius: 8px;">
-                                    <div class="d-flex justify-content-between align-items-center mb-4">
-                                        <h5 style="color: var(--danger-color); font-weight: bold; margin: 0;"><RadzenIcon Icon="monitor_heart" Style="vertical-align: middle; margin-right: 8px;" /> Мониторинг прохождений</h5>
-                                        <button class="btn-action" style="background: var(--danger-color); color: white; padding: 6px 16px; font-size: 0.8rem;" @onclick="ResetAllProgress">Сбросить ВСЕ</button>
-                                    </div>
-
-                                    @if (completedUsers == null || !completedUsers.Any())
-                                    {
-                                        <div class="text-center py-4" style="color: #8fa0b5;"><RadzenIcon Icon="cloud_off" Style="font-size: 2rem; color: var(--border-color);" /><br />Активных прохождений не обнаружено</div>
-                                    }
-                                    else
-                                    {
-                                        <RadzenDataGrid Data="@completedUsers" TItem="UserScenarioProgressDto" AllowPaging="true" PageSize="10" Density="Density.Compact">
-                                            <Columns>
-                                                <RadzenDataGridColumn TItem="UserScenarioProgressDto" Title="Агент / Команда">
-                                                    <Template Context="data">
-                                                        <div class="d-flex flex-column">
-                                                            @if (data.IsTeamAttempt)
-                                                            {
-                                                                <span style="color: #cbe0f5; font-weight: bold;">Команда: @data.TeamName</span>
-                                                            }
-                                                            else
-                                                            {
-
-                                                                <span style="color: #cbe0f5; font-weight: bold;">@data.UserName</span> <span style="color: #8fa0b5; font-size: 0.75rem;">@data.Email</span>
-                                                            }
-                                                        </div>
-                                                    </Template>
-                                                </RadzenDataGridColumn>
-                                                <RadzenDataGridColumn TItem="UserScenarioProgressDto" Title="Статус" Width="140px" TextAlign="TextAlign.Center">
-                                                    <Template Context="data">
-                                                        @if (data.Status == AttemptStatus.InProgress)
-                                                        {
-                                                            <span style="color: var(--accent-cyan); font-weight: bold;">В ПРОЦЕССЕ</span>
-                                                        }
-                                                        else if (data.Status == AttemptStatus.Completed)
-                                                        {
-
-                                                            <span style="color: var(--success-color); font-weight: bold;">УСПЕХ</span>
-                                                        }
-                                                        else if (data.Status == AttemptStatus.Failed)
-                                                        {
-
-                                                            <span style="color: var(--danger-color); font-weight: bold;">ПРОВАЛ</span>
-                                                        }
-                                                    </Template>
-                                                </RadzenDataGridColumn>
-                                                <RadzenDataGridColumn TItem="UserScenarioProgressDto" Property="Score" Title="Баллы" Width="110px" TextAlign="TextAlign.Center">
-                                                    <Template Context="data"><span style="color: var(--accent-cyan); font-weight: bold;">@data.Score XP</span></Template>
-                                                </RadzenDataGridColumn>
-                                                <RadzenDataGridColumn TItem="UserScenarioProgressDto" Title="Действия" Width="80px" TextAlign="TextAlign.Center">
-                                                    <Template Context="data">
-                                                        <button class="btn-zoom" style="color: #e5c07b; border-color: rgba(229, 192, 123, 0.3);" @onclick="@(async () => await ResetSessionById(data.Id))"><RadzenIcon Icon="restart_alt" /></button>
-                                                    </Template>
-                                                </RadzenDataGridColumn>
-                                            </Columns>
-                                        </RadzenDataGrid>
-                                    }
-                                </div>
-                            </Authorized>
-                        </AuthorizeView>
-
                     </div>
                 }
             </div>
@@ -408,9 +342,9 @@
     [Parameter] public int Id { get; set; }
     private CyberScenario? scenario;
     private UserScenarioProgress? currentUserProgress;
-    private List<UserScenarioProgressDto> completedUsers = new();
-    private bool isAdmin = false;
     private string currentUserId = string.Empty;
+    private int? currentTeamId = null;
+
     private Timer? _timer;
     private TimeSpan timeLeft = TimeSpan.Zero;
     private int totalScore = 0;
@@ -426,7 +360,14 @@
         public bool IsCorrect { get; set; } = false;
         public string FeedbackMessage { get; set; } = string.Empty;
         public int FailedAttempts { get; set; } = 0;
-        public int CurrentAward => Math.Max(0, Question.AwardPoints - (FailedAttempts * Question.PenaltyPoints));
+        public int CurrentAward
+        {
+            get
+            {
+                if (Question.PenaltyPoints <= 0) return Question.AwardPoints;
+                return Math.Max(0, Question.AwardPoints - (FailedAttempts * Question.PenaltyPoints));
+            }
+        }
     }
 
     private List<UserQuestionState> questionStates = new();
@@ -439,14 +380,18 @@
     {
         scenario = await ScenarioService.GetByIdAsync(Id);
         if (scenario == null) { NavigationManager.NavigateTo("/scenario"); return; }
+
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
         if (user.Identity?.IsAuthenticated == true)
         {
             currentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
-            isAdmin = user.IsInRole("Admin");
+
+            using var ctx = await ContextFactory.CreateDbContextAsync();
+            var dbUser = await ctx.Set<ApplicationUser>().Include(u => u.Teams).AsNoTracking().FirstOrDefaultAsync(u => u.Id == currentUserId);
+            currentTeamId = dbUser?.Teams?.FirstOrDefault()?.Id;
+
             await LoadUserState();
-            if (isAdmin) await LoadAdminData();
         }
         SessionManager.TeamProgressChanged += OnTeamProgressChanged;
     }
@@ -462,13 +407,24 @@
 
     private async Task LoadUserState()
     {
-        currentUserProgress = await ScenarioService.GetUserProgressAsync(currentUserId, scenario!.Id);
+        using var context = await ContextFactory.CreateDbContextAsync();
+        var query = context.Set<UserScenarioProgress>().Where(p => p.CyberScenarioId == scenario!.Id);
 
-        // Если прогресса нет вообще, создаем объект "NotStarted" локально, чтобы UI не падал
-        if (currentUserProgress == null)
+        if (scenario!.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue)
         {
-            currentUserProgress = new UserScenarioProgress { Status = AttemptStatus.NotStarted };
+            // Ищем строго по TeamId (UserId здесь больше не является якорем)
+            query = query.Where(p => p.TeamId == currentTeamId.Value && p.IsTeamAttempt);
         }
+        else
+        {
+            query = query.Where(p => p.UserId == currentUserId && !p.IsTeamAttempt);
+        }
+
+        currentUserProgress = await query.FirstOrDefaultAsync(p => p.Status == AttemptStatus.InProgress)
+                            ?? await query.OrderByDescending(p => p.StartedAt).FirstOrDefaultAsync();
+
+        if (currentUserProgress == null)
+            currentUserProgress = new UserScenarioProgress { Status = AttemptStatus.NotStarted };
 
         totalScore = currentUserProgress.Score;
 
@@ -478,12 +434,10 @@
             try { var filePath = Path.Combine(Env.WebRootPath, scenario.SchemaPath.TrimStart('/')); if (System.IO.File.Exists(filePath)) schemaXmlContent = await System.IO.File.ReadAllTextAsync(filePath); }
             catch { }
         }
-        if (scenario.Questions != null && questionStates.Count == 0)
-        {
-            questionStates = scenario.Questions.Select(q => new UserQuestionState { Question = q }).ToList();
-        }
 
-        // Загружаем состояния ответов только если есть реальная попытка в БД
+        if (scenario.Questions != null && questionStates.Count == 0)
+            questionStates = scenario.Questions.Select(q => new UserQuestionState { Question = q }).ToList();
+
         if (currentUserProgress.Id != 0)
         {
             var statesDb = await ScenarioService.GetUserQuestionStatesAsync(currentUserProgress.Id);
@@ -506,7 +460,7 @@
 
     private async void OnTeamProgressChanged(int teamId)
     {
-        if (scenario?.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId == teamId)
+        if (scenario?.Scope == VisibilityScope.TeamOnly && currentTeamId == teamId)
         {
             await InvokeAsync(async () => { await LoadUserState(); StateHasChanged(); });
         }
@@ -514,38 +468,52 @@
 
     private async Task StartScenario()
     {
-        // Теперь StartScenarioAsync возвращает прогресс
-        currentUserProgress = await ScenarioService.StartScenarioAsync(currentUserId, scenario!.Id, scenario.DurationInMinutes);
-        // Перезагружаем состояние, чтобы подтянуть ID и всё остальное
-        await LoadUserState();
-        if (scenario!.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId.HasValue)
-            SessionManager.NotifyTeamUpdate(scenario.TargetTeamId.Value);
+        try
+        {
+            using var context = await ContextFactory.CreateDbContextAsync();
+
+            var newProgress = new UserScenarioProgress
+            {
+                CyberScenarioId = scenario!.Id,
+                UserId = scenario.Scope == VisibilityScope.TeamOnly ? null : currentUserId, // ВАЖНО: В командном режиме UserId сессии равен null, чтобы она принадлежала всей команде!
+                TeamId = scenario.Scope == VisibilityScope.TeamOnly ? currentTeamId : null,
+                IsTeamAttempt = scenario.Scope == VisibilityScope.TeamOnly,
+                Status = AttemptStatus.InProgress,
+                StartedAt = DateTime.UtcNow,
+                Score = 0
+            };
+
+            if (scenario.DurationInMinutes > 0)
+                newProgress.TargetEndTime = DateTime.UtcNow.AddMinutes(scenario.DurationInMinutes);
+
+            context.Set<UserScenarioProgress>().Add(newProgress);
+            await context.SaveChangesAsync();
+
+            await LoadUserState();
+
+            if (scenario.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue)
+                SessionManager.NotifyTeamUpdate(currentTeamId.Value);
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Ошибка старта", ex.Message);
+        }
     }
 
     private async Task CheckAnswer(UserQuestionState state)
     {
+        if (state.Question.PenaltyPoints > 0 && state.CurrentAward <= 0) return;
         if (string.IsNullOrWhiteSpace(state.UserAnswer) || currentUserProgress?.Status != AttemptStatus.InProgress) return;
 
-        var result = await ScenarioService.ProcessTeamAnswerAsync(
-            currentUserProgress.Id,
-            state.Question.Id,
-            state.UserAnswer,
-            currentUserId,
-            scenario!.TargetTeamId
-        );
+        var result = await ScenarioService.ProcessTeamAnswerAsync(currentUserProgress.Id, state.Question.Id, state.UserAnswer, currentUserId, currentTeamId);
 
         if (!result.Success)
         {
-            if (result.AlreadySolved)
-            {
-                state.FeedbackMessage = "Задание уже было решено!";
-                state.IsCorrect = true;
-            }
-            else
-            {
-                state.FailedAttempts++;
-                state.FeedbackMessage = $"❌ Отказ системы. Потенциальная награда за вопрос снижена.";
-            }
+            if (result.AlreadySolved) { state.FeedbackMessage = "Задание уже было решено!"; state.IsCorrect = true; }
+            else { state.FailedAttempts++; state.FeedbackMessage = $"❌ Отказ системы. Потенциальная награда за вопрос снижена."; }
+            StateHasChanged();
             return;
         }
 
@@ -553,22 +521,44 @@
         state.IsCorrect = true;
         state.FeedbackMessage = $"✓ Флаг принят! Начислено: +{result.EarnedPoints} XP.";
 
-        if (scenario!.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId.HasValue)
+        if (scenario!.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue)
+            SessionManager.NotifyTeamUpdate(currentTeamId.Value);
+
+        StateHasChanged();
+
+        if (questionStates.All(q => q.IsCorrect))
         {
-            SessionManager.NotifyTeamUpdate(scenario.TargetTeamId.Value);
+            await Task.Delay(1000);
+            await CompleteScenario();
         }
     }
 
     private async Task CompleteScenario()
     {
         StopTimer();
-        if (currentUserProgress != null)
+        if (currentUserProgress != null && currentUserProgress.Id != 0)
         {
-            await ScenarioService.CompleteProgressByIdAsync(currentUserProgress.Id);
+            using var context = await ContextFactory.CreateDbContextAsync();
+            var progressToUpdate = await context.Set<UserScenarioProgress>().FindAsync(currentUserProgress.Id);
+
+            if (progressToUpdate != null)
+            {
+                progressToUpdate.Status = AttemptStatus.Completed;
+                progressToUpdate.CompletedAt = DateTime.UtcNow;
+                if (progressToUpdate.StartedAt.HasValue)
+                    progressToUpdate.TimeSpent = progressToUpdate.CompletedAt.Value - progressToUpdate.StartedAt.Value;
+
+                context.Set<UserScenarioProgress>().Update(progressToUpdate);
+                await context.SaveChangesAsync();
+            }
+
             await LoadUserState();
             NotificationService.Notify(NotificationSeverity.Success, "Успех", $"Сценарий завершен. Итоговый счет: {totalScore}");
-            if (scenario!.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId.HasValue)
-                SessionManager.NotifyTeamUpdate(scenario.TargetTeamId.Value);
+
+            if (scenario!.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue)
+                SessionManager.NotifyTeamUpdate(currentTeamId.Value);
+
+            StateHasChanged();
         }
     }
 
@@ -585,11 +575,7 @@
             if (timeLeft.TotalSeconds <= 0)
             {
                 StopTimer();
-                await ScenarioService.FailUserProgressAsync(currentUserId, scenario!.Id);
-                await InvokeAsync(LoadUserState);
-                await InvokeAsync(StateHasChanged);
-                if (scenario!.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId.HasValue)
-                    SessionManager.NotifyTeamUpdate(scenario.TargetTeamId.Value);
+                await ForceFailScenario();
             }
             else
             {
@@ -606,56 +592,39 @@
             _timer = new Timer(TimerTick, null, 0, 1000);
         }
     }
+
     private void StopTimer() => _timer?.Dispose();
 
-    private void CheckTime()
+    private async void CheckTime()
     {
         if (currentUserProgress?.TargetEndTime != null && DateTime.UtcNow >= currentUserProgress.TargetEndTime.Value)
-        {
-            _ = ScenarioService.FailUserProgressAsync(currentUserId, scenario!.Id);
-            currentUserProgress.Status = AttemptStatus.Failed;
-        }
+            await ForceFailScenario();
     }
 
-    // КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Теперь создаем НОВУЮ попытку
+    private async Task ForceFailScenario()
+    {
+        if (currentUserProgress != null && currentUserProgress.Id != 0)
+        {
+            using var context = await ContextFactory.CreateDbContextAsync();
+            var progress = await context.Set<UserScenarioProgress>().FindAsync(currentUserProgress.Id);
+            if (progress != null)
+            {
+                progress.Status = AttemptStatus.Failed;
+                progress.CompletedAt = DateTime.UtcNow;
+                context.Set<UserScenarioProgress>().Update(progress);
+                await context.SaveChangesAsync();
+            }
+        }
+        await InvokeAsync(async () => { await LoadUserState(); StateHasChanged(); });
+        if (scenario!.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue)
+            SessionManager.NotifyTeamUpdate(currentTeamId.Value);
+    }
+
     private async Task RestartScenario()
     {
-        // Создаем новую попытку (старая Failed/Completed остается в истории)
-        currentUserProgress = await ScenarioService.RestartUserProgressAsync(currentUserId, scenario!.Id);
-
-        // Сбрасываем UI вопросов для новой попытки
-        if (scenario.Questions != null)
-        {
+        await StartScenario();
+        if (scenario!.Questions != null)
             questionStates = scenario.Questions.Select(q => new UserQuestionState { Question = q }).ToList();
-        }
-
-        // Перезагружаем состояние для синхронизации с новой попыткой
-        await LoadUserState();
-
-        if (scenario!.Scope == VisibilityScope.TeamOnly && scenario.TargetTeamId.HasValue)
-            SessionManager.NotifyTeamUpdate(scenario.TargetTeamId.Value);
-    }
-
-    private async Task LoadAdminData() => completedUsers = await ScenarioService.GetAllProgressForScenarioAsync(scenario!.Id);
-
-    private async Task ResetAllProgress()
-    {
-        await ScenarioService.ResetAllProgressForScenarioAsync(scenario!.Id);
-        await LoadAdminData();
-        if (!isAdmin) await LoadUserState();
-    }
-
-    private async Task ResetSessionById(int progressId)
-    {
-        // Для админа удаляем конкретную попытку
-        await ScenarioService.DeleteProgressByIdAsync(progressId);
-        await LoadAdminData();
-        // Если удалили текущую попытку пользователя, перезагружаем его UI
-        if (currentUserProgress != null && currentUserProgress.Id == progressId)
-        {
-            StopTimer();
-            await LoadUserState();
-        }
     }
 
     public void Dispose()

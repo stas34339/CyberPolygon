@@ -74,6 +74,11 @@ public class CyberScenario
     public VisibilityScope Scope { get; set; } = VisibilityScope.Public;
     public int? TargetGroupId { get; set; }
     public int? TargetTeamId { get; set; }
+    public string Tags { get; set; } = string.Empty;
+    public string Difficulty { get; set; } = "Easy";
+    public string? AllowedUserIds { get; set; }
+    public string? AllowedTeamIds { get; set; }
+
 }
 
 public class ScenarioQuestion
@@ -86,6 +91,7 @@ public class ScenarioQuestion
     public int AwardPoints { get; set; } = 10;
     public int PenaltyPoints { get; set; } = 5;
     public int CyberScenarioId { get; set; }
+    public string ExampleAnswer { get; set; } = string.Empty;
 }
 
 public class UserScenarioProgress

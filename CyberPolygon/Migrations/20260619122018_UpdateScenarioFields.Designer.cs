@@ -3,6 +3,7 @@ using System;
 using CyberPolygon.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CyberPolygon.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260619122018_UpdateScenarioFields")]
+    partial class UpdateScenarioFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -216,12 +219,6 @@ namespace CyberPolygon.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("AllowedTeamIds")
-                        .HasColumnType("text");
-
-                    b.Property<string>("AllowedUserIds")
-                        .HasColumnType("text");
-
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("text");
@@ -286,12 +283,6 @@ namespace CyberPolygon.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("AllowedTeamIds")
-                        .HasColumnType("text");
-
-                    b.Property<string>("AllowedUserIds")
-                        .HasColumnType("text");
-
                     b.Property<int>("Difficulty")
                         .HasColumnType("integer");
 
@@ -310,9 +301,6 @@ namespace CyberPolygon.Migrations
 
                     b.Property<string>("ShortDescription")
                         .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Tags")
                         .HasColumnType("text");
 
                     b.Property<int?>("TargetGroupId")
