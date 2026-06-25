@@ -3,6 +3,7 @@ using System;
 using CyberPolygon.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CyberPolygon.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260624072356_AddScenarioDevices")]
+    partial class AddScenarioDevices
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -61,15 +64,10 @@ namespace CyberPolygon.Migrations
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("text");
-
                     b.Property<int>("UserScenarioProgressId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("UserAnswerProgresses");
                 });
@@ -213,38 +211,6 @@ namespace CyberPolygon.Migrations
                     b.ToTable("Instructions");
                 });
 
-            modelBuilder.Entity("CyberPolygon.Data.ScenarioConnection", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CyberScenarioId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("FromDeviceId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("LinkType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("ToDeviceId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CyberScenarioId");
-
-                    b.HasIndex("FromDeviceId");
-
-                    b.HasIndex("ToDeviceId");
-
-                    b.ToTable("ScenarioConnection");
-                });
-
             modelBuilder.Entity("CyberPolygon.Data.ScenarioDevice", b =>
                 {
                     b.Property<int>("Id")
@@ -282,10 +248,6 @@ namespace CyberPolygon.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Os")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Type")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -856,15 +818,6 @@ namespace CyberPolygon.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("CyberPolygon.Data.ApplicationDbContext+UserAnswerProgress", b =>
-                {
-                    b.HasOne("CyberPolygon.Data.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("CyberPolygon.Data.ApplicationUser", b =>
                 {
                     b.HasOne("UserGroup", "Group")
@@ -884,33 +837,6 @@ namespace CyberPolygon.Migrations
                         .IsRequired();
 
                     b.Navigation("Instruction");
-                });
-
-            modelBuilder.Entity("CyberPolygon.Data.ScenarioConnection", b =>
-                {
-                    b.HasOne("CyberScenario", "CyberScenario")
-                        .WithMany("Connections")
-                        .HasForeignKey("CyberScenarioId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("CyberPolygon.Data.ScenarioDevice", "FromDevice")
-                        .WithMany()
-                        .HasForeignKey("FromDeviceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("CyberPolygon.Data.ScenarioDevice", "ToDevice")
-                        .WithMany()
-                        .HasForeignKey("ToDeviceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("CyberScenario");
-
-                    b.Navigation("FromDevice");
-
-                    b.Navigation("ToDevice");
                 });
 
             modelBuilder.Entity("CyberPolygon.Data.ScenarioDevice", b =>
@@ -1062,8 +988,6 @@ namespace CyberPolygon.Migrations
 
             modelBuilder.Entity("CyberScenario", b =>
                 {
-                    b.Navigation("Connections");
-
                     b.Navigation("Devices");
 
                     b.Navigation("Documents");

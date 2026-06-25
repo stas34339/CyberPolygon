@@ -25,7 +25,8 @@ namespace CyberPolygon.Data
         public DbSet<TestDocument> TestDocuments { get; set; }
         public DbSet<UserTestProgress> UserTestProgresses { get; set; }
         public DbSet<UserTestAnswer> UserTestAnswers { get; set; }
-
+        public ICollection<ScenarioDevice> Devices { get; set; } = new List<ScenarioDevice>();
+        public DbSet<ScenarioDevice> ScenarioDevices { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -56,6 +57,8 @@ namespace CyberPolygon.Data
 
             public string LastSubmittedAnswer { get; set; } = string.Empty;
             public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+            public string? UserId { get; set; }
+            public ApplicationUser? User { get; set; }
         }
         public class RussianIdentityErrorDescriber : IdentityErrorDescriber
         {

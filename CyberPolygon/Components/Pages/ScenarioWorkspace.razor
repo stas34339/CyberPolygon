@@ -25,15 +25,19 @@
         --bg-card: #1a2332;
         --border-color: #2a3a4a;
         --text-light: #cbe0f5;
+        --text-muted: #8fa0b5;
+        --accent-blue: #5ba3e3;
         --accent-cyan: #4ec3d1;
         --success-color: #98c379;
         --danger-color: #e06c75;
+        --warning-color: #e5c07b;
     }
 
     .workspace-container {
         background-color: var(--bg-main);
         min-height: 100vh;
         color: var(--text-light);
+        font-family: 'Segoe UI', sans-serif;
     }
 
     .panel-box {
@@ -41,16 +45,6 @@
         border: 1px solid var(--border-color);
         border-radius: 8px;
         padding: 25px;
-    }
-
-    .schema-box {
-        background: #0d1117;
-        border: 1px dashed var(--accent-cyan);
-        border-radius: 8px;
-        padding: 15px;
-        text-align: center;
-        margin-bottom: 30px;
-        position: relative;
     }
 
     .flag-block {
@@ -133,19 +127,209 @@
         }
 
     .btn-zoom {
-        background: transparent;
+        background: rgba(13, 17, 23, 0.7);
         border: 1px solid var(--border-color);
         color: #8fa0b5;
         border-radius: 6px;
         padding: 6px 10px;
         cursor: pointer;
         transition: all 0.2s;
+        backdrop-filter: blur(5px);
     }
 
         .btn-zoom:hover {
             border-color: var(--accent-cyan);
             color: var(--accent-cyan);
+            background: rgba(78, 195, 209, 0.1);
         }
+
+    .schema-box {
+        background-color: #131924 !important;
+        border: 1px dashed var(--accent-cyan);
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 30px;
+        position: relative;
+    }
+
+    #topology-move-layer {
+        position: absolute;
+        left: 0;
+        top: 0;
+        background-color: #1a2332;
+        background-image: radial-gradient(rgba(78, 195, 209, 0.2) 1px, transparent 1px);
+        background-size: 30px 30px;
+        box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
+        border: 1px solid rgba(78, 195, 209, 0.3);
+        border-radius: 12px;
+    }
+
+    .network-hotspot {
+        width: 32px;
+        height: 32px;
+        margin-left: -16px;
+        margin-top: -16px;
+        z-index: 100;
+    }
+
+    .hotspot-trigger {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 0 10px rgba(0,0,0,0.8);
+        transition: all 0.2s ease-in-out;
+    }
+
+        .hotspot-trigger i {
+            font-size: 1.1rem;
+            color: #1a1d21;
+        }
+
+        .hotspot-trigger.secure {
+            background: #98c379;
+            box-shadow: 0 0 12px rgba(152, 195, 121, 0.6);
+        }
+
+        .hotspot-trigger.compromised {
+            background: #e06c75;
+            box-shadow: 0 0 12px rgba(224, 108, 117, 0.8);
+            animation: cyberPulse 2s infinite;
+        }
+
+        .hotspot-trigger:hover {
+            transform: scale(1.25);
+            z-index: 110;
+        }
+
+    /* ИСПРАВЛЕННЫЙ ТУЛТИП: ОТКРЫВАЕТСЯ ВНИЗ И НЕ МЕРЦАЕТ */
+    .hotspot-tooltip {
+        position: absolute;
+        top: 42px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-10px);
+        width: 260px;
+        background: #131924;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 12px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.8);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        z-index: 500;
+    }
+
+        .hotspot-tooltip::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: 0;
+            width: 100%;
+            height: 20px;
+            background: transparent;
+        }
+
+        .hotspot-tooltip::after {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: 50%;
+            transform: translateX(-50%) rotate(45deg);
+            width: 10px;
+            height: 10px;
+            background: #131924;
+            border-left: 1px solid var(--border-color);
+            border-top: 1px solid var(--border-color);
+        }
+
+    .network-hotspot:hover .hotspot-tooltip {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateX(-50%) translateY(0);
+    }
+
+    .tooltip-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 6px;
+        margin-bottom: 8px;
+    }
+
+    .node-name {
+        font-weight: bold;
+        color: var(--text-light);
+        font-size: 0.9rem;
+    }
+
+    .node-status-badge {
+        font-size: 0.65rem;
+        font-weight: 800;
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+
+        .node-status-badge.secure {
+            background: rgba(152,195,121,0.15);
+            color: #98c379;
+        }
+
+        .node-status-badge.compromised {
+            background: rgba(224,108,117,0.15);
+            color: #e06c75;
+        }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.8rem;
+        margin-bottom: 4px;
+        font-family: monospace;
+    }
+
+        .info-row span {
+            color: var(--text-muted);
+        }
+
+        .info-row strong {
+            color: var(--accent-cyan);
+        }
+
+        .info-row .val {
+            color: var(--text-light);
+        }
+
+    .val-ports {
+        color: #e5c07b;
+    }
+
+    .tooltip-note {
+        margin-top: 6px;
+        padding-top: 6px;
+        border-top: 1px dashed var(--border-color);
+        font-size: 0.75rem;
+        color: #8fa0b5;
+        font-style: italic;
+    }
+
+    @@keyframes cyberPulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(224, 108, 117, 0.7);
+        }
+
+        70% {
+            box-shadow: 0 0 0 10px rgba(224, 108, 117, 0);
+        }
+
+        100% {
+            box-shadow: 0 0 0 0 rgba(224, 108, 117, 0);
+        }
+    }
 </style>
 
 <div class="workspace-container p-4">
@@ -221,55 +405,109 @@
                         <div class="lock-center-panel">
                             <RadzenIcon Icon="lock" Style="font-size: 4rem; color: var(--accent-cyan); margin-bottom: 15px;" />
                             <h5 style="color: white; font-weight: bold; text-transform: uppercase;">Система заблокирована</h5>
-                            <p style="color: #8fa0b5; font-size: 0.95rem; max-width: 70%;">Запустите сценарий на левой панели управления для получения доступа к сетевой инфраструктуре и полям ввода.</p>
-                        </div>
-                        <div class="blur-overlay-content">
-                            <div class="schema-box" style="height: 250px;"></div>
-                            <div class="flag-block"><div style="width: 60%; height: 20px; background: #343a42; margin-bottom:15px;"></div><div style="width: 100%; height: 40px; background: #131924;"></div></div>
+                            <p style="color: #8fa0b5; font-size: 0.95rem; max-width: 70%;">Запустите сценарий для получения доступа.</p>
                         </div>
                     </div>
                 }
                 else
                 {
                     <div class="panel-box" style="min-height: 600px;">
-                        @if (!string.IsNullOrEmpty(scenario.SchemaPath))
-                        {
-                            <div class="schema-box" style="height: 400px; display: flex; flex-direction: column;">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h5 style="color: #cbe0f5; font-weight: bold; margin: 0;">Архитектура сети</h5>
-                                    @if (!isXmlSchema)
-                                    {
-                                        <div style="display: flex; gap: 8px;">
-                                            <button class="btn-zoom" @onclick="ZoomIn"><RadzenIcon Icon="zoom_in" /></button>
-                                            <button class="btn-zoom" @onclick="ZoomOut"><RadzenIcon Icon="zoom_out" /></button>
-                                            <button class="btn-zoom" @onclick="ResetZoom"><RadzenIcon Icon="restart_alt" /></button>
-                                        </div>
-                                    }
-                                </div>
 
-                                <div style="flex-grow: 1; border-radius: 4px; overflow: hidden; background: #0d1117;">
-                                    @if (isXmlSchema)
+                        <div class="schema-box" style="height: 520px; display: flex; flex-direction: column;">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5 style="color: #cbe0f5; font-weight: bold; margin: 0; text-transform: uppercase; letter-spacing: 0.5px;">Карта инфраструктуры</h5>
+                                <div class="d-flex gap-2">
+                                    @if (scenario.Devices != null)
                                     {
-                                        <iframe id="drawio-workspace-iframe" style="width: 100%; height: 100%; border: none; background: #0d1117;"></iframe>
-                                    }
-                                    else
-                                    {
-                                        <div style="overflow: auto; width: 100%; height: 100%; padding: 10px;">
-                                            <img src="@scenario.SchemaPath" style="transform: scale(@schemaZoomLevel); transform-origin: top left; transition: transform 0.2s ease; max-width: none;" />
-                                        </div>
+                                        @foreach (var device in scenario.Devices)
+                                        {
+                                            <button type="button" class="btn-zoom" style="font-size: 0.8rem; padding: 4px 10px;" @onclick="() => FocusOnDevice(device.MapX, device.MapY)">
+                                                <RadzenIcon Icon="center_focus_strong" Style="font-size:0.9rem; vertical-align:middle; margin-right:3px;" /> @device.Name
+                                            </button>
+                                        }
                                     }
                                 </div>
                             </div>
-                        }
+
+                            <div style="flex-grow: 1; border-radius: 6px; position: relative; border: 1px solid rgba(255,255,255,0.05); overflow: hidden;">
+                                <div id="schema-drag-container" style="width: 100%; height: 100%; margin: 0; padding: 0; user-select: none; position: relative;">
+
+                                    <div id="topology-move-layer" style="width: @(canvasWidth)px; height: @(canvasHeight)px;">
+
+                                        @if (scenario.Connections != null && scenario.Connections.Any())
+                                        {
+                                            <svg style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; overflow: visible;">
+                                                <defs>
+                                                    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                                                        <feGaussianBlur stdDeviation="2" result="blur" />
+                                                        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                                                    </filter>
+                                                </defs>
+
+                                                @foreach (var conn in scenario.Connections)
+                                                {
+                                                    var fromNode = scenario.Devices.FirstOrDefault(d => d.Id == conn.FromDeviceId);
+                                                    var toNode = scenario.Devices.FirstOrDefault(d => d.Id == conn.ToDeviceId);
+
+                                                    if (fromNode != null && toNode != null)
+                                                    {
+                                                        bool isDangerLink = fromNode.IsCompromised || toNode.IsCompromised;
+                                                        string linkColor = isDangerLink ? "var(--danger-color)" : "rgba(78, 195, 209, 0.6)";
+                                                        string dashArray = conn.LinkType == "VPN" ? "6,6" : "0";
+
+                                                        <line x1="@fromNode.MapX" y1="@fromNode.MapY"
+                                                              x2="@toNode.MapX" y2="@toNode.MapY"
+                                                              stroke="@linkColor"
+                                                              stroke-width="2"
+                                                              stroke-dasharray="@dashArray"
+                                                              style="@(isDangerLink ? "filter: url(#glow);" : "")" />
+                                                    }
+                                                }
+                                            </svg>
+                                        }
+
+                                        @if (scenario.Devices != null)
+                                        {
+                                            @foreach (var device in scenario.Devices)
+                                            {
+                                                <div class="network-hotspot" @key="device.Id" style="position: absolute; left: @(device.MapX)px; top: @(device.MapY)px;">
+                                                    <div class="hotspot-trigger @(device.IsCompromised ? "compromised" : "secure")" @onclick="() => FocusOnDevice(device.MapX, device.MapY)">
+                                                        <RadzenIcon Icon="@(string.IsNullOrEmpty(device.Type) ? "dns" : device.Type)" />
+                                                    </div>
+                                                    <div class="hotspot-tooltip">
+                                                        <div class="tooltip-header">
+                                                            <span class="node-name">@device.Name</span>
+                                                            <span class="node-status-badge @(device.IsCompromised ? "compromised" : "secure")">
+                                                                @(device.IsCompromised ? "COMPROMISED" : "ONLINE")
+                                                            </span>
+                                                        </div>
+                                                        <div class="tooltip-body">
+                                                            <div class="info-row"><span>IP:</span> <strong>@device.IpAddress</strong></div>
+                                                            <div class="info-row"><span>OS:</span> <span class="val">@device.Os</span></div>
+                                                            <div class="info-row"><span>Порты:</span> <span class="val-ports">@device.OpenPorts</span></div>
+                                                            @if (!string.IsNullOrEmpty(device.Description))
+                                                            {
+                                                                <div class="tooltip-note">@device.Description</div>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            }
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                         <div class="d-flex justify-content-between align-items-center mb-4 mt-2">
-                            <h5 style="color: var(--accent-light-blue); font-weight: bold; margin: 0;">Терминал проверки</h5>
+                            <h5 style="color: #5ba3e3; font-weight: bold; margin: 0;">Терминал проверки</h5>
                             <span class="badge" style="background: rgba(78,195,209,0.1); border: 1px solid var(--accent-cyan); color: var(--accent-cyan); padding: 5px 12px;">Режим: @(scenario.GameMode == ScenarioGameMode.AllAtOnce ? "Свободный" : "Последовательный")</span>
                         </div>
 
-                        @foreach (var qState in questionStates)
+                        @for (int k = 0; k < questionStates.Count; k++)
                         {
-                            var index = questionStates.IndexOf(qState);
+                            var qState = questionStates[k];
+                            var index = k;
                             bool isLocked = !qState.IsCorrect && qState.Question.PenaltyPoints > 0 && qState.CurrentAward <= 0;
 
                             @if (scenario.GameMode == ScenarioGameMode.AllAtOnce || index == 0 || questionStates[index - 1].IsCorrect)
@@ -298,21 +536,13 @@
                                     <div class="d-flex gap-2 align-items-center">
                                         <RadzenTextBox @bind-Value="@qState.UserAnswer"
                                                        Disabled="@(qState.IsCorrect || isLocked)"
-                                                       Placeholder="@(qState.IsCorrect ? "Ответ принят" : (isLocked ? "Заблокировано (попытки исчерпаны)" : "Введите ваш ответ или флаг..."))"
+                                                       Placeholder="@(qState.IsCorrect ? "Ответ принят" : (isLocked ? "Заблокировано" : "Введите ответ..."))"
                                                        class="w-100 dark-input"
                                                        @onkeypress="@(async (e) => await HandleKeyPress(e, qState))" />
 
                                         @if (!qState.IsCorrect && !isLocked)
                                         {
                                             <button class="btn-action" style="padding: 8px 16px; font-size: 0.85rem;" @onclick="@(async () => await CheckAnswer(qState))">ПРОВЕРИТЬ</button>
-                                        }
-                                        else if (qState.IsCorrect)
-                                        {
-                                            <RadzenIcon Icon="check_circle" Style="color: var(--success-color); font-size: 2rem;" />
-                                        }
-                                        else if (isLocked)
-                                        {
-                                            <RadzenIcon Icon="lock" Style="color: var(--danger-color); font-size: 2rem;" title="Попытки исчерпаны" />
                                         }
                                     </div>
 
@@ -348,10 +578,10 @@
     private Timer? _timer;
     private TimeSpan timeLeft = TimeSpan.Zero;
     private int totalScore = 0;
-    private bool isXmlSchema = false;
-    private string schemaXmlContent = string.Empty;
-    private bool isViewerLoaded = false;
-    private double schemaZoomLevel = 1.0;
+    private bool isMapInitialized = false;
+
+    private int canvasWidth = 800;
+    private int canvasHeight = 550;
 
     public class UserQuestionState
     {
@@ -360,21 +590,15 @@
         public bool IsCorrect { get; set; } = false;
         public string FeedbackMessage { get; set; } = string.Empty;
         public int FailedAttempts { get; set; } = 0;
-        public int CurrentAward
-        {
-            get
-            {
-                if (Question.PenaltyPoints <= 0) return Question.AwardPoints;
-                return Math.Max(0, Question.AwardPoints - (FailedAttempts * Question.PenaltyPoints));
-            }
-        }
+        public int CurrentAward => Question.PenaltyPoints <= 0 ? Question.AwardPoints : Math.Max(0, Question.AwardPoints - (FailedAttempts * Question.PenaltyPoints));
     }
 
     private List<UserQuestionState> questionStates = new();
 
-    private void ZoomIn() => schemaZoomLevel += 0.2;
-    private void ZoomOut() { if (schemaZoomLevel > 0.4) schemaZoomLevel -= 0.2; }
-    private void ResetZoom() => schemaZoomLevel = 1.0;
+    private async Task FocusOnDevice(int x, int y)
+    {
+        await JSRuntime.InvokeVoidAsync("imageViewer.focusOnCoordinates", "schema-drag-container", x, y);
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -386,24 +610,20 @@
         if (user.Identity?.IsAuthenticated == true)
         {
             currentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
-
             using var ctx = await ContextFactory.CreateDbContextAsync();
             var dbUser = await ctx.Set<ApplicationUser>().Include(u => u.Teams).AsNoTracking().FirstOrDefaultAsync(u => u.Id == currentUserId);
             currentTeamId = dbUser?.Teams?.FirstOrDefault()?.Id;
-
             await LoadUserState();
         }
-
-        // Подписываемся на события команды
         SessionManager.TeamProgressChanged += OnTeamProgressChanged;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (isXmlSchema && !string.IsNullOrEmpty(schemaXmlContent) && !isViewerLoaded)
+        if (!isMapInitialized && currentUserProgress?.Status == AttemptStatus.InProgress)
         {
-            try { await JSRuntime.InvokeVoidAsync("setupDrawIoViewer", "drawio-workspace-iframe", schemaXmlContent); isViewerLoaded = true; }
-            catch (Exception ex) { Console.WriteLine($"Ошибка инициализации Draw.io: {ex.Message}"); }
+            isMapInitialized = true;
+            try { await JSRuntime.InvokeVoidAsync("imageViewer.init", "schema-drag-container", "topology-move-layer"); } catch { }
         }
     }
 
@@ -412,150 +632,92 @@
         using var context = await ContextFactory.CreateDbContextAsync();
         var query = context.Set<UserScenarioProgress>().Where(p => p.CyberScenarioId == scenario!.Id);
 
-        if (scenario!.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue)
-        {
-            query = query.Where(p => p.TeamId == currentTeamId.Value && p.IsTeamAttempt);
-        }
-        else
-        {
-            query = query.Where(p => p.UserId == currentUserId && !p.IsTeamAttempt);
-        }
+        if (scenario!.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue) query = query.Where(p => p.TeamId == currentTeamId.Value && p.IsTeamAttempt);
+        else query = query.Where(p => p.UserId == currentUserId && !p.IsTeamAttempt);
 
-        currentUserProgress = await query.FirstOrDefaultAsync(p => p.Status == AttemptStatus.InProgress)
-                            ?? await query.OrderByDescending(p => p.StartedAt).FirstOrDefaultAsync();
-
-        if (currentUserProgress == null)
-            currentUserProgress = new UserScenarioProgress { Status = AttemptStatus.NotStarted };
+        currentUserProgress = await query.FirstOrDefaultAsync(p => p.Status == AttemptStatus.InProgress) ?? await query.OrderByDescending(p => p.StartedAt).FirstOrDefaultAsync();
+        if (currentUserProgress == null) currentUserProgress = new UserScenarioProgress { Status = AttemptStatus.NotStarted };
 
         totalScore = currentUserProgress.Score;
+        CalculateCanvasBounds();
 
-        if (!string.IsNullOrEmpty(scenario.SchemaPath) && (scenario.SchemaPath.EndsWith(".xml", StringComparison.OrdinalIgnoreCase) || scenario.SchemaPath.EndsWith(".drawio", StringComparison.OrdinalIgnoreCase) || scenario.SchemaPath.EndsWith(".drawioa", StringComparison.OrdinalIgnoreCase)))
-        {
-            isXmlSchema = true;
-            try { var filePath = Path.Combine(Env.WebRootPath, scenario.SchemaPath.TrimStart('/')); if (System.IO.File.Exists(filePath)) schemaXmlContent = await System.IO.File.ReadAllTextAsync(filePath); }
-            catch { }
-        }
-
-        if (scenario.Questions != null && questionStates.Count == 0)
-            questionStates = scenario.Questions.Select(q => new UserQuestionState { Question = q }).ToList();
+        if (scenario.Questions != null && questionStates.Count == 0) questionStates = scenario.Questions.Select(q => new UserQuestionState { Question = q }).ToList();
 
         if (currentUserProgress.Id != 0)
         {
             var statesDb = await ScenarioService.GetUserQuestionStatesAsync(currentUserProgress.Id);
             foreach (var qState in questionStates)
             {
-                if (statesDb.TryGetValue(qState.Question.Id, out var dbInfo))
-                {
-                    qState.IsCorrect = dbInfo.IsCorrect;
-                    qState.FailedAttempts = dbInfo.FailedAttempts;
-                }
+                if (statesDb.TryGetValue(qState.Question.Id, out var dbInfo)) { qState.IsCorrect = dbInfo.IsCorrect; qState.FailedAttempts = dbInfo.FailedAttempts; }
             }
         }
+        if (currentUserProgress.Status == AttemptStatus.InProgress) { CheckTime(); StartTimer(); }
+    }
 
-        if (currentUserProgress.Status == AttemptStatus.InProgress)
+    private void CalculateCanvasBounds()
+    {
+        if (scenario?.Devices != null && scenario.Devices.Any())
         {
-            CheckTime();
-            StartTimer();
+            int maxX = scenario.Devices.Max(d => d.MapX);
+            int maxY = scenario.Devices.Max(d => d.MapY);
+
+            canvasWidth = Math.Max(800, maxX + 150);
+            canvasHeight = Math.Max(550, maxY + 150);
+        }
+        else
+        {
+            canvasWidth = 800;
+            canvasHeight = 550;
         }
     }
 
     private async void OnTeamProgressChanged(int teamId)
     {
-        // Когда другой тиммейт делает действие, загружаем новые данные и перерисовываем
         if (scenario?.Scope == VisibilityScope.TeamOnly && currentTeamId == teamId)
         {
-            await InvokeAsync(async () =>
-            {
-                await LoadUserState();
-                StateHasChanged();
-            });
+            await InvokeAsync(async () => { await LoadUserState(); StateHasChanged(); });
         }
     }
 
     private async Task StartScenario()
     {
-        try
+        using var context = await ContextFactory.CreateDbContextAsync();
+        var newProgress = new UserScenarioProgress
         {
-            using var context = await ContextFactory.CreateDbContextAsync();
+            CyberScenarioId = scenario!.Id,
+            UserId = scenario.Scope == VisibilityScope.TeamOnly ? null : currentUserId,
+            TeamId = scenario.Scope == VisibilityScope.TeamOnly ? currentTeamId : null,
+            IsTeamAttempt = scenario.Scope == VisibilityScope.TeamOnly,
+            Status = AttemptStatus.InProgress,
+            StartedAt = DateTime.UtcNow,
+            Score = 0
+        };
+        if (scenario.DurationInMinutes > 0) newProgress.TargetEndTime = DateTime.UtcNow.AddMinutes(scenario.DurationInMinutes);
+        context.Set<UserScenarioProgress>().Add(newProgress);
+        await context.SaveChangesAsync();
 
-            var newProgress = new UserScenarioProgress
-            {
-                CyberScenarioId = scenario!.Id,
-                UserId = scenario.Scope == VisibilityScope.TeamOnly ? null : currentUserId,
-                TeamId = scenario.Scope == VisibilityScope.TeamOnly ? currentTeamId : null,
-                IsTeamAttempt = scenario.Scope == VisibilityScope.TeamOnly,
-                Status = AttemptStatus.InProgress,
-                StartedAt = DateTime.UtcNow,
-                Score = 0
-            };
+        isMapInitialized = false;
+        await LoadUserState();
 
-            if (scenario.DurationInMinutes > 0)
-                newProgress.TargetEndTime = DateTime.UtcNow.AddMinutes(scenario.DurationInMinutes);
-
-            context.Set<UserScenarioProgress>().Add(newProgress);
-            await context.SaveChangesAsync();
-
-            await LoadUserState();
-
-            // Оповещаем команду о старте
-            if (scenario.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue)
-                SessionManager.NotifyTeamUpdate(currentTeamId.Value);
-
-            StateHasChanged();
-        }
-        catch (Exception ex)
-        {
-            NotificationService.Notify(NotificationSeverity.Error, "Ошибка старта", ex.Message);
-        }
+        if (scenario.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue) SessionManager.NotifyTeamUpdate(currentTeamId.Value);
+        StateHasChanged();
     }
 
     private async Task CheckAnswer(UserQuestionState state)
     {
-        if (state.Question.PenaltyPoints > 0 && state.CurrentAward <= 0) return;
         if (string.IsNullOrWhiteSpace(state.UserAnswer) || currentUserProgress?.Status != AttemptStatus.InProgress) return;
-
         var result = await ScenarioService.ProcessTeamAnswerAsync(currentUserProgress.Id, state.Question.Id, state.UserAnswer, currentUserId, currentTeamId);
-
         if (!result.Success)
         {
-            if (result.AlreadySolved)
-            {
-                state.FeedbackMessage = "Задание уже было решено!";
-                state.IsCorrect = true;
-            }
-            else
-            {
-                state.FailedAttempts++;
-                state.FeedbackMessage = $"❌ Отказ системы. Потенциальная награда за вопрос снижена.";
-            }
-
-            // ВАЖНОЕ ИЗМЕНЕНИЕ: Отправляем уведомление ВСЕГДА, даже при ошибке, чтобы у всех списались штрафные очки
-            if (scenario!.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue)
-            {
-                SessionManager.NotifyTeamUpdate(currentTeamId.Value);
-            }
-
-            StateHasChanged();
-            return;
+            if (result.AlreadySolved) state.IsCorrect = true;
+            else { state.FailedAttempts++; state.FeedbackMessage = $"❌ Отказ системы."; }
+            if (scenario!.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue) SessionManager.NotifyTeamUpdate(currentTeamId.Value);
+            StateHasChanged(); return;
         }
-
-        totalScore = result.NewTotalScore;
-        state.IsCorrect = true;
-        state.FeedbackMessage = $"✓ Флаг принят! Начислено: +{result.EarnedPoints} XP.";
-
-        // Оповещаем команду о сданном флаге
-        if (scenario!.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue)
-        {
-            SessionManager.NotifyTeamUpdate(currentTeamId.Value);
-        }
-
+        totalScore = result.NewTotalScore; state.IsCorrect = true;
+        if (scenario!.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue) SessionManager.NotifyTeamUpdate(currentTeamId.Value);
         StateHasChanged();
-
-        if (questionStates.All(q => q.IsCorrect))
-        {
-            await Task.Delay(1000);
-            await CompleteScenario();
-        }
+        if (questionStates.All(q => q.IsCorrect)) await CompleteScenario();
     }
 
     private async Task CompleteScenario()
@@ -564,34 +726,15 @@
         if (currentUserProgress != null && currentUserProgress.Id != 0)
         {
             using var context = await ContextFactory.CreateDbContextAsync();
-            var progressToUpdate = await context.Set<UserScenarioProgress>().FindAsync(currentUserProgress.Id);
-
-            if (progressToUpdate != null)
-            {
-                progressToUpdate.Status = AttemptStatus.Completed;
-                progressToUpdate.CompletedAt = DateTime.UtcNow;
-                if (progressToUpdate.StartedAt.HasValue)
-                    progressToUpdate.TimeSpent = progressToUpdate.CompletedAt.Value - progressToUpdate.StartedAt.Value;
-
-                context.Set<UserScenarioProgress>().Update(progressToUpdate);
-                await context.SaveChangesAsync();
-            }
-
+            var p = await context.Set<UserScenarioProgress>().FindAsync(currentUserProgress.Id);
+            if (p != null) { p.Status = AttemptStatus.Completed; p.CompletedAt = DateTime.UtcNow; context.Set<UserScenarioProgress>().Update(p); await context.SaveChangesAsync(); }
             await LoadUserState();
-            NotificationService.Notify(NotificationSeverity.Success, "Успех", $"Сценарий завершен. Итоговый счет: {totalScore}");
-
-            // Оповещаем команду о финише
-            if (scenario!.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue)
-                SessionManager.NotifyTeamUpdate(currentTeamId.Value);
-
+            if (scenario!.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue) SessionManager.NotifyTeamUpdate(currentTeamId.Value);
             StateHasChanged();
         }
     }
 
-    private async Task HandleKeyPress(KeyboardEventArgs e, UserQuestionState state)
-    {
-        if (e.Key == "Enter") await CheckAnswer(state);
-    }
+    private async Task HandleKeyPress(KeyboardEventArgs e, UserQuestionState state) { if (e.Key == "Enter") await CheckAnswer(state); }
 
     private async void TimerTick(object? state)
     {
@@ -610,22 +753,9 @@
         }
     }
 
-    private void StartTimer()
-    {
-        if (scenario!.DurationInMinutes > 0 && currentUserProgress?.TargetEndTime != null)
-        {
-            _timer?.Dispose();
-            _timer = new Timer(TimerTick, null, 0, 1000);
-        }
-    }
-
+    private void StartTimer() { if (scenario!.DurationInMinutes > 0 && currentUserProgress?.TargetEndTime != null) { _timer?.Dispose(); _timer = new Timer(TimerTick, null, 0, 1000); } }
     private void StopTimer() => _timer?.Dispose();
-
-    private async void CheckTime()
-    {
-        if (currentUserProgress?.TargetEndTime != null && DateTime.UtcNow >= currentUserProgress.TargetEndTime.Value)
-            await ForceFailScenario();
-    }
+    private async void CheckTime() { if (currentUserProgress?.TargetEndTime != null && DateTime.UtcNow >= currentUserProgress.TargetEndTime.Value) await ForceFailScenario(); }
 
     private async Task ForceFailScenario()
     {
@@ -654,9 +784,5 @@
             questionStates = scenario.Questions.Select(q => new UserQuestionState { Question = q }).ToList();
     }
 
-    public void Dispose()
-    {
-        StopTimer();
-        SessionManager.TeamProgressChanged -= OnTeamProgressChanged;
-    }
+    public void Dispose() { StopTimer(); SessionManager.TeamProgressChanged -= OnTeamProgressChanged; }
 }

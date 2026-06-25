@@ -69,6 +69,8 @@ public class CyberScenario
     public string? DocumentationFileName { get; set; }
     public ScenarioGameMode GameMode { get; set; } = ScenarioGameMode.AllAtOnce;
     public List<ScenarioQuestion> Questions { get; set; } = new();
+    public List<ScenarioDevice> Devices { get; set; } = new List<ScenarioDevice>();
+    public List<ScenarioConnection> Connections { get; set; } = new List<ScenarioConnection>();
 
     // НОВЫЕ ПОЛЯ ДОСТУПА
     public VisibilityScope Scope { get; set; } = VisibilityScope.Public;
@@ -112,6 +114,8 @@ public class UserScenarioProgress
     public DateTime? CompletedAt { get; set; }
 
     public CyberScenario Scenario { get; set; } = null!;
+
+    public UserTeam? Team { get; set; }
 }
 
 public class UserScenarioProgressDto

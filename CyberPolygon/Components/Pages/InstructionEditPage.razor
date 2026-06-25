@@ -77,6 +77,25 @@
         border-radius: 6px !important;
     }
 
+        /* СВЕТЛЫЕ ПЛЕЙСХОЛДЕРЫ ДЛЯ ВСЕХ ПОЛЕЙ */
+        .dark-input::placeholder, .rz-textbox::placeholder, .rz-textarea::placeholder {
+            color: #8fa0b5 !important;
+            opacity: 0.9 !important;
+            font-style: italic;
+        }
+
+    ::-webkit-input-placeholder {
+        color: #8fa0b5 !important;
+        opacity: 0.9 !important;
+        font-style: italic;
+    }
+
+    ::-moz-placeholder {
+        color: #8fa0b5 !important;
+        opacity: 0.9 !important;
+        font-style: italic;
+    }
+
     /* Исправление выпадающих списков Radzen */
     .rz-dropdown-panel, .rz-popup {
         background-color: var(--bg-card) !important;
@@ -86,6 +105,7 @@
     .rz-dropdown-item {
         color: var(--text-light) !important;
         background-color: transparent !important;
+        padding: 8px 12px !important;
     }
 
         .rz-dropdown-item:hover {
@@ -130,6 +150,7 @@
         cursor: pointer;
     }
 
+    /* ОБНОВЛЕННАЯ ЗОНА ЗАГРУЗКИ */
     .upload-zone {
         position: relative;
         border: 2px dashed var(--accent-cyan);
@@ -137,13 +158,20 @@
         padding: 30px 20px;
         text-align: center;
         background: rgba(78, 195, 209, 0.05);
-        transition: all 0.3s;
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
         cursor: pointer;
+        overflow: hidden;
     }
 
         .upload-zone:hover {
             background: rgba(78, 195, 209, 0.15);
             border-color: var(--accent-light-blue);
+            box-shadow: 0 4px 15px rgba(78, 195, 209, 0.2);
         }
 
         .upload-zone input[type=file] {
@@ -154,7 +182,19 @@
             left: 0;
             opacity: 0;
             cursor: pointer;
+            z-index: 2;
         }
+
+    .upload-icon {
+        font-size: 2.5rem;
+        color: var(--accent-cyan);
+        transition: transform 0.3s ease, color 0.3s ease;
+    }
+
+    .upload-zone:hover .upload-icon {
+        transform: translateY(-4px);
+        color: var(--accent-light-blue);
+    }
 
     .added-item-row {
         background: rgba(0, 0, 0, 0.2);
@@ -166,6 +206,16 @@
         align-items: center;
         margin-top: 10px;
     }
+
+    .upload-zone small, .upload-zone span {
+        color: var(--text-light) !important;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    }
+
+        /* Оставляем саму техническую подсказку чуть мягче основного текста, но контрастной */
+        .upload-zone span:last-child {
+            color: var(--text-muted) !important;
+        }
 </style>
 
 <div class="page-container">
@@ -186,12 +236,12 @@
             <div class="col-md-8">
                 <div class="cyber-card">
                     <div class="mb-4">
-                        <label class="cyber-label">Название инструкции</label>
-                        <RadzenTextBox @bind-Value="@Item.Title" class="w-100 rz-textbox" Placeholder="Введите название регламента или руководства..." />
+                        <label class="cyber-label">Название руководства</label>
+                        <RadzenTextBox @bind-Value="@Item.Title" class="w-100 rz-textbox" Placeholder="Например: Памятка по настройке VPN подключения..." />
                     </div>
                     <div class="mb-2">
-                        <label class="cyber-label">Содержание / Текст инструкции</label>
-                        <RadzenTextArea @bind-Value="@Item.Description" class="w-100 rz-textarea" Rows="14" Placeholder="Подробное описание..." />
+                        <label class="cyber-label">Текст инструкции</label>
+                        <RadzenTextArea @bind-Value="@Item.Description" class="w-100 rz-textarea" Rows="14" Placeholder="Подробное описание шагов, команд или регламентов..." />
                     </div>
                 </div>
             </div>
@@ -199,9 +249,24 @@
             <div class="col-md-4">
                 <div class="cyber-card mb-4">
                     <label class="cyber-label">Системная иконка</label>
-                    <RadzenDropDown @bind-Value="@Item.IconName" Data="@availableIcons" class="w-100 rz-dropdown" />
+
+                    <RadzenDropDown @bind-Value="@Item.IconName" Data="@availableIcons" class="w-100 rz-dropdown">
+                        <Template Context="icon">
+                            <div class="d-flex align-items-center gap-2">
+                                <RadzenIcon Icon="@icon" Style="font-size: 1.2rem; color: var(--accent-cyan);" />
+                                <span style="color: var(--text-light);">@GetIconDescription(icon)</span>
+                            </div>
+                        </Template>
+                        <ValueTemplate Context="icon">
+                            <div class="d-flex align-items-center gap-2">
+                                <RadzenIcon Icon="@icon" Style="font-size: 1.2rem; color: var(--accent-cyan);" />
+                                <span style="color: var(--text-light);">@GetIconDescription(icon)</span>
+                            </div>
+                        </ValueTemplate>
+                    </RadzenDropDown>
+
                     <div class="mt-4 text-center">
-                        <RadzenIcon Icon="@Item.IconName" Style="font-size: 4rem; color: var(--accent-cyan);" />
+                        <RadzenIcon Icon="@Item.IconName" Style="font-size: 4.5rem; color: var(--accent-cyan); text-shadow: 0 0 15px rgba(78, 195, 209, 0.4);" />
                     </div>
                 </div>
 
@@ -213,14 +278,15 @@
                     {
                         <div class="upload-zone">
                             <InputFile OnChange="LoadFiles" multiple />
-                            <RadzenIcon Icon="cloud_upload" Style="font-size: 3rem; color: var(--accent-cyan); display: block; margin: 0 auto 10px;" />
-                            <span style="color: var(--text-light); font-weight: 500;">Нажмите сюда или перетащите файлы</span>
+                            <RadzenIcon Icon="cloud_upload" class="upload-icon" />
+                            <span style="color: var(--text-light); font-weight: 500; display: block;">Нажмите сюда или перетащите файлы</span>
+                            <span style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-top: 2px;">Поддерживаются форматы PDF, DOCX, ZIP (Макс. 10 файлов)</span>
                         </div>
 
                         @if (uploadedFiles.Any())
                         {
                             <div class="mt-3">
-                                <label class="cyber-label">Подготовлено к загрузке:</label>
+                                <label class="cyber-label" style="font-size: 0.75rem; opacity: 0.8;">Подготовлено к загрузке:</label>
                                 @foreach (var file in uploadedFiles)
                                 {
                                     <div class="added-item-row">
@@ -238,7 +304,7 @@
                     }
                     else
                     {
-                        @* Отображение уже прикрепленных файлов (добавление новых в режиме редактирования зависит от твоего бекенда) *@
+                        @* Отображение уже прикрепленных файлов *@
                         @if (Item.Attachments != null && Item.Attachments.Any())
                         {
                             <div class="mt-2">
@@ -255,7 +321,7 @@
                         }
                         else
                         {
-                            <p class="text-muted text-center mt-3">Файлы отсутствуют.</p>
+                            <p class="text-center mt-3" style="color: var(--text-light); font-weight: 500;">Файлы отсутствуют.</p>
                         }
                     }
                 </div>
@@ -275,6 +341,23 @@
     {
         "assignment", "terminal", "security", "shield", "bug_report",
         "lock", "visibility", "help_center", "description", "code", "lan"
+    };
+
+    // Вспомогательный метод для красивого русского перевода названий иконок
+    private string GetIconDescription(string iconName) => iconName switch
+    {
+        "assignment" => "Документ / Задание",
+        "terminal" => "Терминал / Консоль",
+        "security" => "Безопасность / Щит",
+        "shield" => "Защита",
+        "bug_report" => "Уязвимость / Баг",
+        "lock" => "Блокировка / Доступ",
+        "visibility" => "Мониторинг / Обзор",
+        "help_center" => "Справка / Помощь",
+        "description" => "Описание / Файл",
+        "code" => "Исходный код",
+        "lan" => "Локальная сеть",
+        _ => iconName
     };
 
     protected override async Task OnInitializedAsync()

@@ -331,6 +331,8 @@ public class ScenarioService
         return await context.Scenarios
             .Include(s => s.Questions)
             .Include(s => s.Documents)
+            .Include(s => s.Devices)
+            .Include(s => s.Connections) // <--- ВОТ ЭТА СТРОКА ВКЛЮЧИТ ЛИНИИ В ТЕРМИНАЛЕ!
             .FirstOrDefaultAsync(s => s.Id == id);
     }
 

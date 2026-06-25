@@ -33,7 +33,7 @@
         background-color: var(--bg-main);
         min-height: calc(100vh - 60px);
         color: var(--text-light);
-        max-width: 1300px;
+        max-width: 1400px;
         margin: 0 auto;
         padding: 30px 20px;
     }
@@ -51,13 +51,11 @@
         z-index: 1050;
     }
 
-    /* ФИКС ДЛЯ RADZEN: Чтобы position: sticky работал внутри вкладок */
     .custom-tabs, .rz-tabview-panels, .rz-tabview-panel {
         overflow: visible !important;
         contain: none !important;
     }
 
-    /* Плавающий блок для вопросов */
     .sticky-questions-header {
         position: sticky;
         top: 85px;
@@ -94,6 +92,25 @@
         border: 1px solid var(--border-color) !important;
         color: var(--text-light) !important;
         border-radius: 6px !important;
+    }
+
+        /* СВЕТЛЫЕ ПЛЕЙСХОЛДЕРЫ ДЛЯ ВСЕХ ПОЛЕЙ */
+        .dark-input::placeholder, .rz-textbox::placeholder, .rz-textarea::placeholder {
+            color: #8fa0b5 !important;
+            opacity: 0.9 !important;
+            font-style: italic;
+        }
+
+    ::-webkit-input-placeholder {
+        color: #8fa0b5 !important;
+        opacity: 0.9 !important;
+        font-style: italic;
+    }
+
+    ::-moz-placeholder {
+        color: #8fa0b5 !important;
+        opacity: 0.9 !important;
+        font-style: italic;
     }
 
     .cyber-label {
@@ -171,33 +188,6 @@
             background: rgba(224, 108, 117, 0.15);
         }
 
-    .upload-zone {
-        position: relative;
-        border: 2px dashed var(--accent-cyan);
-        border-radius: 10px;
-        padding: 30px 20px;
-        text-align: center;
-        background: rgba(78, 195, 209, 0.05);
-        transition: all 0.3s;
-        cursor: pointer;
-    }
-
-        .upload-zone:hover {
-            background: rgba(78, 195, 209, 0.15);
-            border-color: var(--accent-light-blue);
-        }
-
-        .upload-zone input[type=file] {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            opacity: 0;
-            cursor: pointer;
-        }
-
-    /* ================= СТИЛИ ДЛЯ СПИСКОВ ДОСТУПА (DUAL-LIST) ================= */
     .scroll-list-panel {
         background: var(--bg-input);
         border: 1px solid var(--border-color);
@@ -277,18 +267,134 @@
                 background: rgba(224, 108, 117, 0.2);
                 border-color: var(--danger-color);
             }
+
+    /* ЗОНА ЗАГРУЗКИ */
+    .upload-zone {
+        position: relative;
+        border: 2px dashed var(--accent-cyan);
+        border-radius: 8px;
+        padding: 25px 20px;
+        text-align: center;
+        background: rgba(78, 195, 209, 0.05);
+        transition: all 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        cursor: pointer;
+        overflow: hidden;
+    }
+
+        .upload-zone:hover {
+            background: rgba(78, 195, 209, 0.15);
+            border-color: var(--accent-light-blue);
+            box-shadow: 0 4px 15px rgba(78, 195, 209, 0.2);
+        }
+
+        .upload-zone input[type=file] {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+    .upload-icon {
+        font-size: 2.5rem;
+        color: var(--accent-cyan);
+        transition: transform 0.3s ease, color 0.3s ease;
+    }
+
+    .upload-zone:hover .upload-icon {
+        transform: translateY(-4px);
+        color: var(--accent-light-blue);
+    }
+
+    /* ХОЛСТ КОНСТРУКТОРА */
+    .canvas-container {
+        width: 100%;
+        height: 600px;
+        background-color: #131924;
+        background-image: radial-gradient(rgba(78, 195, 209, 0.15) 1px, transparent 1px);
+        background-size: 25px 25px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        position: relative;
+        overflow: hidden;
+        cursor: crosshair;
+        box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+    }
+
+    .canvas-device {
+        position: absolute;
+        width: 44px;
+        height: 44px;
+        margin-left: -22px;
+        margin-top: -22px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+        border: 2px solid var(--accent-cyan);
+        background: #1a2332;
+        cursor: pointer;
+        transition: transform 0.15s;
+        z-index: 10;
+    }
+
+        .canvas-device:hover {
+            transform: scale(1.15);
+            z-index: 100;
+        }
+
+        .canvas-device.selected-dev {
+            border-color: var(--success-color);
+            box-shadow: 0 0 15px var(--success-color);
+            background: #131924;
+        }
+
+        .canvas-device i {
+            font-size: 1.3rem;
+            color: var(--text-light);
+        }
+
+        .canvas-device.selected-dev i {
+            color: var(--success-color);
+        }
+
+    .device-caption {
+        position: absolute;
+        top: 48px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(19, 25, 36, 0.9);
+        color: #fff;
+        font-size: 0.75rem;
+        padding: 2px 8px;
+        border-radius: 4px;
+        white-space: nowrap;
+        border: 1px solid var(--border-color);
+        pointer-events: none;
+    }
 </style>
+
 <RadzenComponents />
+
 <div class="page-container">
     <div class="page-header">
         <h2 style="color: var(--accent-light-blue); margin: 0; font-weight: 700; text-transform: uppercase;">
             @(Id.HasValue ? "Редактирование сценария" : "Создание сценария")
         </h2>
         <div class="d-flex align-items-center gap-3">
-            <button type="button" class="btn-primary-gradient" style="background: linear-gradient(135deg, #98c379 0%, #5ba3e3 100%);" @onclick="OnSave">
+            <button type="button" class="btn-primary-gradient" @onclick="OnSave">
                 <RadzenIcon Icon="save" Style="font-size: 1.2rem;" /> Сохранить в БД
             </button>
-            <button class="btn-outline-light" @onclick="Cancel">Отмена</button>
+            <button type="button" class="btn-outline-light" @onclick="Cancel">Отмена</button>
         </div>
     </div>
 
@@ -296,25 +402,20 @@
         <RadzenTabs @bind-SelectedIndex="@selectedTabIndex" class="w-100 custom-tabs">
             <Tabs>
                 <RadzenTabsItem>
-                    <Template Context="tabContext1">
-                        <span style="color: @(IsStep1Valid ? "var(--success-color)" : "var(--text-light)"); font-weight: @(IsStep1Valid ? "bold" : "normal");">
-                            <RadzenIcon Icon="@(IsStep1Valid ? "check_circle" : "info")" Style="vertical-align: middle; margin-right: 6px;" />
-                            1. Основное
-                        </span>
-                    </Template>
+                    <Template Context="tabContext1"><span style="color: @(IsStep1Valid ? "var(--success-color)" : "var(--text-light)");"><RadzenIcon Icon="@(IsStep1Valid ? "check_circle" : "info")" Style="vertical-align: middle; margin-right: 6px;" /> 1. Основное</span></Template>
                     <ChildContent>
                         <div class="row">
                             <div class="col-md-8">
                                 <div class="mb-4">
                                     <label class="cyber-label">Название сценария</label>
-                                    <RadzenTextBox @bind-Value="@Item.Title" class="w-100 rz-textbox" Placeholder="Введите название..." />
+                                    <RadzenTextBox @bind-Value="@Item.Title" class="w-100 rz-textbox" Placeholder="Например: Взлом корпоративного домена..." />
                                 </div>
                                 <div class="mb-4">
-                                    <label class="cyber-label">Описание сценария</label>
-                                    <RadzenTextArea @bind-Value="@Item.Description" class="w-100 rz-textarea" Rows="3" Placeholder="Краткое описание для карточки..." />
+                                    <label class="cyber-label">Краткое описание (для превью)</label>
+                                    <RadzenTextArea @bind-Value="@Item.Description" class="w-100 rz-textarea" Rows="3" Placeholder="В этом сценарии курсантам предстоит проанализировать логи..." />
                                 </div>
                                 <div class="mb-4">
-                                    <label class="cyber-label">Легенда сценария</label>
+                                    <label class="cyber-label">Подробная легенда и вводная информация</label>
                                     <RadzenHtmlEditor @bind-Value="@Item.Legend" style="height: 350px;" class="rz-html-editor" />
                                 </div>
                             </div>
@@ -322,17 +423,17 @@
                                 <div class="cyber-card">
                                     <h5 style="color: var(--accent-cyan); margin-bottom: 20px;">Метаданные</h5>
                                     <div class="mb-4">
-                                        <label class="cyber-label">Теги</label>
-                                        <RadzenTextBox @bind-Value="@Item.Tags" class="w-100 rz-textbox" Placeholder="linux, network, logs..." />
+                                        <label class="cyber-label">Теги (через запятую)</label>
+                                        <RadzenTextBox @bind-Value="@Item.Tags" class="w-100 rz-textbox" Placeholder="linux, active-directory, nmap..." />
                                     </div>
                                     <div class="mb-4">
-                                        <label class="cyber-label">Сложность</label>
+                                        <label class="cyber-label">Уровень сложности</label>
                                         <RadzenDropDown @bind-Value="@Item.Difficulty" TValue="string" Data="@difficulties" class="w-100 rz-dropdown" />
                                     </div>
                                     <div class="mb-4">
-                                        <label class="cyber-label">Время прохождения (мин)</label>
+                                        <label class="cyber-label">Лимит времени (минуты)</label>
                                         <RadzenNumeric @bind-Value="@Item.DurationInMinutes" Min="0" class="w-100 rz-numeric" />
-                                        <small class="text-muted">0 — без лимита</small>
+                                        <small class="text-muted" style="color: var(--text-light) !important; opacity: 0.8;">Оставьте 0 для прохождения без таймера</small>
                                     </div>
                                 </div>
                             </div>
@@ -341,61 +442,52 @@
                 </RadzenTabsItem>
 
                 <RadzenTabsItem>
-                    <Template Context="tabContext2">
-                        <span style="color: @(IsStep2Valid ? "var(--success-color)" : "var(--text-light)"); font-weight: @(IsStep2Valid ? "bold" : "normal");">
-                            <RadzenIcon Icon="@(IsStep2Valid ? "check_circle" : "quiz")" Style="vertical-align: middle; margin-right: 6px;" />
-                            2. Вопросы
-                        </span>
-                    </Template>
+                    <Template Context="tabContext2"><span style="color: @(IsStep2Valid ? "var(--success-color)" : "var(--text-light)");"><RadzenIcon Icon="@(IsStep2Valid ? "check_circle" : "quiz")" Style="vertical-align: middle; margin-right: 6px;" /> 2. Задания</span></Template>
                     <ChildContent>
                         <div class="sticky-questions-header">
                             <div style="width: 50%;">
-                                <label class="cyber-label">Отображение вопросов (Режим)</label>
+                                <label class="cyber-label">Формат выдачи заданий</label>
                                 <RadzenDropDown @bind-Value="@Item.GameMode" TValue="ScenarioGameMode" Data="@(Enum.GetValues(typeof(ScenarioGameMode)))" class="w-100 rz-dropdown">
                                     <Template Context="modeContext">
-                                        @((ScenarioGameMode)modeContext == ScenarioGameMode.AllAtOnce ? "Все задания сразу" : "Поочередно (последовательно)")
+                                        @((ScenarioGameMode)modeContext == ScenarioGameMode.AllAtOnce ? "Доступны все задания сразу" : "Открывать строго по очереди")
                                     </Template>
                                 </RadzenDropDown>
                             </div>
                             <button type="button" class="btn-primary-gradient" @onclick="AddQuestion">
-                                <RadzenIcon Icon="add" Style="font-size: 1.2rem; margin-top: -2px;" /> <span>Добавить задание</span>
+                                <RadzenIcon Icon="add" Style="font-size: 1.2rem; margin-top: -2px;" /> <span>Новый флаг</span>
                             </button>
                         </div>
-
                         @if (!Item.Questions.Any())
                         {
-                            <div class="text-center p-5 text-muted">Нет заданий. Нажмите «Добавить задание» на панели выше.</div>
+                            <div class="text-center p-5" style="color: var(--text-light); opacity: 0.8;">Список заданий пуст. Добавьте первый вопрос.</div>
                         }
-
-                        @foreach (var q in Item.Questions)
+                        @for (int i = 0; i < Item.Questions.Count; i++)
                         {
-                            var index = Item.Questions.IndexOf(q);
-                            <div class="cyber-card mb-3">
+                            var q = Item.Questions[i];
+                            <div class="cyber-card mb-3" @key="q">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <span style="color: var(--accent-cyan); font-weight: bold;">ЗАДАНИЕ №@(index + 1)</span>
-                                    <button type="button" class="btn-delete-icon" @onclick="@(() => Item.Questions.Remove(q))">
-                                        <RadzenIcon Icon="delete" />
-                                    </button>
+                                    <span style="color: var(--accent-cyan); font-weight: bold;">ЗАДАНИЕ №@(i + 1)</span>
+                                    <button type="button" class="btn-delete-icon" @onclick="@(() => Item.Questions.Remove(q))"><RadzenIcon Icon="delete" /></button>
                                 </div>
                                 <div class="row">
                                     <div class="col-12 mb-3">
-                                        <label class="cyber-label">Формулировка задания</label>
-                                        <RadzenTextBox @bind-Value="@q.Text" class="w-100 rz-textbox" />
+                                        <label class="cyber-label">Формулировка задачи</label>
+                                        <RadzenTextBox @bind-Value="@q.Text" class="w-100 rz-textbox" Placeholder="Найдите скрытый порт на сервере..." />
                                     </div>
                                     <div class="col-md-6 mb-3">
-                                        <label class="cyber-label" style="color: var(--success-color) !important;">Эталонный ответ (Флаг)</label>
-                                        <RadzenTextBox @bind-Value="@q.CorrectAnswer" class="w-100 rz-textbox" />
+                                        <label class="cyber-label" style="color: var(--success-color) !important;">Эталонный ответ (Сам Флаг)</label>
+                                        <RadzenTextBox @bind-Value="@q.CorrectAnswer" class="w-100 rz-textbox" Placeholder="8080" />
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label class="cyber-label" style="color: var(--accent-blue) !important;">Пример ответа (Подсказка формата)</label>
-                                        <RadzenTextBox @bind-Value="@q.ExampleAnswer" class="w-100 rz-textbox" Placeholder="Например: IP-адрес или flag{...}" />
+                                        <RadzenTextBox @bind-Value="@q.ExampleAnswer" class="w-100 rz-textbox" Placeholder="Например: flag{...} или IP-адрес" />
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="cyber-label">Награда (+ XP)</label>
+                                        <label class="cyber-label">Награда за успех (+ XP)</label>
                                         <RadzenNumeric @bind-Value="@q.AwardPoints" Min="1" class="w-100 rz-numeric" />
                                     </div>
                                     <div class="col-md-6">
-                                        <label class="cyber-label">Штраф за ошибку (- XP)</label>
+                                        <label class="cyber-label">Штраф за неверную попытку (- XP)</label>
                                         <RadzenNumeric @bind-Value="@q.PenaltyPoints" Min="0" class="w-100 rz-numeric" />
                                     </div>
                                 </div>
@@ -405,259 +497,272 @@
                 </RadzenTabsItem>
 
                 <RadzenTabsItem>
-                    <Template Context="tabContext3">
-                        <span style="color: @(IsStep3Valid ? "var(--success-color)" : "var(--text-light)"); font-weight: @(IsStep3Valid ? "bold" : "normal");">
-                            <RadzenIcon Icon="@(IsStep3Valid ? "check_circle" : "vpn_key")" Style="vertical-align: middle; margin-right: 6px;" />
-                            3. Доступ
-                        </span>
-                    </Template>
+                    <Template Context="tabContext3"><span style="color: var(--text-light);"><RadzenIcon Icon="vpn_key" Style="vertical-align: middle; margin-right: 6px;" /> 3. Доступ</span></Template>
                     <ChildContent>
                         <div class="row">
-                            <div class="col-md-6 mb-4">
+                            <div class="col-md-6">
                                 <div class="cyber-card" style="cursor: pointer; border-color: @(!isIndividual ? "var(--success-color)" : "var(--border-color)")" @onclick="SetTeamMode">
-                                    <div class="text-center">
-                                        <RadzenIcon Icon="groups" Style="font-size: 3rem; color: var(--warning-color);" />
-                                        <h4 class="mt-3 text-light">Командное прохождение</h4>
-                                        <p class="text-muted" style="font-size: 0.9rem;">Сценарий назначается боевым командам.</p>
-                                    </div>
+                                    <div class="text-center"><RadzenIcon Icon="groups" Style="font-size: 3rem; color: var(--warning-color);" /><h4 class="mt-3 text-light">Командный режим</h4></div>
                                     @if (!isIndividual)
                                     {
-                                        <hr style="border-color: var(--border-color);" />
-                                        <div @onclick:stopPropagation="true">
-                                            <div class="row mt-3">
-                                                <div class="col-6">
-                                                    <label class="cyber-label">Все команды</label>
-                                                    <div class="scroll-list-panel">
-                                                        @if (!teams.Any(t => !addedTeams.Any(at => at.Id == t.Id)))
-                                                        {
-                                                            <div class="text-muted text-center p-3" style="font-size: 0.85rem;">Все команды добавлены</div>
-                                                        }
-                                                        @foreach (var team in teams.Where(t => !addedTeams.Any(at => at.Id == t.Id)))
-                                                        {
-                                                            <div class="list-item-inline" @key="team.Id">
-                                                                <span class="item-text" title="@team.Name">👥 @team.Name</span>
-                                                                <button type="button" class="btn-item-action add" @onclick="() => addedTeams.Add(team)" title="Разрешить доступ"><RadzenIcon Icon="add" /></button>
-                                                            </div>
-                                                        }
-                                                    </div>
-                                                </div>
-                                                <div class="col-6">
-                                                    <label class="cyber-label" style="color: var(--success-color) !important;">Разрешен доступ</label>
-                                                    <div class="scroll-list-panel selected">
-                                                        @if (!addedTeams.Any())
-                                                        {
-                                                            <div class="text-muted text-center p-3" style="font-size: 0.85rem;">Команды не выбраны</div>
-                                                        }
-                                                        @foreach (var team in addedTeams.ToList())
-                                                        {
-                                                            <div class="list-item-inline active-item" @key="team.Id">
-                                                                <span class="item-text" title="@team.Name">👥 @team.Name</span>
-                                                                <button type="button" class="btn-item-action remove" @onclick="() => addedTeams.Remove(team)" title="Закрыть доступ"><RadzenIcon Icon="remove" /></button>
-                                                            </div>
-                                                        }
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    }
-                                </div>
-                            </div>
-
-                            <div class="col-md-6 mb-4">
-                                <div class="cyber-card" style="cursor: pointer; border-color: @(isIndividual ? "var(--success-color)" : "var(--border-color)")" @onclick="SetIndividualMode">
-                                    <div class="text-center">
-                                        <RadzenIcon Icon="person" Style="font-size: 3rem; color: var(--accent-blue);" />
-                                        <h4 class="mt-3 text-light">Индивидуальное прохождение</h4>
-                                        <p class="text-muted" style="font-size: 0.9rem;">Оставьте пустым для доступа всем, либо выберите.</p>
-                                    </div>
-                                    @if (isIndividual)
-                                    {
-                                        <hr style="border-color: var(--border-color);" />
-                                        <div @onclick:stopPropagation="true">
-                                            <div class="row mt-3">
-                                                <div class="col-6">
-                                                    <label class="cyber-label">Все оперативники</label>
-                                                    <div class="scroll-list-panel">
-                                                        @if (!users.Any(u => !addedUsers.Any(au => au.Id == u.Id)))
-                                                        {
-                                                            <div class="text-muted text-center p-3" style="font-size: 0.85rem;">Все добавлены</div>
-                                                        }
-                                                        @foreach (var usr in users.Where(u => !addedUsers.Any(au => au.Id == u.Id)))
-                                                        {
-                                                            <div class="list-item-inline" @key="usr.Id">
-                                                                <span class="item-text" title="@GetUserDisplayName(usr)">👤 @GetUserDisplayName(usr)</span>
-                                                                <button type="button" class="btn-item-action add" @onclick="() => addedUsers.Add(usr)" title="Разрешить доступ"><RadzenIcon Icon="add" /></button>
-                                                            </div>
-                                                        }
-                                                    </div>
-                                                </div>
-                                                <div class="col-6">
-                                                    <label class="cyber-label" style="color: var(--success-color) !important;">Разрешен доступ</label>
-                                                    <div class="scroll-list-panel selected">
-                                                        @if (!addedUsers.Any())
-                                                        {
-                                                            <div class="text-muted text-center p-3" style="font-size: 0.85rem;">Доступ всем</div>
-                                                        }
-                                                        @foreach (var usr in addedUsers.ToList())
-                                                        {
-                                                            <div class="list-item-inline active-item" @key="usr.Id">
-                                                                <span class="item-text" title="@GetUserDisplayName(usr)">👤 @GetUserDisplayName(usr)</span>
-                                                                <button type="button" class="btn-item-action remove" @onclick="() => addedUsers.Remove(usr)" title="Закрыть доступ"><RadzenIcon Icon="remove" /></button>
-                                                            </div>
-                                                        }
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    }
-                                </div>
-                            </div>
-                        </div>
-                    </ChildContent>
-                </RadzenTabsItem>
-
-                <RadzenTabsItem>
-                    <Template Context="tabContext4">
-                        <span style="color: @(IsStep4Valid ? "var(--success-color)" : "var(--text-light)"); font-weight: @(IsStep4Valid ? "bold" : "normal");">
-                            <RadzenIcon Icon="@(IsStep4Valid ? "check_circle" : "layers")" Style="vertical-align: middle; margin-right: 6px;" />
-                            4. Материалы
-                        </span>
-                    </Template>
-                    <ChildContent>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="cyber-card">
-                                    <label class="cyber-label">Инфраструктурная схема сети</label>
-                                    <div class="upload-zone">
-                                        <InputFile OnChange="UploadSchemaToDb" />
-                                        <RadzenIcon Icon="account_tree" Style="font-size: 3rem; color: var(--accent-cyan); display: block; margin: 0 auto 10px;" />
-                                        @if (SchemaLoaded || !string.IsNullOrEmpty(Item.SchemaPath))
-                                        {
-                                            <span style="color: var(--success-color); font-weight: bold;">Схема успешно прикреплена!</span>
+                                        <div class="row mt-3" @onclick:stopPropagation="true">
+                                            <div class="col-6"><div class="scroll-list-panel">@foreach (var x in teams.Where(t => !addedTeams.Any(at => at.Id == t.Id))){
+                                                <div class="list-item-inline"><span>👥 @x.Name</span><button type="button" class="btn-item-action add" @onclick="() => addedTeams.Add(x)"><RadzenIcon Icon="add" /></button></div>
+                                            }
+                                        </div></div>
+                                        <div class="col-6"><div class="scroll-list-panel selected">@foreach (var t in addedTeams.ToList()){
+                                            <div class="list-item-inline"><span>👥 @t.Name</span><button type="button" class="btn-item-action remove" @onclick="() => addedTeams.Remove(t)"><RadzenIcon Icon="remove" /></button></div>
                                         }
-                                        else
+                                    </div></div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="cyber-card" style="cursor: pointer; border-color: @(isIndividual ? "var(--success-color)" : "var(--border-color)")" @onclick="SetIndividualMode">
+                            <div class="text-center"><RadzenIcon Icon="person" Style="font-size: 3rem; color: var(--accent-blue);" /><h4 class="mt-3 text-light">Одиночный режим</h4></div>
+                            @if (isIndividual)
+                            {
+                                <div class="row mt-3" @onclick:stopPropagation="true">
+                                    <div class="col-6"><div class="scroll-list-panel">@foreach (var x in users.Where(u => !addedUsers.Any(au => au.Id == u.Id))){
+                                        <div class="list-item-inline"><span>👤 @GetUserDisplayName(x)</span><button type="button" class="btn-item-action add" @onclick="() => addedUsers.Add(x)"><RadzenIcon Icon="add" /></button></div>
+                                    }
+                                </div></div>
+                                <div class="col-6"><div class="scroll-list-panel selected">@foreach (var u in addedUsers.ToList()){
+                                    <div class="list-item-inline"><span>👤 @GetUserDisplayName(u)</span><button type="button" class="btn-item-action remove" @onclick="() => addedUsers.Remove(u)"><RadzenIcon Icon="remove" /></button></div>
+                                }
+                            </div></div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </ChildContent>
+</RadzenTabsItem>
+
+<RadzenTabsItem>
+    <Template Context="tabContext4"><span style="color: var(--text-light);"><RadzenIcon Icon="layers" Style="vertical-align: middle; margin-right: 6px;" /> 4. Материалы</span></Template>
+    <ChildContent>
+        <div class="cyber-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <label class="cyber-label">Дополнительные файлы для скачивания (Pcap, логи, скрипты)</label>
+                <button type="button" class="btn-outline-light" @onclick="AddDocumentSlot"><RadzenIcon Icon="add" Style="font-size: 1rem; margin-top: -2px;" /> Добавить файл</button>
+            </div>
+
+            @if (!Item.Documents.Any())
+            {
+                <div class="text-center p-4">
+                    <RadzenIcon Icon="folder_open" Style="font-size: 3rem; color: var(--text-muted); margin-bottom: 10px; display: block;" />
+                    <span style="color: var(--text-light); opacity: 0.8;">Файлы к сценарию пока не прикреплены. Нажмите кнопку "Добавить файл".</span>
+                </div>
+            }
+
+            @foreach (var doc in Item.Documents)
+            {
+                <div class="p-3 mb-3 rounded" style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color);" @key="doc">
+                    <div class="d-flex gap-2 mb-3">
+                        <RadzenTextBox @bind-Value="@doc.Title" Placeholder="Название документа (например: Дамп трафика .pcap)" class="w-100 rz-textbox" />
+                        <button type="button" class="btn-delete-icon" @onclick="@(() => Item.Documents.Remove(doc))"><RadzenIcon Icon="close" /></button>
+                    </div>
+
+                    <div class="upload-zone" style="border-color: @(string.IsNullOrEmpty(doc.FilePath) ? "var(--accent-cyan)" : "var(--success-color)")">
+                        <InputFile OnChange="@(e => UploadDocumentToDb(e, doc))" />
+                        @if (!string.IsNullOrEmpty(doc.FilePath))
+                        {
+                            <RadzenIcon Icon="check_circle" Style="font-size: 2.5rem; color: var(--success-color);" />
+                            <span style="color: var(--success-color); font-weight: bold; font-size: 1.1rem;">Файл загружен и готов!</span>
+                        }
+                        else
+                        {
+                            <RadzenIcon Icon="cloud_upload" class="upload-icon" />
+                            <span style="color: var(--text-light); font-weight: 500; font-size: 1.05rem;">Кликните или перетащите файл сюда</span>
+                            <small style="color: var(--text-light); opacity: 0.7; font-size: 0.8rem;">Поддерживаются любые форматы (макс. 25 МБ)</small>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </ChildContent>
+</RadzenTabsItem>
+
+<RadzenTabsItem>
+    <Template Context="tabContext5">
+        <span style="color: var(--accent-cyan); font-weight: bold;">
+            <RadzenIcon Icon="router" Style="vertical-align: middle; margin-right: 6px;" /> 5. Топология сети
+        </span>
+    </Template>
+    <ChildContent>
+        <div class="row">
+            <div class="col-md-5">
+                <div class="sticky-questions-header" style="top: 0; margin-bottom: 15px; padding: 10px 15px;">
+                    <span style="font-weight: bold; font-size: 1.1rem;">Узлов на карте: @Item.Devices.Count</span>
+                    <button type="button" class="btn-primary-gradient" style="padding: 6px 14px; font-size: 0.85rem;" @onclick="AddDevice">
+                        <RadzenIcon Icon="add" Style="font-size: 1rem;" /> Добавить ПК
+                    </button>
+                </div>
+                <div style="max-height: 400px; overflow-y: auto; padding-right: 5px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 10px;">
+                    @for (int j = 0; j < Item.Devices.Count; j++)
+                    {
+                        var d = Item.Devices[j];
+                        <div class="p-3 mb-3 rounded position-relative" style="background: @(selectedDevice == d ? "rgba(152,195,121,0.08)" : "rgba(0,0,0,0.2)"); border: 1px solid @(selectedDevice == d ? "var(--success-color)" : "var(--border-color)"); cursor: pointer;" @onclick="() => selectedDevice = d" @key="d">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <strong style="color: @(selectedDevice == d ? "var(--success-color)" : "var(--accent-cyan)"); font-size: 1.1rem;">#@(j + 1): @(string.IsNullOrWhiteSpace(d.Name) ? "Новый узел" : d.Name)</strong>
+                                <button type="button" class="btn-delete-icon" style="padding: 2px 6px;" @onclick="@(() => { Item.Devices.Remove(d); if (selectedDevice == d) selectedDevice = null; })"><RadzenIcon Icon="close" /></button>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <span style="font-size: 0.75rem; color: var(--text-light); opacity: 0.85; display:block; margin-bottom:4px;">Имя в системе:</span>
+                                    <input type="text" class="form-control form-control-sm dark-input" placeholder="Напр: DC-01" @bind="d.Name" />
+                                </div>
+                                <div class="col-6">
+                                    <span style="font-size: 0.75rem; color: var(--text-light); opacity: 0.85; display:block; margin-bottom:4px;">IP-адрес:</span>
+                                    <input type="text" class="form-control form-control-sm dark-input" placeholder="10.0.0.5" @bind="d.IpAddress" />
+                                </div>
+                                <div class="col-6">
+                                    <span style="font-size: 0.75rem; color: var(--text-light); opacity: 0.85; display:block; margin-bottom:4px;">ОС:</span>
+                                    <input type="text" class="form-control form-control-sm dark-input" placeholder="Windows Server" @bind="d.Os" />
+                                </div>
+                                <div class="col-6">
+                                    <span style="font-size: 0.75rem; color: var(--text-light); opacity: 0.85; display:block; margin-bottom:4px;">Открытые порты:</span>
+                                    <input type="text" class="form-control form-control-sm dark-input" placeholder="22, 80, 443" @bind="d.OpenPorts" />
+                                </div>
+                                <div class="col-4">
+                                    <span style="font-size: 0.75rem; color: var(--text-light); opacity: 0.85; display:block; margin-bottom:4px;">Иконка узла:</span>
+                                    <select class="form-select form-select-sm dark-input text-light" @bind="d.Type">
+                                        <option value="dns">🖧 Сервер</option>
+                                        <option value="router">🌐 Роутер</option>
+                                        <option value="computer">💻 ПК</option>
+                                        <option value="security">🛡 Фаервол</option>
+                                        <option value="laptop">📱 Ноутбук</option>
+                                    </select>
+                                </div>
+                                <div class="col-4">
+                                    <span style="font-size: 0.75rem; color: var(--text-light); opacity: 0.85; display:block; margin-bottom:4px;">Позиция X:</span>
+                                    <input type="number" class="form-control form-control-sm dark-input" @bind="d.MapX" />
+                                </div>
+                                <div class="col-4">
+                                    <span style="font-size: 0.75rem; color: var(--text-light); opacity: 0.85; display:block; margin-bottom:4px;">Позиция Y:</span>
+                                    <input type="number" class="form-control form-control-sm dark-input" @bind="d.MapY" />
+                                </div>
+                                <div class="col-12">
+                                    <span style="font-size: 0.75rem; color: var(--text-light); opacity: 0.85; display:block; margin-bottom:4px;">Описание (подсказка для игрока):</span>
+                                    <input type="text" class="form-control form-control-sm dark-input" placeholder="Главный контроллер домена предприятия..." @bind="d.Description" />
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mt-4 mb-2">
+                    <span class="cyber-label" style="margin:0;">Линии связи</span>
+                    <button type="button" class="btn-outline-light" style="padding: 4px 10px; font-size: 0.75rem;" @onclick="AddConnection"><RadzenIcon Icon="add" Style="font-size: 0.9rem; margin-top:-2px;" /> Добавить кабель</button>
+                </div>
+                <div style="max-height: 200px; overflow-y: auto;">
+                    @foreach (var c in Item.Connections)
+                    {
+                        <div class="p-2 mb-2 rounded" style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color);" @key="c">
+                            <div class="row g-2 align-items-center">
+                                <div class="col-4">
+                                    <select class="form-select form-select-sm dark-input text-light" style="font-size: 0.8rem;" value="@Item.Devices.IndexOf(c.FromDevice ?? Item.Devices.FirstOrDefault(d => d.Id == c.FromDeviceId && d.Id != 0))" @onchange="@(e => SetConnectionFrom(c, e.Value))">
+                                        <option value="-1" disabled>Откуда...</option>
+                                        @for (int i = 0; i < Item.Devices.Count; i++)
                                         {
-                                            <span style="color: var(--text-light); font-weight: 500;">Нажмите сюда или перетащите файл со схемой</span>
+                                            <option value="@i">@Item.Devices[i].Name</option>
                                         }
-                                    </div>
+                                    </select>
                                 </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="cyber-card">
-                                    <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <label class="cyber-label">Документы и методички</label>
-                                        <button type="button" class="btn-outline-light" style="padding: 4px 10px; font-size: 0.8rem; border-color: var(--accent-blue); color: var(--accent-blue);" @onclick="AddDocumentSlot">
-                                            <RadzenIcon Icon="add" Style="font-size: 1rem; margin-top: -2px;" /> Добавить файл
-                                        </button>
-                                    </div>
-
-                                    @if (!Item.Documents.Any())
-                                    {
-                                        <p class="text-muted text-center mt-4">Дополнительные файлы не прикреплены.</p>
-                                    }
-
-                                    @foreach (var doc in Item.Documents)
-                                    {
-                                        <div class="p-3 mb-2 rounded" style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color);">
-                                            <div class="d-flex gap-2 mb-2">
-                                                <RadzenTextBox @bind-Value="@doc.Title" Placeholder="Название документа" class="w-100 rz-textbox" />
-                                                <button type="button" class="btn-delete-icon" @onclick="@(() => Item.Documents.Remove(doc))"><RadzenIcon Icon="close" /></button>
-                                            </div>
-                                            <div class="upload-zone" style="padding: 15px;">
-                                                <InputFile OnChange="@(e => UploadDocumentToDb(e, doc))" />
-                                                @if (!string.IsNullOrEmpty(doc.FilePath))
-                                                {
-                                                    <span style="color: var(--success-color); font-weight: bold;">Файл загружен</span>
-                                                }
-                                                else
-                                                {
-                                                    <span style="color: var(--text-light); font-weight: 500;">Кликните для выбора файла</span>
-                                                }
-                                            </div>
-                                        </div>
-                                    }
+                                <div class="col-1 text-center px-0"><RadzenIcon Icon="arrow_right_alt" Style="color: var(--text-light); opacity: 0.8;" /></div>
+                                <div class="col-4">
+                                    <select class="form-select form-select-sm dark-input text-light" style="font-size: 0.8rem;" value="@Item.Devices.IndexOf(c.ToDevice ?? Item.Devices.FirstOrDefault(d => d.Id == c.ToDeviceId && d.Id != 0))" @onchange="@(e => SetConnectionTo(c, e.Value))">
+                                        <option value="-1" disabled>Куда...</option>
+                                        @for (int i = 0; i < Item.Devices.Count; i++)
+                                        {
+                                            <option value="@i">@Item.Devices[i].Name</option>
+                                        }
+                                    </select>
+                                </div>
+                                <div class="col-2 px-0">
+                                    <select class="form-select form-select-sm dark-input text-light" style="font-size: 0.8rem;" @bind="c.LinkType">
+                                        <option value="Ethernet">LAN</option>
+                                        <option value="VPN">VPN</option>
+                                    </select>
+                                </div>
+                                <div class="col-1 text-end">
+                                    <button type="button" class="btn-delete-icon" style="padding: 2px 4px;" @onclick="() => Item.Connections.Remove(c)"><RadzenIcon Icon="close" Style="font-size: 0.9rem;" /></button>
                                 </div>
                             </div>
                         </div>
-                    </ChildContent>
-                </RadzenTabsItem>
+                    }
+                </div>
+            </div>
 
-                <RadzenTabsItem>
-                    <Template Context="tabContext5">
-                        <span style="color: var(--text-light);">
-                            <RadzenIcon Icon="verified" Style="vertical-align: middle; margin-right: 6px;" />
-                            5. Сохранение
-                        </span>
-                    </Template>
-                    <ChildContent>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="cyber-card">
-                                    <h4 style="color: var(--accent-light-blue); margin-bottom: 20px;">Краткий обзор конфигурации</h4>
-                                    <ul class="list-unstyled" style="font-size: 1.05rem; line-height: 2;">
-                                        <li><strong style="color: var(--accent-cyan);">Название:</strong> @(string.IsNullOrWhiteSpace(Item.Title) ? "Не указано" : Item.Title)</li>
-                                        <li><strong style="color: var(--accent-cyan);">Сложность:</strong> @Item.Difficulty</li>
-                                        <li><strong style="color: var(--accent-cyan);">Заданий:</strong> @Item.Questions.Count шт.</li>
-                                        <li>
-                                            <strong style="color: var(--accent-cyan);">Формат:</strong>
-                                            @(isIndividual ? "Индивидуальный" : "Командный")
-                                            @(addedUsers.Any() || addedTeams.Any() ? "(Ограниченный доступ)" : "(Открытый доступ)")
-                                        </li>
-                                        <li><strong style="color: var(--accent-cyan);">Материалов:</strong> @Item.Documents.Count шт. + @(string.IsNullOrEmpty(Item.SchemaPath) ? "Без схемы" : "Схема загружена")</li>
-                                    </ul>
-                                </div>
-                            </div>
+            <div class="col-md-7">
+                <label class="cyber-label text-center mb-2">Виртуальный полигон</label>
+                <div class="canvas-container" @onclick="HandleCanvasClick">
+                    <svg style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; overflow: visible;">
+                        @foreach (var conn in Item.Connections)
+                        {
+                            var fromNode = conn.FromDevice ?? Item.Devices.FirstOrDefault(d => d.Id == conn.FromDeviceId && d.Id != 0);
+                            var toNode = conn.ToDevice ?? Item.Devices.FirstOrDefault(d => d.Id == conn.ToDeviceId && d.Id != 0);
 
-                            <div class="col-md-6">
-                                <div class="cyber-card text-center" style="padding: 40px 20px;">
-                                    <h4 style="color: var(--accent-cyan); margin-bottom: 25px;">Режим публикации</h4>
+                            if (fromNode != null && toNode != null)
+                            {
+                                string dashArray = conn.LinkType == "VPN" ? "6,6" : "0";
+                                <line x1="@fromNode.MapX" y1="@fromNode.MapY" x2="@toNode.MapX" y2="@toNode.MapY" stroke="rgba(78, 195, 209, 0.6)" stroke-width="2" stroke-dasharray="@dashArray" />
+                            }
+                        }
+                    </svg>
 
-                                    <div class="d-flex justify-content-center gap-3 mb-4 flex-wrap">
-                                        <button type="button" class="btn-outline-light" style="padding: 15px 30px; border-color: @(Item.IsVisible ? "var(--success-color)" : "var(--border-color)"); background: @(Item.IsVisible ? "rgba(152,195,121,0.1)" : "transparent");" @onclick="() => Item.IsVisible = true">
-                                            <RadzenIcon Icon="visibility" Style="vertical-align: middle; margin-right: 8px;" /> ОТКРЫТЬ ДОСТУП
-                                        </button>
-                                        <button type="button" class="btn-outline-light" style="padding: 15px 30px; border-color: @(!Item.IsVisible ? "var(--warning-color)" : "var(--border-color)"); background: @(!Item.IsVisible ? "rgba(229,192,123,0.1)" : "transparent");" @onclick="() => Item.IsVisible = false">
-                                            <RadzenIcon Icon="visibility_off" Style="vertical-align: middle; margin-right: 8px;" /> В ЧЕРНОВИК
-                                        </button>
-                                    </div>
-                                    <p class="text-muted">@(Item.IsVisible ? "Сценарий сразу появится в каталоге у целевой аудитории." : "Сценарий будет сохранен, но скрыт от пользователей.")</p>
-                                </div>
-                            </div>
+                    @foreach (var dev in Item.Devices)
+                    {
+                        var currentDev = dev;
+                        <div class="canvas-device @(selectedDevice == currentDev ? "selected-dev" : "")" style="left: @(currentDev.MapX)px; top: @(currentDev.MapY)px;" @onclick="() => selectedDevice = currentDev" @onclick:stopPropagation="true" @key="currentDev.Id">
+                            <RadzenIcon Icon="@(string.IsNullOrEmpty(currentDev.Type) ? "dns" : currentDev.Type)" />
+                            <div class="device-caption">@(string.IsNullOrWhiteSpace(currentDev.Name) ? "Без имени" : currentDev.Name)</div>
                         </div>
-                    </ChildContent>
-                </RadzenTabsItem>
-            </Tabs>
-        </RadzenTabs>
-    </RadzenTemplateForm>
+                    }
+                </div>
+                <div class="text-center mt-2" style="font-size:0.8rem; color: var(--text-light); opacity: 0.8;">Выберите ПК слева, а затем кликните по сетке полигона, чтобы задать его позицию.</div>
+            </div>
+        </div>
+    </ChildContent>
+</RadzenTabsItem>
+
+<RadzenTabsItem>
+    <Template Context="tabContext6"><span style="color: var(--text-light);"><RadzenIcon Icon="verified" Style="vertical-align: middle; margin-right: 6px;" /> 6. Готово</span></Template>
+    <ChildContent>
+        <div class="row">
+            <div class="col-md-6"><div class="cyber-card"><h4 style="color: var(--accent-light-blue); margin-bottom: 20px;">Краткая сводка</h4><ul class="list-unstyled" style="line-height: 2;"><li><strong>Название:</strong> @(string.IsNullOrEmpty(Item.Title) ? "Без названия" : Item.Title)</li><li><strong>Сетевых узлов:</strong> @Item.Devices.Count шт.</li><li><strong>Связей:</strong> @Item.Connections.Count шт.</li></ul></div></div>
+            <div class="col-md-6"><div class="cyber-card text-center" style="padding: 40px 20px;"><div class="d-flex justify-content-center gap-3 mb-4"><button type="button" class="btn-outline-light" style="border-color: @(Item.IsVisible ? "var(--success-color)" : "var(--border-color)");" @onclick="() => Item.IsVisible = true">ОТКРЫТЬ ДОСТУП ИГРОКАМ</button><button type="button" class="btn-outline-light" style="border-color: @(!Item.IsVisible ? "var(--warning-color)" : "var(--border-color)");" @onclick="() => Item.IsVisible = false">СОХРАНИТЬ В ЧЕРНОВИК</button></div></div></div>
+        </div>
+    </ChildContent>
+</RadzenTabsItem>
+</Tabs>
+</RadzenTabs>
+</RadzenTemplateForm>
 </div>
 
 @code {
     [Parameter] public int? Id { get; set; }
     private CyberScenario Item { get; set; } = new();
 
-    // Данные из БД
     private List<ApplicationUser> users = new();
     private List<UserTeam> teams = new();
-
-    // Списки добавленных сущностей для отображения в UI
     private List<ApplicationUser> addedUsers = new();
     private List<UserTeam> addedTeams = new();
 
+    private ScenarioDevice? selectedDevice;
     private int selectedTabIndex = 0;
-    private bool SchemaLoaded = false;
     private bool isIndividual = true;
-
     private readonly List<string> difficulties = new() { "Легкий", "Средний", "Сложный" };
 
     private bool IsStep1Valid => !string.IsNullOrWhiteSpace(Item.Title);
     private bool IsStep2Valid => Item.Questions.Any() && Item.Questions.All(q => !string.IsNullOrWhiteSpace(q.Text) && !string.IsNullOrWhiteSpace(q.CorrectAnswer));
-    private bool IsStep3Valid => true;
-    private bool IsStep4Valid => SchemaLoaded || !string.IsNullOrEmpty(Item.SchemaPath) || Item.Documents.Any();
 
     protected override async Task OnInitializedAsync()
     {
         using var context = await ContextFactory.CreateDbContextAsync();
-
         users = await context.Set<ApplicationUser>().AsNoTracking().ToListAsync();
         teams = await context.Set<UserTeam>().AsNoTracking().ToListAsync();
 
@@ -666,118 +771,69 @@
             Item = await context.Scenarios
                 .Include(s => s.Questions)
                 .Include(s => s.Documents)
+                .Include(s => s.Devices)
+                .Include(s => s.Connections)
                 .FirstOrDefaultAsync(s => s.Id == Id.Value) ?? new CyberScenario();
 
             isIndividual = Item.Scope != VisibilityScope.TeamOnly;
 
-            // Восстанавливаем список добавленных пользователей
-            if (!string.IsNullOrEmpty(Item.AllowedUserIds))
-            {
-                var userIds = Item.AllowedUserIds.Split(',', StringSplitOptions.RemoveEmptyEntries);
-                addedUsers = users.Where(u => userIds.Contains(u.Id)).ToList();
-            }
-
-            // Восстанавливаем список добавленных команд
-            if (!string.IsNullOrEmpty(Item.AllowedTeamIds))
-            {
-                var teamIds = Item.AllowedTeamIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse);
-                addedTeams = teams.Where(t => teamIds.Contains(t.Id)).ToList();
-            }
+            if (!string.IsNullOrEmpty(Item.AllowedUserIds)) { var userIds = Item.AllowedUserIds.Split(',', StringSplitOptions.RemoveEmptyEntries); addedUsers = users.Where(u => userIds.Contains(u.Id)).ToList(); }
+            if (!string.IsNullOrEmpty(Item.AllowedTeamIds)) { var teamIds = Item.AllowedTeamIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse); addedTeams = teams.Where(t => teamIds.Contains(t.Id)).ToList(); }
         }
         else
         {
-            Item = new CyberScenario
-            {
-                Questions = new List<ScenarioQuestion>(),
-                Documents = new List<ScenarioDocument>(),
-                IsVisible = false,
-                GameMode = ScenarioGameMode.AllAtOnce,
-                Difficulty = "Легкий",
-                Scope = VisibilityScope.Public
-            };
+            Item = new CyberScenario { Questions = new List<ScenarioQuestion>(), Documents = new List<ScenarioDocument>(), Devices = new List<ScenarioDevice>(), Connections = new List<ScenarioConnection>(), IsVisible = false, GameMode = ScenarioGameMode.AllAtOnce };
         }
     }
 
     private void SetIndividualMode() => isIndividual = true;
     private void SetTeamMode() => isIndividual = false;
-
-    private string GetUserDisplayName(ApplicationUser? u)
-    {
-        if (u == null) return "Оперативник";
-        var name = $"{u.LastName} {u.FirstName}".Trim();
-        return string.IsNullOrWhiteSpace(name) ? (u.UserName ?? "Оперативник") : name;
-    }
-
+    private string GetUserDisplayName(ApplicationUser? u) => u != null ? $"{u.LastName} {u.FirstName}".Trim() : "User";
     private void AddQuestion() => Item.Questions.Add(new ScenarioQuestion { AwardPoints = 10, PenaltyPoints = 5 });
     private void AddDocumentSlot() => Item.Documents.Add(new ScenarioDocument());
 
-    private async Task UploadSchemaToDb(InputFileChangeEventArgs e)
+    private void AddDevice()
     {
-        try
-        {
-            using var ms = new MemoryStream();
-            await e.File.OpenReadStream(maxAllowedSize: 1024 * 1024 * 15).CopyToAsync(ms);
-            Item.SchemaPath = $"data:{e.File.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}";
-            SchemaLoaded = true;
-        }
-        catch (Exception ex)
-        {
-            NotificationService.Notify(NotificationSeverity.Error, "Ошибка схемы", ex.Message);
-        }
+        var newDev = new ScenarioDevice { Name = $"Узел {Item.Devices.Count + 1}", MapX = 100, MapY = 100, Type = "dns" };
+        Item.Devices.Add(newDev);
+        selectedDevice = newDev;
+    }
+
+    private void AddConnection()
+    {
+        if (Item.Devices.Count >= 2) { Item.Connections.Add(new ScenarioConnection { FromDevice = Item.Devices[0], ToDevice = Item.Devices[1], LinkType = "Ethernet" }); }
+        else { NotificationService.Notify(NotificationSeverity.Info, "Внимание", "Добавьте минимум 2 устройства для связи."); }
+    }
+
+    private void SetConnectionFrom(ScenarioConnection c, object val) { if (int.TryParse(val?.ToString(), out int idx) && idx >= 0) { c.FromDevice = Item.Devices[idx]; c.FromDeviceId = c.FromDevice.Id; } }
+    private void SetConnectionTo(ScenarioConnection c, object val) { if (int.TryParse(val?.ToString(), out int idx) && idx >= 0) { c.ToDevice = Item.Devices[idx]; c.ToDeviceId = c.ToDevice.Id; } }
+
+    private void HandleCanvasClick(MouseEventArgs e)
+    {
+        if (selectedDevice != null) { selectedDevice.MapX = (int)e.OffsetX; selectedDevice.MapY = (int)e.OffsetY; StateHasChanged(); }
     }
 
     private async Task UploadDocumentToDb(InputFileChangeEventArgs e, ScenarioDocument doc)
     {
-        try
-        {
-            using var ms = new MemoryStream();
-            await e.File.OpenReadStream(maxAllowedSize: 1024 * 1024 * 25).CopyToAsync(ms);
-            doc.FilePath = $"data:{e.File.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}";
-            if (string.IsNullOrWhiteSpace(doc.Title)) doc.Title = e.File.Name;
-        }
-        catch (Exception ex)
-        {
-            NotificationService.Notify(NotificationSeverity.Error, "Ошибка документа", ex.Message);
-        }
+        using var ms = new MemoryStream();
+        await e.File.OpenReadStream(maxAllowedSize: 1024 * 1024 * 25).CopyToAsync(ms);
+        doc.FilePath = $"data:{e.File.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}";
+        if (string.IsNullOrWhiteSpace(doc.Title)) doc.Title = e.File.Name;
     }
 
     private async Task OnSave()
     {
-        if (isIndividual)
-        {
-            Item.AllowedTeamIds = null;
-            Item.AllowedUserIds = addedUsers.Any() ? string.Join(",", addedUsers.Select(u => u.Id)) : null;
-            Item.Scope = string.IsNullOrEmpty(Item.AllowedUserIds) ? VisibilityScope.Public : VisibilityScope.GroupOnly;
-        }
-        else
-        {
-            Item.AllowedUserIds = null;
-            Item.AllowedTeamIds = addedTeams.Any() ? string.Join(",", addedTeams.Select(t => t.Id)) : null;
-            Item.Scope = VisibilityScope.TeamOnly;
-        }
-
-        if (!IsStep1Valid)
-        {
-            NotificationService.Notify(NotificationSeverity.Warning, "Ошибка", "Заполните название на 1-й вкладке.");
-            selectedTabIndex = 0;
-            return;
-        }
-        if (!IsStep2Valid)
-        {
-            NotificationService.Notify(NotificationSeverity.Warning, "Ошибка", "Добавьте задания и заполните в них текст и эталонный ответ.");
-            selectedTabIndex = 1;
-            return;
-        }
+        Item.SchemaPath = "INTERNAL_BUILDER";
+        if (isIndividual) { Item.AllowedTeamIds = null; Item.AllowedUserIds = addedUsers.Any() ? string.Join(",", addedUsers.Select(u => u.Id)) : null; Item.Scope = string.IsNullOrEmpty(Item.AllowedUserIds) ? VisibilityScope.Public : VisibilityScope.GroupOnly; }
+        else { Item.AllowedUserIds = null; Item.AllowedTeamIds = addedTeams.Any() ? string.Join(",", addedTeams.Select(t => t.Id)) : null; Item.Scope = VisibilityScope.TeamOnly; }
 
         using var context = await ContextFactory.CreateDbContextAsync();
-        if (Item.Id == 0) context.Scenarios.Add(Item);
-        else context.Scenarios.Update(Item);
+        if (Item.Id == 0) context.Scenarios.Add(Item); else context.Scenarios.Update(Item);
 
         await context.SaveChangesAsync();
         CatalogUpdateService.NotifyCatalogChanged();
         NotificationService.Notify(NotificationSeverity.Success, "Успех", "Сценарий сохранен!");
         NavigationManager.NavigateTo("scenario");
     }
-
     private void Cancel() => NavigationManager.NavigateTo("scenario");
 }
