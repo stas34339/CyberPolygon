@@ -1,9 +1,11 @@
 ﻿@page "/scenario/{Id:int}/workspace"
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Web
 @using System.Security.Claims
 @using System.Threading
 @using Microsoft.EntityFrameworkCore
 @using CyberPolygon.Data
+@using CyberPolygon.Models
 @implements IDisposable
 @rendermode InteractiveServer
 
@@ -205,7 +207,6 @@
             z-index: 110;
         }
 
-    /* ИСПРАВЛЕННЫЙ ТУЛТИП: ОТКРЫВАЕТСЯ ВНИЗ И НЕ МЕРЦАЕТ */
     .hotspot-tooltip {
         position: absolute;
         top: 42px;
@@ -446,8 +447,8 @@
 
                                                 @foreach (var conn in scenario.Connections)
                                                 {
-                                                    var fromNode = scenario.Devices.FirstOrDefault(d => d.Id == conn.FromDeviceId);
-                                                    var toNode = scenario.Devices.FirstOrDefault(d => d.Id == conn.ToDeviceId);
+                                                    var fromNode = scenario.Devices?.FirstOrDefault(d => d.Id == conn.FromDeviceId);
+                                                    var toNode = scenario.Devices?.FirstOrDefault(d => d.Id == conn.ToDeviceId);
 
                                                     if (fromNode != null && toNode != null)
                                                     {
@@ -457,9 +458,7 @@
 
                                                         <line x1="@fromNode.MapX" y1="@fromNode.MapY"
                                                               x2="@toNode.MapX" y2="@toNode.MapY"
-                                                              stroke="@linkColor"
-                                                              stroke-width="2"
-                                                              stroke-dasharray="@dashArray"
+                                                              stroke="@linkColor" stroke-width="2" stroke-dasharray="@dashArray"
                                                               style="@(isDangerLink ? "filter: url(#glow);" : "")" />
                                                     }
                                                 }
@@ -485,6 +484,26 @@
                                                             <div class="info-row"><span>IP:</span> <strong>@device.IpAddress</strong></div>
                                                             <div class="info-row"><span>OS:</span> <span class="val">@device.Os</span></div>
                                                             <div class="info-row"><span>Порты:</span> <span class="val-ports">@device.OpenPorts</span></div>
+
+                                                            @if (device.Applications != null && device.Applications.Any())
+                                                            {
+                                                                <div style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border-color);">
+                                                                    <div style="font-size: 0.7rem; color: var(--accent-cyan); text-transform: uppercase; margin-bottom: 6px; font-weight: bold; letter-spacing: 0.5px;">
+                                                                        Установленное ПО:
+                                                                    </div>
+                                                                    @foreach (var app in device.Applications)
+                                                                    {
+                                                                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 3px; align-items: center;" @key="app.Id">
+                                                                            <span style="color: var(--text-light); display: flex; align-items: center; gap: 4px;">
+                                                                                <RadzenIcon Icon="layers" Style="font-size: 0.8rem; color: var(--text-muted);" />
+                                                                                @app.Name
+                                                                            </span>
+                                                                            <span style="color: var(--warning-color); font-family: monospace; font-size: 0.75rem;">v.@app.Version</span>
+                                                                        </div>
+                                                                    }
+                                                                </div>
+                                                            }
+
                                                             @if (!string.IsNullOrEmpty(device.Description))
                                                             {
                                                                 <div class="tooltip-note">@device.Description</div>
@@ -579,6 +598,7 @@
     private TimeSpan timeLeft = TimeSpan.Zero;
     private int totalScore = 0;
     private bool isMapInitialized = false;
+    private bool _isDisposed = false;
 
     private int canvasWidth = 800;
     private int canvasHeight = 550;
@@ -597,30 +617,43 @@
 
     private async Task FocusOnDevice(int x, int y)
     {
-        await JSRuntime.InvokeVoidAsync("imageViewer.focusOnCoordinates", "schema-drag-container", x, y);
+        try { await JSRuntime.InvokeVoidAsync("imageViewer.focusOnCoordinates", "schema-drag-container", x, y); } catch { }
     }
 
     protected override async Task OnInitializedAsync()
     {
-        scenario = await ScenarioService.GetByIdAsync(Id);
-        if (scenario == null) { NavigationManager.NavigateTo("/scenario"); return; }
-
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
-        if (user.Identity?.IsAuthenticated == true)
+        try
         {
-            currentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
-            using var ctx = await ContextFactory.CreateDbContextAsync();
-            var dbUser = await ctx.Set<ApplicationUser>().Include(u => u.Teams).AsNoTracking().FirstOrDefaultAsync(u => u.Id == currentUserId);
-            currentTeamId = dbUser?.Teams?.FirstOrDefault()?.Id;
-            await LoadUserState();
+            scenario = await ScenarioService.GetByIdAsync(Id);
+            if (scenario == null) { NavigationManager.NavigateTo("/scenario"); return; }
+
+            if (scenario.Questions != null)
+            {
+                questionStates = scenario.Questions.Select(q => new UserQuestionState { Question = q }).ToList();
+            }
+
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                currentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+                using var ctx = await ContextFactory.CreateDbContextAsync();
+                var dbUser = await ctx.Set<ApplicationUser>().Include(u => u.Teams).AsNoTracking().FirstOrDefaultAsync(u => u.Id == currentUserId);
+                currentTeamId = dbUser?.Teams?.FirstOrDefault()?.Id;
+
+                await LoadUserState();
+            }
+            SessionManager.TeamProgressChanged += OnTeamProgressChanged;
         }
-        SessionManager.TeamProgressChanged += OnTeamProgressChanged;
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Критический сбой инициализации", ex.Message);
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!isMapInitialized && currentUserProgress?.Status == AttemptStatus.InProgress)
+        if (firstRender && !isMapInitialized && currentUserProgress?.Status == AttemptStatus.InProgress)
         {
             isMapInitialized = true;
             try { await JSRuntime.InvokeVoidAsync("imageViewer.init", "schema-drag-container", "topology-move-layer"); } catch { }
@@ -629,29 +662,93 @@
 
     private async Task LoadUserState()
     {
-        using var context = await ContextFactory.CreateDbContextAsync();
-        var query = context.Set<UserScenarioProgress>().Where(p => p.CyberScenarioId == scenario!.Id);
+        if (scenario == null) return;
 
-        if (scenario!.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue) query = query.Where(p => p.TeamId == currentTeamId.Value && p.IsTeamAttempt);
-        else query = query.Where(p => p.UserId == currentUserId && !p.IsTeamAttempt);
-
-        currentUserProgress = await query.FirstOrDefaultAsync(p => p.Status == AttemptStatus.InProgress) ?? await query.OrderByDescending(p => p.StartedAt).FirstOrDefaultAsync();
-        if (currentUserProgress == null) currentUserProgress = new UserScenarioProgress { Status = AttemptStatus.NotStarted };
-
-        totalScore = currentUserProgress.Score;
-        CalculateCanvasBounds();
-
-        if (scenario.Questions != null && questionStates.Count == 0) questionStates = scenario.Questions.Select(q => new UserQuestionState { Question = q }).ToList();
-
-        if (currentUserProgress.Id != 0)
+        try
         {
-            var statesDb = await ScenarioService.GetUserQuestionStatesAsync(currentUserProgress.Id);
-            foreach (var qState in questionStates)
+            using var context = await ContextFactory.CreateDbContextAsync();
+
+            if (scenario.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue)
             {
-                if (statesDb.TryGetValue(qState.Question.Id, out var dbInfo)) { qState.IsCorrect = dbInfo.IsCorrect; qState.FailedAttempts = dbInfo.FailedAttempts; }
+                currentUserProgress = await context.UserProgresses
+                    .FirstOrDefaultAsync(p => p.CyberScenarioId == Id && p.TeamId == currentTeamId && p.Status == AttemptStatus.InProgress);
+            }
+            else
+            {
+                currentUserProgress = await context.UserProgresses
+                    .FirstOrDefaultAsync(p => p.CyberScenarioId == Id && p.UserId == currentUserId && p.Status == AttemptStatus.InProgress);
+            }
+
+            if (currentUserProgress == null)
+            {
+                if (scenario.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue)
+                {
+                    currentUserProgress = await context.UserProgresses
+                        .OrderByDescending(p => p.StartedAt)
+                        .FirstOrDefaultAsync(p => p.CyberScenarioId == Id && p.TeamId == currentTeamId);
+                }
+                else
+                {
+                    currentUserProgress = await context.UserProgresses
+                        .OrderByDescending(p => p.StartedAt)
+                        .FirstOrDefaultAsync(p => p.CyberScenarioId == Id && p.UserId == currentUserId);
+                }
+            }
+
+            if (currentUserProgress == null)
+            {
+                currentUserProgress = new UserScenarioProgress
+                {
+                    Status = AttemptStatus.NotStarted,
+                    CyberScenarioId = Id
+                };
+            }
+
+            totalScore = currentUserProgress.Score;
+
+            if (scenario.Questions != null && currentUserProgress.Id != 0)
+            {
+                var solvedAnswers = await context.UserAnswerProgresses
+                    .Where(a => a.UserScenarioProgressId == currentUserProgress.Id)
+                    .ToListAsync();
+
+                questionStates = scenario.Questions.Select(q =>
+                {
+                    var solved = solvedAnswers.FirstOrDefault(a => a.QuestionId == q.Id);
+                    return new UserQuestionState
+                    {
+                        Question = q,
+                        IsCorrect = solved?.IsCorrect ?? false,
+                        FailedAttempts = solved?.FailedAttempts ?? 0,
+                        UserAnswer = solved?.LastSubmittedAnswer ?? string.Empty
+                    };
+                }).ToList();
+            }
+
+            var freshDevices = await context.Set<ScenarioDevice>()
+                .Include(d => d.Applications)
+                .Where(d => d.CyberScenarioId == scenario.Id)
+                .ToListAsync();
+
+            if (freshDevices != null)
+            {
+                scenario.Devices = freshDevices;
+                CalculateCanvasBounds();
+            }
+
+            if (currentUserProgress.Status == AttemptStatus.InProgress)
+            {
+                StartTimer();
+            }
+            else
+            {
+                StopTimer();
             }
         }
-        if (currentUserProgress.Status == AttemptStatus.InProgress) { CheckTime(); StartTimer(); }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Ошибка базы данных", ex.Message);
+        }
     }
 
     private void CalculateCanvasBounds()
@@ -673,6 +770,7 @@
 
     private async void OnTeamProgressChanged(int teamId)
     {
+        if (_isDisposed) return;
         if (scenario?.Scope == VisibilityScope.TeamOnly && currentTeamId == teamId)
         {
             await InvokeAsync(async () => { await LoadUserState(); StateHasChanged(); });
@@ -681,43 +779,88 @@
 
     private async Task StartScenario()
     {
-        using var context = await ContextFactory.CreateDbContextAsync();
-        var newProgress = new UserScenarioProgress
+        if (scenario == null || string.IsNullOrEmpty(currentUserId)) return;
+
+        var (success, msg) = await SessionManager.CheckConcurrencyAsync(currentUserId, currentTeamId);
+        if (!success)
         {
-            CyberScenarioId = scenario!.Id,
-            UserId = scenario.Scope == VisibilityScope.TeamOnly ? null : currentUserId,
-            TeamId = scenario.Scope == VisibilityScope.TeamOnly ? currentTeamId : null,
-            IsTeamAttempt = scenario.Scope == VisibilityScope.TeamOnly,
-            Status = AttemptStatus.InProgress,
-            StartedAt = DateTime.UtcNow,
-            Score = 0
-        };
-        if (scenario.DurationInMinutes > 0) newProgress.TargetEndTime = DateTime.UtcNow.AddMinutes(scenario.DurationInMinutes);
-        context.Set<UserScenarioProgress>().Add(newProgress);
-        await context.SaveChangesAsync();
+            NotificationService.Notify(NotificationSeverity.Warning, "Предупреждение", msg);
+            return;
+        }
 
-        isMapInitialized = false;
-        await LoadUserState();
+        try
+        {
+            using var context = await ContextFactory.CreateDbContextAsync();
 
-        if (scenario.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue) SessionManager.NotifyTeamUpdate(currentTeamId.Value);
-        StateHasChanged();
+            var newProgress = new UserScenarioProgress
+            {
+                UserId = scenario.Scope == VisibilityScope.TeamOnly ? null : currentUserId,
+                TeamId = currentTeamId,
+                IsTeamAttempt = scenario.Scope == VisibilityScope.TeamOnly,
+                CyberScenarioId = scenario.Id,
+                Score = 0,
+                Status = AttemptStatus.InProgress,
+                StartedAt = DateTime.UtcNow,
+                TargetEndTime = scenario.DurationInMinutes > 0 ? DateTime.UtcNow.AddMinutes(scenario.DurationInMinutes) : null
+            };
+
+            context.UserProgresses.Add(newProgress);
+            await context.SaveChangesAsync();
+
+            await LoadUserState();
+
+            if (scenario.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue)
+                SessionManager.NotifyTeamUpdate(currentTeamId.Value);
+
+            NotificationService.Notify(NotificationSeverity.Success, "Система", "Симуляция инфраструктуры успешно запущена!");
+
+            await InvokeAsync(StateHasChanged);
+            await Task.Delay(100);
+
+            if (!isMapInitialized)
+            {
+                isMapInitialized = true;
+                try { await JSRuntime.InvokeVoidAsync("imageViewer.init", "schema-drag-container", "topology-move-layer"); } catch { }
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Критическая ошибка старта", ex.Message);
+        }
     }
 
     private async Task CheckAnswer(UserQuestionState state)
     {
         if (string.IsNullOrWhiteSpace(state.UserAnswer) || currentUserProgress?.Status != AttemptStatus.InProgress) return;
-        var result = await ScenarioService.ProcessTeamAnswerAsync(currentUserProgress.Id, state.Question.Id, state.UserAnswer, currentUserId, currentTeamId);
-        if (!result.Success)
+        try
         {
-            if (result.AlreadySolved) state.IsCorrect = true;
-            else { state.FailedAttempts++; state.FeedbackMessage = $"❌ Отказ системы."; }
+            var result = await ScenarioService.ProcessTeamAnswerAsync(currentUserProgress.Id, state.Question.Id, state.UserAnswer, currentUserId, currentTeamId);
+            if (!result.Success)
+            {
+                if (result.AlreadySolved) state.IsCorrect = true;
+                else { state.FailedAttempts++; state.FeedbackMessage = "❌ Неверный флаг."; }
+                if (scenario!.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue) SessionManager.NotifyTeamUpdate(currentTeamId.Value);
+                StateHasChanged(); return;
+            }
+
+            totalScore = result.NewTotalScore;
+            state.IsCorrect = true;
+            state.FeedbackMessage = "✅ Флаг принят!";
+
             if (scenario!.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue) SessionManager.NotifyTeamUpdate(currentTeamId.Value);
-            StateHasChanged(); return;
+            StateHasChanged();
+
+            if (questionStates.All(q => q.IsCorrect)) await CompleteScenario();
         }
-        totalScore = result.NewTotalScore; state.IsCorrect = true;
-        if (scenario!.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue) SessionManager.NotifyTeamUpdate(currentTeamId.Value);
-        StateHasChanged();
-        if (questionStates.All(q => q.IsCorrect)) await CompleteScenario();
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Ошибка проверки флага", ex.Message);
+        }
+    }
+
+    private async Task HandleKeyPress(KeyboardEventArgs e, UserQuestionState state)
+    {
+        if (e.Key == "Enter") await CheckAnswer(state);
     }
 
     private async Task CompleteScenario()
@@ -725,26 +868,40 @@
         StopTimer();
         if (currentUserProgress != null && currentUserProgress.Id != 0)
         {
-            using var context = await ContextFactory.CreateDbContextAsync();
-            var p = await context.Set<UserScenarioProgress>().FindAsync(currentUserProgress.Id);
-            if (p != null) { p.Status = AttemptStatus.Completed; p.CompletedAt = DateTime.UtcNow; context.Set<UserScenarioProgress>().Update(p); await context.SaveChangesAsync(); }
-            await LoadUserState();
-            if (scenario!.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue) SessionManager.NotifyTeamUpdate(currentTeamId.Value);
-            StateHasChanged();
+            try
+            {
+                using var context = await ContextFactory.CreateDbContextAsync();
+                var p = await context.Set<UserScenarioProgress>().FindAsync(currentUserProgress.Id);
+                if (p != null)
+                {
+                    p.Status = AttemptStatus.Completed;
+                    p.CompletedAt = DateTime.UtcNow;
+                    context.Set<UserScenarioProgress>().Update(p);
+                    await context.SaveChangesAsync();
+                }
+                await LoadUserState();
+                if (scenario!.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue) SessionManager.NotifyTeamUpdate(currentTeamId.Value);
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
     }
 
-    private async Task HandleKeyPress(KeyboardEventArgs e, UserQuestionState state) { if (e.Key == "Enter") await CheckAnswer(state); }
-
     private async void TimerTick(object? state)
     {
+        if (_isDisposed) return;
+
         if (currentUserProgress?.TargetEndTime != null)
         {
             timeLeft = currentUserProgress.TargetEndTime.Value - DateTime.UtcNow;
+
             if (timeLeft.TotalSeconds <= 0)
             {
                 StopTimer();
-                await ForceFailScenario();
+                await InvokeAsync(ForceFailScenario);
             }
             else
             {
@@ -753,24 +910,43 @@
         }
     }
 
-    private void StartTimer() { if (scenario!.DurationInMinutes > 0 && currentUserProgress?.TargetEndTime != null) { _timer?.Dispose(); _timer = new Timer(TimerTick, null, 0, 1000); } }
+    private void StartTimer()
+    {
+        if (scenario != null && scenario.DurationInMinutes > 0 && currentUserProgress?.TargetEndTime != null)
+        {
+            _timer?.Dispose();
+            _timer = new Timer(TimerTick, null, 0, 1000);
+        }
+    }
+
     private void StopTimer() => _timer?.Dispose();
-    private async void CheckTime() { if (currentUserProgress?.TargetEndTime != null && DateTime.UtcNow >= currentUserProgress.TargetEndTime.Value) await ForceFailScenario(); }
 
     private async Task ForceFailScenario()
     {
         if (currentUserProgress != null && currentUserProgress.Id != 0)
         {
-            using var context = await ContextFactory.CreateDbContextAsync();
-            var progress = await context.Set<UserScenarioProgress>().FindAsync(currentUserProgress.Id);
-            if (progress != null)
+            try
             {
-                progress.Status = AttemptStatus.Failed;
-                progress.CompletedAt = DateTime.UtcNow;
-                context.Set<UserScenarioProgress>().Update(progress);
-                await context.SaveChangesAsync();
+                using var context = await ContextFactory.CreateDbContextAsync();
+                var progress = await context.Set<UserScenarioProgress>().FindAsync(currentUserProgress.Id);
+                if (progress != null && progress.Status == AttemptStatus.InProgress)
+                {
+                    progress.Status = AttemptStatus.Failed;
+                    progress.CompletedAt = DateTime.UtcNow;
+
+                    if (progress.StartedAt.HasValue)
+                        progress.TimeSpent = progress.CompletedAt.Value - progress.StartedAt.Value;
+
+                    context.Set<UserScenarioProgress>().Update(progress);
+                    await context.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
             }
         }
+
         await InvokeAsync(async () => { await LoadUserState(); StateHasChanged(); });
 
         if (scenario!.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue)
@@ -779,10 +955,14 @@
 
     private async Task RestartScenario()
     {
+        StopTimer();
         await StartScenario();
-        if (scenario!.Questions != null)
-            questionStates = scenario.Questions.Select(q => new UserQuestionState { Question = q }).ToList();
     }
 
-    public void Dispose() { StopTimer(); SessionManager.TeamProgressChanged -= OnTeamProgressChanged; }
+    public void Dispose()
+    {
+        _isDisposed = true;
+        StopTimer();
+        SessionManager.TeamProgressChanged -= OnTeamProgressChanged;
+    }
 }

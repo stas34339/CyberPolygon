@@ -4,7 +4,7 @@
 @using CyberPolygon.Data
 @using CyberPolygon.Services
 @using System.IO
-
+@using CyberPolygon.Models
 @inject ScenarioService ScenarioService
 @inject NavigationManager NavigationManager
 @inject NotificationService NotificationService
@@ -585,149 +585,170 @@
     </ChildContent>
 </RadzenTabsItem>
 
-<RadzenTabsItem>
-    <Template Context="tabContext5">
-        <span style="color: var(--accent-cyan); font-weight: bold;">
-            <RadzenIcon Icon="router" Style="vertical-align: middle; margin-right: 6px;" /> 5. Топология сети
-        </span>
-    </Template>
-    <ChildContent>
-        <div class="row">
-            <div class="col-md-5">
-                <div class="sticky-questions-header" style="top: 0; margin-bottom: 15px; padding: 10px 15px;">
-                    <span style="font-weight: bold; font-size: 1.1rem;">Узлов на карте: @Item.Devices.Count</span>
-                    <button type="button" class="btn-primary-gradient" style="padding: 6px 14px; font-size: 0.85rem;" @onclick="AddDevice">
-                        <RadzenIcon Icon="add" Style="font-size: 1rem;" /> Добавить ПК
-                    </button>
-                </div>
-                <div style="max-height: 400px; overflow-y: auto; padding-right: 5px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 10px;">
-                    @for (int j = 0; j < Item.Devices.Count; j++)
-                    {
-                        var d = Item.Devices[j];
-                        <div class="p-3 mb-3 rounded position-relative" style="background: @(selectedDevice == d ? "rgba(152,195,121,0.08)" : "rgba(0,0,0,0.2)"); border: 1px solid @(selectedDevice == d ? "var(--success-color)" : "var(--border-color)"); cursor: pointer;" @onclick="() => selectedDevice = d" @key="d">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <strong style="color: @(selectedDevice == d ? "var(--success-color)" : "var(--accent-cyan)"); font-size: 1.1rem;">#@(j + 1): @(string.IsNullOrWhiteSpace(d.Name) ? "Новый узел" : d.Name)</strong>
-                                <button type="button" class="btn-delete-icon" style="padding: 2px 6px;" @onclick="@(() => { Item.Devices.Remove(d); if (selectedDevice == d) selectedDevice = null; })"><RadzenIcon Icon="close" /></button>
+                <RadzenTabsItem>
+                    <Template Context="tabContext5">
+                        <span style="color: var(--accent-cyan); font-weight: bold;">
+                            <RadzenIcon Icon="router" Style="vertical-align: middle; margin-right: 6px;" /> 5. Топология сети
+                        </span>
+                    </Template>
+                    <ChildContent>
+                        <div class="row">
+                            <div class="col-md-5">
+                                <div class="sticky-questions-header" style="top: 0; margin-bottom: 15px; padding: 10px 15px;">
+                                    <span style="font-weight: bold; font-size: 1.1rem;">Узлов на карте: @Item.Devices.Count</span>
+                                    <button type="button" class="btn-primary-gradient" style="padding: 6px 14px; font-size: 0.85rem;" @onclick="AddDevice">
+                                        <RadzenIcon Icon="add" Style="font-size: 1rem;" /> Добавить ПК
+                                    </button>
+                                </div>
+                                <div style="max-height: 400px; overflow-y: auto; padding-right: 5px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 10px;">
+                                    @for (int j = 0; j < Item.Devices.Count; j++)
+                                    {
+                                        var d = Item.Devices[j];
+                                        <div class="p-3 mb-3 rounded position-relative" style="background: @(selectedDevice == d ? "rgba(152,195,121,0.08)" : "rgba(0,0,0,0.2)"); border: 1px solid @(selectedDevice == d ? "var(--success-color)" : "var(--border-color)"); cursor: pointer;" @onclick="() => selectedDevice = d" @key="d">
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <strong style="color: @(selectedDevice == d ? "var(--success-color)" : "var(--accent-cyan)"); font-size: 1.1rem;">#@(j + 1): @(string.IsNullOrWhiteSpace(d.Name) ? "Новый узел" : d.Name)</strong>
+                                                <button type="button" class="btn-delete-icon" style="padding: 2px 6px;" @onclick="@(() => { Item.Devices.Remove(d); if (selectedDevice == d) selectedDevice = null; })"><RadzenIcon Icon="close" /></button>
+                                            </div>
+
+                                            <div class="row g-3">
+                                                <div class="col-6">
+                                                    <span style="font-size: 0.75rem; color: var(--text-light); opacity: 0.85; display:block; margin-bottom:4px;">Имя в системе:</span>
+                                                    <input type="text" class="form-control form-control-sm dark-input" placeholder="Напр: DC-01" @bind="d.Name" />
+                                                </div>
+                                                <div class="col-6">
+                                                    <span style="font-size: 0.75rem; color: var(--text-light); opacity: 0.85; display:block; margin-bottom:4px;">IP-адрес:</span>
+                                                    <input type="text" class="form-control form-control-sm dark-input" placeholder="10.0.0.5" @bind="d.IpAddress" />
+                                                </div>
+                                                <div class="col-6">
+                                                    <span style="font-size: 0.75rem; color: var(--text-light); opacity: 0.85; display:block; margin-bottom:4px;">ОС:</span>
+                                                    <input type="text" class="form-control form-control-sm dark-input" placeholder="Windows Server" @bind="d.Os" />
+                                                </div>
+                                                <div class="col-6">
+                                                    <span style="font-size: 0.75rem; color: var(--text-light); opacity: 0.85; display:block; margin-bottom:4px;">Открытые порты:</span>
+                                                    <input type="text" class="form-control form-control-sm dark-input" placeholder="22, 80, 443" @bind="d.OpenPorts" />
+                                                </div>
+                                                <div class="col-4">
+                                                    <span style="font-size: 0.75rem; color: var(--text-light); opacity: 0.85; display:block; margin-bottom:4px;">Иконка узла:</span>
+                                                    <select class="form-select form-select-sm dark-input text-light" @bind="d.Type">
+                                                        <option value="dns">🖧 Сервер</option>
+                                                        <option value="router">🌐 Роутер</option>
+                                                        <option value="computer">💻 ПК</option>
+                                                        <option value="security">🛡 Фаервол</option>
+                                                        <option value="laptop">📱 Ноутбук</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-4">
+                                                    <span style="font-size: 0.75rem; color: var(--text-light); opacity: 0.85; display:block; margin-bottom:4px;">Позиция X:</span>
+                                                    <input type="number" class="form-control form-control-sm dark-input" @bind="d.MapX" />
+                                                </div>
+                                                <div class="col-4">
+                                                    <span style="font-size: 0.75rem; color: var(--text-light); opacity: 0.85; display:block; margin-bottom:4px;">Позиция Y:</span>
+                                                    <input type="number" class="form-control form-control-sm dark-input" @bind="d.MapY" />
+                                                </div>
+                                                <div class="col-12">
+                                                    <span style="font-size: 0.75rem; color: var(--text-light); opacity: 0.85; display:block; margin-bottom:4px;">Описание (подсказка):</span>
+                                                    <input type="text" class="form-control form-control-sm dark-input" placeholder="Главный контроллер домена..." @bind="d.Description" />
+                                                </div>
+
+                                                <div class="col-12 mt-2" style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; border: 1px dashed var(--border-color);">
+                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                        <span style="font-size: 0.75rem; color: var(--accent-cyan); text-transform: uppercase; font-weight: bold;">Установленное ПО</span>
+                                                        <button type="button" class="btn-outline-light" style="padding: 2px 8px; font-size: 0.7rem;" @onclick="@(() => d.Applications.Add(new DeviceApplication()))">
+                                                            <RadzenIcon Icon="add" Style="font-size: 0.8rem; margin-top:-2px;" /> Добавить ПО
+                                                        </button>
+                                                    </div>
+                                                    @if (!d.Applications.Any())
+                                                    {
+                                                        <div style="font-size: 0.75rem; color: var(--text-muted); font-style: italic;">Приложения не добавлены.</div>
+                                                    }
+                                                    @foreach (var app in d.Applications)
+                                                    {
+                                                        <div class="d-flex gap-2 mb-2 align-items-center" @key="app">
+                                                            <input type="text" class="form-control form-control-sm dark-input" placeholder="Название (напр. Apache)" @bind="app.Name" />
+                                                            <input type="text" class="form-control form-control-sm dark-input" placeholder="Версия" @bind="app.Version" style="width: 80px;" />
+                                                            <button type="button" class="btn-delete-icon text-danger" style="padding: 2px 4px;" @onclick="() => d.Applications.Remove(app)"><RadzenIcon Icon="close" Style="font-size:0.9rem;" /></button>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center mt-4 mb-2">
+                                    <span class="cyber-label" style="margin:0;">Линии связи</span>
+                                    <button type="button" class="btn-outline-light" style="padding: 4px 10px; font-size: 0.75rem;" @onclick="AddConnection"><RadzenIcon Icon="add" Style="font-size: 0.9rem; margin-top:-2px;" /> Добавить кабель</button>
+                                </div>
+                                <div style="max-height: 200px; overflow-y: auto;">
+                                    @foreach (var c in Item.Connections)
+                                    {
+                                        <div class="p-2 mb-2 rounded" style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color);" @key="c">
+                                            <div class="row g-2 align-items-center">
+                                                <div class="col-4">
+                                                    <select class="form-select form-select-sm dark-input text-light" style="font-size: 0.8rem;" value="@Item.Devices.IndexOf(c.FromDevice ?? Item.Devices.FirstOrDefault(dev => dev.Id == c.FromDeviceId && dev.Id != 0))" @onchange="@(e => SetConnectionFrom(c, e.Value))">
+                                                        <option value="-1" disabled>Откуда...</option>
+                                                        @for (int i = 0; i < Item.Devices.Count; i++)
+                                                        {
+                                                            <option value="@i">@Item.Devices[i].Name</option>
+                                                        }
+                                                    </select>
+                                                </div>
+                                                <div class="col-1 text-center px-0"><RadzenIcon Icon="arrow_right_alt" Style="color: var(--text-light); opacity: 0.8;" /></div>
+                                                <div class="col-4">
+                                                    <select class="form-select form-select-sm dark-input text-light" style="font-size: 0.8rem;" value="@Item.Devices.IndexOf(c.ToDevice ?? Item.Devices.FirstOrDefault(dev => dev.Id == c.ToDeviceId && dev.Id != 0))" @onchange="@(e => SetConnectionTo(c, e.Value))">
+                                                        <option value="-1" disabled>Куда...</option>
+                                                        @for (int i = 0; i < Item.Devices.Count; i++)
+                                                        {
+                                                            <option value="@i">@Item.Devices[i].Name</option>
+                                                        }
+                                                    </select>
+                                                </div>
+                                                <div class="col-2 px-0">
+                                                    <select class="form-select form-select-sm dark-input text-light" style="font-size: 0.8rem;" @bind="c.LinkType">
+                                                        <option value="Ethernet">LAN</option>
+                                                        <option value="VPN">VPN</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-1 text-end">
+                                                    <button type="button" class="btn-delete-icon" style="padding: 2px 4px;" @onclick="() => Item.Connections.Remove(c)"><RadzenIcon Icon="close" Style="font-size: 0.9rem;" /></button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
                             </div>
 
-                            <div class="row g-3">
-                                <div class="col-6">
-                                    <span style="font-size: 0.75rem; color: var(--text-light); opacity: 0.85; display:block; margin-bottom:4px;">Имя в системе:</span>
-                                    <input type="text" class="form-control form-control-sm dark-input" placeholder="Напр: DC-01" @bind="d.Name" />
-                                </div>
-                                <div class="col-6">
-                                    <span style="font-size: 0.75rem; color: var(--text-light); opacity: 0.85; display:block; margin-bottom:4px;">IP-адрес:</span>
-                                    <input type="text" class="form-control form-control-sm dark-input" placeholder="10.0.0.5" @bind="d.IpAddress" />
-                                </div>
-                                <div class="col-6">
-                                    <span style="font-size: 0.75rem; color: var(--text-light); opacity: 0.85; display:block; margin-bottom:4px;">ОС:</span>
-                                    <input type="text" class="form-control form-control-sm dark-input" placeholder="Windows Server" @bind="d.Os" />
-                                </div>
-                                <div class="col-6">
-                                    <span style="font-size: 0.75rem; color: var(--text-light); opacity: 0.85; display:block; margin-bottom:4px;">Открытые порты:</span>
-                                    <input type="text" class="form-control form-control-sm dark-input" placeholder="22, 80, 443" @bind="d.OpenPorts" />
-                                </div>
-                                <div class="col-4">
-                                    <span style="font-size: 0.75rem; color: var(--text-light); opacity: 0.85; display:block; margin-bottom:4px;">Иконка узла:</span>
-                                    <select class="form-select form-select-sm dark-input text-light" @bind="d.Type">
-                                        <option value="dns">🖧 Сервер</option>
-                                        <option value="router">🌐 Роутер</option>
-                                        <option value="computer">💻 ПК</option>
-                                        <option value="security">🛡 Фаервол</option>
-                                        <option value="laptop">📱 Ноутбук</option>
-                                    </select>
-                                </div>
-                                <div class="col-4">
-                                    <span style="font-size: 0.75rem; color: var(--text-light); opacity: 0.85; display:block; margin-bottom:4px;">Позиция X:</span>
-                                    <input type="number" class="form-control form-control-sm dark-input" @bind="d.MapX" />
-                                </div>
-                                <div class="col-4">
-                                    <span style="font-size: 0.75rem; color: var(--text-light); opacity: 0.85; display:block; margin-bottom:4px;">Позиция Y:</span>
-                                    <input type="number" class="form-control form-control-sm dark-input" @bind="d.MapY" />
-                                </div>
-                                <div class="col-12">
-                                    <span style="font-size: 0.75rem; color: var(--text-light); opacity: 0.85; display:block; margin-bottom:4px;">Описание (подсказка для игрока):</span>
-                                    <input type="text" class="form-control form-control-sm dark-input" placeholder="Главный контроллер домена предприятия..." @bind="d.Description" />
-                                </div>
-                            </div>
-                        </div>
-                    }
-                </div>
-
-                <div class="d-flex justify-content-between align-items-center mt-4 mb-2">
-                    <span class="cyber-label" style="margin:0;">Линии связи</span>
-                    <button type="button" class="btn-outline-light" style="padding: 4px 10px; font-size: 0.75rem;" @onclick="AddConnection"><RadzenIcon Icon="add" Style="font-size: 0.9rem; margin-top:-2px;" /> Добавить кабель</button>
-                </div>
-                <div style="max-height: 200px; overflow-y: auto;">
-                    @foreach (var c in Item.Connections)
-                    {
-                        <div class="p-2 mb-2 rounded" style="background: rgba(0,0,0,0.2); border: 1px solid var(--border-color);" @key="c">
-                            <div class="row g-2 align-items-center">
-                                <div class="col-4">
-                                    <select class="form-select form-select-sm dark-input text-light" style="font-size: 0.8rem;" value="@Item.Devices.IndexOf(c.FromDevice ?? Item.Devices.FirstOrDefault(d => d.Id == c.FromDeviceId && d.Id != 0))" @onchange="@(e => SetConnectionFrom(c, e.Value))">
-                                        <option value="-1" disabled>Откуда...</option>
-                                        @for (int i = 0; i < Item.Devices.Count; i++)
+                            <div class="col-md-7">
+                                <label class="cyber-label text-center mb-2">Виртуальный полигон</label>
+                                <div class="canvas-container" @onclick="HandleCanvasClick">
+                                    <svg style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; overflow: visible;">
+                                        @foreach (var conn in Item.Connections)
                                         {
-                                            <option value="@i">@Item.Devices[i].Name</option>
+                                            var fromNode = conn.FromDevice ?? Item.Devices.FirstOrDefault(d => d.Id == conn.FromDeviceId && d.Id != 0);
+                                            var toNode = conn.ToDevice ?? Item.Devices.FirstOrDefault(d => d.Id == conn.ToDeviceId && d.Id != 0);
+
+                                            if (fromNode != null && toNode != null)
+                                            {
+                                                string dashArray = conn.LinkType == "VPN" ? "6,6" : "0";
+                                                <line x1="@fromNode.MapX" y1="@fromNode.MapY" x2="@toNode.MapX" y2="@toNode.MapY" stroke="rgba(78, 195, 209, 0.6)" stroke-width="2" stroke-dasharray="@dashArray" />
+                                            }
                                         }
-                                    </select>
+                                    </svg>
+
+                                    @foreach (var dev in Item.Devices)
+                                    {
+                                        var currentDev = dev;
+                                        <div class="canvas-device @(selectedDevice == currentDev ? "selected-dev" : "")" style="left: @(currentDev.MapX)px; top: @(currentDev.MapY)px;" @onclick="() => selectedDevice = currentDev" @onclick:stopPropagation="true" @key="currentDev">
+                                            <RadzenIcon Icon="@(string.IsNullOrEmpty(currentDev.Type) ? "dns" : currentDev.Type)" />
+                                            <div class="device-caption">@(string.IsNullOrWhiteSpace(currentDev.Name) ? "Без имени" : currentDev.Name)</div>
+                                        </div>
+                                    }
                                 </div>
-                                <div class="col-1 text-center px-0"><RadzenIcon Icon="arrow_right_alt" Style="color: var(--text-light); opacity: 0.8;" /></div>
-                                <div class="col-4">
-                                    <select class="form-select form-select-sm dark-input text-light" style="font-size: 0.8rem;" value="@Item.Devices.IndexOf(c.ToDevice ?? Item.Devices.FirstOrDefault(d => d.Id == c.ToDeviceId && d.Id != 0))" @onchange="@(e => SetConnectionTo(c, e.Value))">
-                                        <option value="-1" disabled>Куда...</option>
-                                        @for (int i = 0; i < Item.Devices.Count; i++)
-                                        {
-                                            <option value="@i">@Item.Devices[i].Name</option>
-                                        }
-                                    </select>
-                                </div>
-                                <div class="col-2 px-0">
-                                    <select class="form-select form-select-sm dark-input text-light" style="font-size: 0.8rem;" @bind="c.LinkType">
-                                        <option value="Ethernet">LAN</option>
-                                        <option value="VPN">VPN</option>
-                                    </select>
-                                </div>
-                                <div class="col-1 text-end">
-                                    <button type="button" class="btn-delete-icon" style="padding: 2px 4px;" @onclick="() => Item.Connections.Remove(c)"><RadzenIcon Icon="close" Style="font-size: 0.9rem;" /></button>
-                                </div>
+                                <div class="text-center mt-2" style="font-size:0.8rem; color: var(--text-light); opacity: 0.8;">Выберите ПК слева, а затем кликните по сетке полигона, чтобы задать его позицию.</div>
                             </div>
                         </div>
-                    }
-                </div>
-            </div>
-
-            <div class="col-md-7">
-                <label class="cyber-label text-center mb-2">Виртуальный полигон</label>
-                <div class="canvas-container" @onclick="HandleCanvasClick">
-                    <svg style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; overflow: visible;">
-                        @foreach (var conn in Item.Connections)
-                        {
-                            var fromNode = conn.FromDevice ?? Item.Devices.FirstOrDefault(d => d.Id == conn.FromDeviceId && d.Id != 0);
-                            var toNode = conn.ToDevice ?? Item.Devices.FirstOrDefault(d => d.Id == conn.ToDeviceId && d.Id != 0);
-
-                            if (fromNode != null && toNode != null)
-                            {
-                                string dashArray = conn.LinkType == "VPN" ? "6,6" : "0";
-                                <line x1="@fromNode.MapX" y1="@fromNode.MapY" x2="@toNode.MapX" y2="@toNode.MapY" stroke="rgba(78, 195, 209, 0.6)" stroke-width="2" stroke-dasharray="@dashArray" />
-                            }
-                        }
-                    </svg>
-
-                    @foreach (var dev in Item.Devices)
-                    {
-                        var currentDev = dev;
-                        <div class="canvas-device @(selectedDevice == currentDev ? "selected-dev" : "")" style="left: @(currentDev.MapX)px; top: @(currentDev.MapY)px;" @onclick="() => selectedDevice = currentDev" @onclick:stopPropagation="true" @key="currentDev.Id">
-                            <RadzenIcon Icon="@(string.IsNullOrEmpty(currentDev.Type) ? "dns" : currentDev.Type)" />
-                            <div class="device-caption">@(string.IsNullOrWhiteSpace(currentDev.Name) ? "Без имени" : currentDev.Name)</div>
-                        </div>
-                    }
-                </div>
-                <div class="text-center mt-2" style="font-size:0.8rem; color: var(--text-light); opacity: 0.8;">Выберите ПК слева, а затем кликните по сетке полигона, чтобы задать его позицию.</div>
-            </div>
-        </div>
-    </ChildContent>
-</RadzenTabsItem>
+                    </ChildContent>
+                </RadzenTabsItem>
 
 <RadzenTabsItem>
     <Template Context="tabContext6"><span style="color: var(--text-light);"><RadzenIcon Icon="verified" Style="vertical-align: middle; margin-right: 6px;" /> 6. Готово</span></Template>

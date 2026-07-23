@@ -1,14 +1,15 @@
 ﻿// ScenarioService.cs
 using CyberPolygon.Data;
+using CyberPolygon.Models;
+using CyberPolygon.Services;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting;
-using CyberPolygon.Services;
 
 public class ScenarioService
 {
@@ -32,7 +33,6 @@ public class ScenarioService
 
     public async Task SaveAsync(CyberScenario scenario)
     {
-        // Твоя реализация SaveAsync без изменений
         using var context = await _contextFactory.CreateDbContextAsync();
 
         if (scenario.Id == 0)
@@ -44,6 +44,9 @@ public class ScenarioService
             var existingScenario = await context.Scenarios
                 .Include(s => s.Questions)
                 .Include(s => s.Documents)
+                .Include(s => s.Devices)
+                    .ThenInclude(d => d.Applications) // Учим сервис видеть приложения
+                .Include(s => s.Connections)
                 .FirstOrDefaultAsync(s => s.Id == scenario.Id);
 
             if (existingScenario != null)
@@ -51,43 +54,54 @@ public class ScenarioService
                 context.Entry(existingScenario).CurrentValues.SetValues(scenario);
                 existingScenario.GameMode = scenario.GameMode;
 
-                foreach (var existingQuestion in existingScenario.Questions.ToList())
-                {
-                    if (!scenario.Questions.Any(q => q.Id == existingQuestion.Id))
-                        context.Remove(existingQuestion);
-                }
-
+                // 1. Сохранение вопросов
+                context.RemoveRange(existingScenario.Questions.Where(eq => !scenario.Questions.Any(q => q.Id == eq.Id)));
                 foreach (var q in scenario.Questions)
                 {
-                    if (q.Id == 0)
-                    {
-                        existingScenario.Questions.Add(q);
-                    }
-                    else
-                    {
-                        var existingQ = existingScenario.Questions.FirstOrDefault(eq => eq.Id == q.Id);
-                        if (existingQ != null)
-                            context.Entry(existingQ).CurrentValues.SetValues(q);
-                    }
+                    if (q.Id == 0) existingScenario.Questions.Add(q);
+                    else context.Entry(existingScenario.Questions.First(eq => eq.Id == q.Id)).CurrentValues.SetValues(q);
                 }
 
-                foreach (var existingDoc in existingScenario.Documents.ToList())
-                {
-                    if (!scenario.Documents.Any(d => d.Id == existingDoc.Id))
-                        context.Remove(existingDoc);
-                }
+                // 2. Сохранение документов
+                context.RemoveRange(existingScenario.Documents.Where(ed => !scenario.Documents.Any(d => d.Id == ed.Id)));
                 foreach (var d in scenario.Documents)
+                {
+                    if (d.Id == 0) existingScenario.Documents.Add(d);
+                    else context.Entry(existingScenario.Documents.First(ed => ed.Id == d.Id)).CurrentValues.SetValues(d);
+                }
+
+                // 3. СОХРАНЕНИЕ ТОПОЛОГИИ И ПРИЛОЖЕНИЙ
+                context.RemoveRange(existingScenario.Devices.Where(ed => !scenario.Devices.Any(d => d.Id == ed.Id)));
+                foreach (var d in scenario.Devices)
                 {
                     if (d.Id == 0)
                     {
-                        existingScenario.Documents.Add(d);
+                        existingScenario.Devices.Add(d);
                     }
                     else
                     {
-                        var existingD = existingScenario.Documents.FirstOrDefault(ed => ed.Id == d.Id);
-                        if (existingD != null)
-                            context.Entry(existingD).CurrentValues.SetValues(d);
+                        var existingD = existingScenario.Devices.First(ed => ed.Id == d.Id);
+                        context.Entry(existingD).CurrentValues.SetValues(d);
+
+                        // Сохранение приложений внутри ПК
+                        existingD.Applications ??= new List<DeviceApplication>();
+                        d.Applications ??= new List<DeviceApplication>();
+
+                        context.RemoveRange(existingD.Applications.Where(ea => !d.Applications.Any(a => a.Id == ea.Id)));
+                        foreach (var a in d.Applications)
+                        {
+                            if (a.Id == 0) existingD.Applications.Add(a);
+                            else context.Entry(existingD.Applications.First(ea => ea.Id == a.Id)).CurrentValues.SetValues(a);
+                        }
                     }
+                }
+
+                // 4. Сохранение связей (кабелей)
+                context.RemoveRange(existingScenario.Connections.Where(ec => !scenario.Connections.Any(c => c.Id == ec.Id)));
+                foreach (var c in scenario.Connections)
+                {
+                    if (c.Id == 0) existingScenario.Connections.Add(c);
+                    else context.Entry(existingScenario.Connections.First(ec => ec.Id == c.Id)).CurrentValues.SetValues(c);
                 }
             }
             else
@@ -95,7 +109,6 @@ public class ScenarioService
                 context.Scenarios.Update(scenario);
             }
         }
-
         await context.SaveChangesAsync();
     }
 
@@ -332,6 +345,7 @@ public class ScenarioService
             .Include(s => s.Questions)
             .Include(s => s.Documents)
             .Include(s => s.Devices)
+            .ThenInclude(d => d.Applications)
             .Include(s => s.Connections) // <--- ВОТ ЭТА СТРОКА ВКЛЮЧИТ ЛИНИИ В ТЕРМИНАЛЕ!
             .FirstOrDefaultAsync(s => s.Id == id);
     }

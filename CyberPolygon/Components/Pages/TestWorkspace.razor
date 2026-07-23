@@ -735,7 +735,9 @@
     {
         if (progress?.TargetEndTime != null)
         {
+            // ИСПРАВЛЕНО: Использование строго UtcNow
             timeLeft = progress.TargetEndTime.Value - DateTime.UtcNow;
+
             if (timeLeft.TotalSeconds <= 0)
             {
                 _timer?.Dispose();
@@ -743,7 +745,8 @@
                 isTestFinished = true;
                 NotificationService.Notify(NotificationSeverity.Error, "Время вышло", "Тестирование было автоматически завершено системой.");
             }
-            StateHasChanged();
+
+            await InvokeAsync(StateHasChanged);
         }
     }
 }

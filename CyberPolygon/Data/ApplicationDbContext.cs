@@ -1,4 +1,5 @@
 using CyberPolygon.Data.Models;
+using CyberPolygon.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -25,7 +26,7 @@ namespace CyberPolygon.Data
         public DbSet<TestDocument> TestDocuments { get; set; }
         public DbSet<UserTestProgress> UserTestProgresses { get; set; }
         public DbSet<UserTestAnswer> UserTestAnswers { get; set; }
-        public ICollection<ScenarioDevice> Devices { get; set; } = new List<ScenarioDevice>();
+        public DbSet<DeviceApplication> DeviceApplications { get; set; }
         public DbSet<ScenarioDevice> ScenarioDevices { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {

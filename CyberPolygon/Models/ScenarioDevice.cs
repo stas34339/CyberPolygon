@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using CyberPolygon.Models;
+using System.ComponentModel.DataAnnotations;
 
 namespace CyberPolygon.Data // Убедись, что namespace совпадает с твоим проектом
 {
@@ -23,5 +24,7 @@ namespace CyberPolygon.Data // Убедись, что namespace совпадае
         public int MapY { get; set; }
 
         public string Type { get; set; } = "dns"; // По умолчанию — сервер
+
+        public List<DeviceApplication> Applications { get; set; } = new();
     }
 }
