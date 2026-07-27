@@ -8,6 +8,8 @@
 @inject NavigationManager NavigationManager
 @inject IDbContextFactory<ApplicationDbContext> ContextFactory
 @rendermode InteractiveServer
+@attribute [Authorize]
+
 
 <PageTitle>Главный терминал | Киберполигон</PageTitle>
 
@@ -645,42 +647,3 @@
     </div>
 </div>
 
-@code {
-    private bool isLoaded = false;
-    private string UserDisplayName = string.Empty;
-    private ApplicationUser? dbUser;
-    private int activeCard = 1;
-
-    protected override async Task OnInitializedAsync()
-    {
-        var authState = await AuthProvider.GetAuthenticationStateAsync();
-        var userClaims = authState.User;
-
-        if (userClaims.Identity?.IsAuthenticated == true)
-        {
-            var userId = userClaims.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (!string.IsNullOrEmpty(userId))
-            {
-                using var context = await ContextFactory.CreateDbContextAsync();
-                dbUser = await context.Set<ApplicationUser>()
-                    .Include(u => u.Group)
-                    .Include(u => u.Teams)
-                    .FirstOrDefaultAsync(u => u.Id == userId);
-
-                UserDisplayName = dbUser?.LastName + " " + dbUser?.FirstName ?? userClaims.Identity.Name ?? "Оперативник";
-            }
-        }
-        else
-        {
-            UserDisplayName = "Гость полигона";
-        }
-
-        isLoaded = true;
-    }
-
-    private void ToggleCard(int cardId)
-    {
-        activeCard = cardId;
-    }
-}

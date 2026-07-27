@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace CyberPolygon.Services
+﻿namespace CyberPolygon.Services
 {
     public class CatalogUpdateService
     {

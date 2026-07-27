@@ -1,10 +1,9 @@
 ﻿@page "/scenario"
-@using CyberPolygon.Components.Components
-@using Microsoft.EntityFrameworkCore
 @using CyberPolygon.Data
 @using CyberPolygon.Services
+@using Microsoft.EntityFrameworkCore
 @rendermode InteractiveServer
-
+@attribute [Authorize]
 @implements IDisposable
 @inject ScenarioService ScenarioService
 @inject DialogService DialogService
@@ -329,12 +328,10 @@
                         var currentStatus = userProgresses.ContainsKey(item.Id) ? userProgresses[item.Id] : AttemptStatus.NotStarted;
 
                         <div class="scenario-card" @key="item.Id">
-                            <AuthorizeView Roles="Admin">
-                                <div class="admin-actions">
+                            <div class="admin-actions">
                                     <button class="btn-icon edit" @onclick="@(() => OpenEditDialog(item))" title="Редактировать"><RadzenIcon Icon="edit" /></button>
                                     <button class="btn-icon delete" @onclick="@(() => DeleteItem(item.Id))" title="Удалить"><RadzenIcon Icon="delete" /></button>
                                 </div>
-                            </AuthorizeView>
 
                             <h3 class="card-title" title="@item.Title">@item.Title</h3>
 
@@ -417,133 +414,3 @@
     </div>
 }
 
-@code {
-    List<CyberScenario>? scenarios;
-    private Dictionary<int, AttemptStatus> userProgresses = new();
-    private string currentUserId = string.Empty;
-    private int? currentTeamId = null;
-    private bool isAdmin = false;
-    private readonly SemaphoreSlim _lock = new(1, 1);
-
-    protected override async Task OnInitializedAsync()
-    {
-        CatalogUpdateService.OnCatalogChanged += HandleExternalUpdate;
-        SessionManager.TeamProgressChanged += OnTeamProgressChanged;
-
-        await Refresh();
-    }
-
-    private async void HandleExternalUpdate()
-    {
-        await InvokeAsync(async () =>
-        {
-            await Refresh();
-            StateHasChanged();
-        });
-    }
-
-    private async void OnTeamProgressChanged(int teamId)
-    {
-        if (currentTeamId == teamId)
-        {
-            await InvokeAsync(async () =>
-            {
-                await Refresh();
-                StateHasChanged();
-            });
-        }
-    }
-
-    async Task Refresh()
-    {
-        // Предотвращаем одновременные конкурентные запросы к контексту данных
-        if (!await _lock.WaitAsync(0)) return;
-
-        try
-        {
-            var allScenarios = await ScenarioService.GetAllAsync();
-            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-            var userPrincipal = authState.User;
-            currentUserId = userPrincipal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
-            isAdmin = userPrincipal.IsInRole("Admin");
-
-            userProgresses.Clear();
-
-            if (!string.IsNullOrEmpty(currentUserId))
-            {
-                using var context = await ContextFactory.CreateDbContextAsync();
-                var dbUser = await context.Set<ApplicationUser>().Include(u => u.Teams).AsNoTracking().FirstOrDefaultAsync(u => u.Id == currentUserId);
-                currentTeamId = dbUser?.Teams?.FirstOrDefault()?.Id;
-
-                // ОПТИМИЗАЦИЯ: Извлекаем из БД строго записи текущего пользователя или его команды
-                var progresses = await context.Set<UserScenarioProgress>()
-                    .Where(p => p.UserId == currentUserId || (currentTeamId.HasValue && p.TeamId == currentTeamId.Value))
-                    .AsNoTracking()
-                    .ToListAsync();
-
-                foreach (var item in allScenarios)
-                {
-                    UserScenarioProgress? p = null;
-                    if (item.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue)
-                        p = progresses.FirstOrDefault(x => x.CyberScenarioId == item.Id && x.TeamId == currentTeamId.Value && x.IsTeamAttempt);
-                    else
-                        p = progresses.FirstOrDefault(x => x.CyberScenarioId == item.Id && x.UserId == currentUserId && !x.IsTeamAttempt);
-
-                    if (p != null) userProgresses[item.Id] = p.Status;
-                }
-            }
-
-            if (isAdmin)
-            {
-                scenarios = allScenarios;
-            }
-            else
-            {
-                using var context = await ContextFactory.CreateDbContextAsync();
-                var dbUser = await context.Set<ApplicationUser>().Include(u => u.Teams).AsNoTracking().FirstOrDefaultAsync(u => u.Id == currentUserId);
-                if (dbUser == null) { scenarios = new List<CyberScenario>(); return; }
-
-                var userTeamIds = dbUser.Teams?.Select(t => t.Id).ToList() ?? new List<int>();
-                scenarios = allScenarios.Where(s => s.IsVisible && (s.Scope == VisibilityScope.Public || (s.Scope == VisibilityScope.GroupOnly && !string.IsNullOrEmpty(s.AllowedUserIds) && s.AllowedUserIds.Contains(currentUserId)) || (s.Scope == VisibilityScope.TeamOnly && !string.IsNullOrEmpty(s.AllowedTeamIds) && userTeamIds.Any(t => s.AllowedTeamIds.Contains(t.ToString()))))).ToList();
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Ошибка загрузки каталога сценариев: {ex.Message}");
-            scenarios ??= new List<CyberScenario>();
-        }
-        finally
-        {
-            _lock.Release();
-        }
-    }
-
-    void OpenEditDialog(CyberScenario scenario) => NavigationManager.NavigateTo($"/scenario/edit/{scenario.Id}");
-
-    bool isDeleteVisualDialogVisible = false; int scenarioIdToDelete = 0;
-    void DeleteItem(int id) { scenarioIdToDelete = id; isDeleteVisualDialogVisible = true; }
-
-    async Task ConfirmDelete()
-    {
-        isDeleteVisualDialogVisible = false;
-        if (scenarioIdToDelete != 0)
-        {
-            await ScenarioService.DeleteAsync(scenarioIdToDelete);
-            CatalogUpdateService.NotifyCatalogChanged();
-            NotificationService.Notify(NotificationSeverity.Success, "Система", "Данные удалены");
-        }
-        scenarioIdToDelete = 0;
-    }
-
-    void CloseDeleteDialog() { isDeleteVisualDialogVisible = false; scenarioIdToDelete = 0; }
-
-    private int GetDifficultyOrder(string difficulty) => difficulty switch { "Легкий" => 1, "Средний" => 2, "Сложный" => 3, _ => 4 };
-    private string GetDifficultyClass(string difficulty) => difficulty switch { "Легкий" => "diff-easy", "Средний" => "diff-medium", "Сложный" => "diff-hard", _ => "diff-easy" };
-    private string GetDifficultyColor(string difficulty) => difficulty switch { "Легкий" => "var(--success-color)", "Средний" => "var(--warning-color)", "Сложный" => "var(--danger-color)", _ => "var(--text-light)" };
-
-    public void Dispose()
-    {
-        CatalogUpdateService.OnCatalogChanged -= HandleExternalUpdate;
-        SessionManager.TeamProgressChanged -= OnTeamProgressChanged;
-    }
-}

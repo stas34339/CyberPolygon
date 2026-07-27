@@ -3,13 +3,7 @@ using CyberPolygon.Data;
 using CyberPolygon.Models;
 using CyberPolygon.Services;
 using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 
 public class ScenarioService
 {

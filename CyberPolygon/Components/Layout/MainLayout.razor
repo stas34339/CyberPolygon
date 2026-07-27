@@ -1,75 +1,13 @@
-﻿@using CyberPolygon.Components.Account.Pages
-@inject AuthenticationStateProvider AuthStateProvider
-@inject CookieThemeService CookieThemeService
-@inherits LayoutComponentBase
+﻿@inherits LayoutComponentBase
 
-
-
-<style>
-    :root {
-        --bg-main: #1e1e1e;
-        --bg-card: #24272c;
-        --bg-card-hover: #2a2e36;
-        --text-muted: #8fa0b5;
-        --text-light: #cbe0f5;
-        --accent-blue: #5ba3e3;
-        --accent-cyan: #4ec3d1;
-        --border-color: #343a42;
-    }
-
-    body {
-        margin: 0;
-        background-color: var(--bg-main);
-    }
-
-    .page {
-        display: flex;
-        flex-direction: column;
-        min-height: 100vh;
-    }
-
-    main {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-    }
-
-    article.content {
-        padding: 0; /* убираем px-4, если хочешь отступы — верни */
-    }
-
-    /* если на странице нужен background-image, он задаётся внутри компонентов */
-</style>
 <RadzenComponents />
-<html>
-<body>
-    <div class="page">
-        @if (isAuthenticated)
-        {
-            <header class="top-nav">
-                <NavMenu />
-            </header>
 
-            <main>
-                <article>
-                    @Body
-                </article>
-            </main>
-        }
-        else
-        {
-            <Login />
-        }
-    </div>
-</body>
-</html>
+<RadzenLayout>
+    <RadzenHeader Style="background: linear-gradient(135deg, #1a2332 0%, #1e2d3d 100%); border-bottom: 2px solid #2a3a4a; box-shadow: none;">
+        <NavMenu />
+    </RadzenHeader>
 
-@code {
-    private bool isAuthenticated;
-
-    protected override async Task OnInitializedAsync()
-    {
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        isAuthenticated = authState.User.Identity?.IsAuthenticated ?? false;
-    }
-}
+    <RadzenBody Style="background-color: #1e1e1e; padding: 0;">
+        @Body
+    </RadzenBody>
+</RadzenLayout>

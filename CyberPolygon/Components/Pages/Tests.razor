@@ -1,10 +1,8 @@
 ﻿@page "/tests"
-@using CyberPolygon.Components.Components
 @using Microsoft.EntityFrameworkCore
-@using CyberPolygon.Data
 @using CyberPolygon.Services
 @rendermode InteractiveServer
-
+@attribute [Authorize]
 @implements IDisposable
 @inject TestService TestService
 @inject DialogService DialogService
@@ -330,7 +328,7 @@
                         var currentStatus = userProgresses.ContainsKey(item.Id) ? userProgresses[item.Id] : AttemptStatus.NotStarted;
 
                         <div class="test-card" @key="item.Id">
-                            <AuthorizeView Roles="Admin">
+                            <AuthorizeView Roles="SuperAdmin">
                                 <div class="admin-actions">
                                     <button class="btn-icon edit" @onclick="@(() => NavigationManager.NavigateTo($"/admin/test/edit/{item.Id}"))" title="Редактировать"><RadzenIcon Icon="edit" /></button>
                                     <button class="btn-icon delete" @onclick="@(() => DeleteItem(item.Id))" title="Удалить"><RadzenIcon Icon="delete" /></button>
@@ -414,112 +412,3 @@
     </div>
 }
 
-@code {
-    List<CyberTest>? tests;
-    private Dictionary<int, AttemptStatus> userProgresses = new();
-    private string currentUserId = string.Empty;
-    private bool isAdmin = false;
-    private readonly SemaphoreSlim _lock = new(1, 1);
-
-    protected override async Task OnInitializedAsync()
-    {
-        CatalogUpdateService.OnCatalogChanged += HandleCatalogChanged;
-        await Refresh();
-    }
-
-    private async void HandleCatalogChanged()
-    {
-        await InvokeAsync(async () =>
-        {
-            await Refresh();
-            StateHasChanged();
-        });
-    }
-
-    async Task Refresh()
-    {
-        if (!await _lock.WaitAsync(0)) return;
-
-        try
-        {
-            var allTests = await TestService.GetAllAsync();
-            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-            var userPrincipal = authState.User;
-            currentUserId = userPrincipal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
-            isAdmin = userPrincipal.IsInRole("Admin");
-
-            userProgresses.Clear();
-
-            if (!string.IsNullOrEmpty(currentUserId))
-            {
-                using var context = await ContextFactory.CreateDbContextAsync();
-                var progresses = await context.Set<UserTestProgress>()
-                    .Where(p => p.UserId == currentUserId)
-                    .AsNoTracking()
-                    .ToListAsync();
-
-                foreach (var p in progresses)
-                {
-                    if (p.Status == AttemptStatus.InProgress && p.TargetEndTime.HasValue && DateTime.UtcNow >= p.TargetEndTime.Value)
-                    {
-                        p.Status = AttemptStatus.Failed; p.CompletedAt = DateTime.UtcNow;
-                        context.Set<UserTestProgress>().Update(p); await context.SaveChangesAsync();
-                    }
-                    if (!userProgresses.ContainsKey(p.CyberTestId) || p.Status == AttemptStatus.InProgress)
-                    {
-                        userProgresses[p.CyberTestId] = p.Status;
-                    }
-                }
-            }
-
-            if (isAdmin)
-            {
-                tests = allTests;
-            }
-            else
-            {
-                tests = allTests.Where(t => t.IsVisible && (
-                    t.Scope == VisibilityScope.Public ||
-                    (t.Scope == VisibilityScope.GroupOnly && !string.IsNullOrEmpty(t.AllowedUserIds) && t.AllowedUserIds.Contains(currentUserId))
-                )).ToList();
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Ошибка загрузки каталога тестов: {ex.Message}");
-            tests ??= new List<CyberTest>();
-        }
-        finally
-        {
-            _lock.Release();
-        }
-    }
-
-    bool isDeleteVisualDialogVisible = false; int testIdToDelete = 0;
-    void DeleteItem(int id) { testIdToDelete = id; isDeleteVisualDialogVisible = true; }
-
-    async Task ConfirmDelete()
-    {
-        isDeleteVisualDialogVisible = false;
-        if (testIdToDelete != 0)
-        {
-            await TestService.DeleteAsync(testIdToDelete);
-
-            // СИГНАЛ: Сообщаем всем, что тест удален!
-            CatalogUpdateService.NotifyCatalogChanged();
-
-            NotificationService.Notify(NotificationSeverity.Success, "Система", "Тест успешно удален.");
-        }
-        testIdToDelete = 0;
-    }
-    void CloseDeleteDialog() { isDeleteVisualDialogVisible = false; testIdToDelete = 0; }
-
-    private string GetDifficultyClass(TestDifficulty diff) => diff switch { TestDifficulty.Easy => "diff-easy", TestDifficulty.Medium => "diff-medium", _ => "diff-hard" };
-    private string GetDifficultyText(TestDifficulty diff) => diff switch { TestDifficulty.Easy => "Легкий", TestDifficulty.Medium => "Средний", _ => "Сложный" };
-    private string GetDifficultyColor(TestDifficulty diff) => diff switch { TestDifficulty.Easy => "var(--success-color)", TestDifficulty.Medium => "var(--warning-color)", _ => "var(--danger-color)" };
-
-    public void Dispose()
-    {
-        CatalogUpdateService.OnCatalogChanged -= HandleCatalogChanged;
-    }
-}

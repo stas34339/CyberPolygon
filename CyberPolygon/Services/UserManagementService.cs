@@ -1,7 +1,6 @@
 ﻿using CyberPolygon.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 
 namespace CyberPolygon.Services
 {

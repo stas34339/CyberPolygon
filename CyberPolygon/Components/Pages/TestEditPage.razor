@@ -4,7 +4,7 @@
 @using CyberPolygon.Data
 @using CyberPolygon.Services
 @using System.IO
-
+@attribute [Authorize]
 @inject TestService TestService
 @inject NavigationManager NavigationManager
 @inject NotificationService NotificationService
@@ -416,72 +416,3 @@
         </RadzenTabs>
     </RadzenTemplateForm>
 </div>
-
-@code {
-    [Parameter] public int? Id { get; set; }
-    private CyberTest Item { get; set; } = new();
-    private List<ApplicationUser> users = new();
-    private string? selectedUserIdToAdd;
-    private List<ApplicationUser> addedUsers = new();
-    private int selectedTabIndex = 0;
-
-    private bool IsStep1Valid => !string.IsNullOrWhiteSpace(Item.Title);
-    private bool IsStep2Valid => Item.Questions.Any() && Item.Questions.All(q => !string.IsNullOrWhiteSpace(q.Text) && (q.Type == QuestionType.ManualText ? !string.IsNullOrWhiteSpace(q.CorrectTextAnswer) : q.Options.Any()));
-    private bool IsStep3Valid => true;
-    private bool IsStep4Valid => true;
-
-    protected override async Task OnInitializedAsync()
-    {
-        using var context = await ContextFactory.CreateDbContextAsync();
-        users = await context.Set<ApplicationUser>().AsNoTracking().ToListAsync();
-
-        if (Id.HasValue)
-        {
-            Item = await context.Set<CyberTest>().Include(t => t.Questions).ThenInclude(q => q.Options).Include(t => t.Documents).FirstOrDefaultAsync(t => t.Id == Id.Value) ?? new CyberTest();
-            if (!string.IsNullOrEmpty(Item.AllowedUserIds))
-            {
-                var userIds = Item.AllowedUserIds.Split(',', StringSplitOptions.RemoveEmptyEntries);
-                addedUsers = users.Where(u => userIds.Contains(u.Id)).ToList();
-            }
-        }
-        else
-        {
-            Item = new CyberTest { Questions = new(), Documents = new(), IsVisible = false, Scope = VisibilityScope.Public, Difficulty = TestDifficulty.Easy };
-        }
-    }
-
-    private void AddUserToList() { if (!string.IsNullOrEmpty(selectedUserIdToAdd) && !addedUsers.Any(u => u.Id == selectedUserIdToAdd)) { var u = users.FirstOrDefault(x => x.Id == selectedUserIdToAdd); if (u != null) addedUsers.Add(u); } selectedUserIdToAdd = null; }
-    private void AddAllUsersToList() { var missing = users.Where(u => !addedUsers.Any(au => au.Id == u.Id)).ToList(); if (missing.Any()) addedUsers.AddRange(missing); }
-    private void RemoveUserFromList(ApplicationUser user) => addedUsers.Remove(user);
-    private void AddQuestion() => Item.Questions.Add(new TestQuestion { Type = QuestionType.ManualText, Options = new() });
-    private void AddOption(TestQuestion q) => q.Options.Add(new TestOption());
-    private void AddDocumentSlot() => Item.Documents.Add(new TestDocument());
-
-    private async Task UploadDocumentToDb(InputFileChangeEventArgs e, TestDocument doc)
-    {
-        try { using var ms = new MemoryStream(); await e.File.OpenReadStream(1024 * 1024 * 25).CopyToAsync(ms); doc.FilePath = $"data:{e.File.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}"; if (string.IsNullOrWhiteSpace(doc.Title)) doc.Title = e.File.Name; }
-        catch (Exception ex) { NotificationService.Notify(NotificationSeverity.Error, "Ошибка документа", ex.Message); }
-    }
-
-    private async Task OnSave()
-    {
-        Item.AllowedTeamIds = null;
-        Item.AllowedUserIds = addedUsers.Any() ? string.Join(",", addedUsers.Select(u => u.Id)) : null;
-        Item.Scope = string.IsNullOrEmpty(Item.AllowedUserIds) ? VisibilityScope.Public : VisibilityScope.GroupOnly;
-
-        if (!IsStep1Valid) { NotificationService.Notify(NotificationSeverity.Warning, "Ошибка", "Заполните название на 1-й вкладке."); selectedTabIndex = 0; return; }
-        if (!IsStep2Valid) { NotificationService.Notify(NotificationSeverity.Warning, "Ошибка", "Добавьте вопросы и заполните к ним ответы."); selectedTabIndex = 1; return; }
-
-        using var context = await ContextFactory.CreateDbContextAsync();
-        if (Item.Id == 0) context.Set<CyberTest>().Add(Item); else context.Set<CyberTest>().Update(Item);
-        await context.SaveChangesAsync();
-
-        // СИГНАЛ: Сообщаем каталогу, что нужно обновиться!
-        CatalogUpdateService.NotifyCatalogChanged();
-
-        NotificationService.Notify(NotificationSeverity.Success, "Успех", "Тест сохранен!");
-        NavigationManager.NavigateTo("tests");
-    }
-
-    private void Cancel() => NavigationManager.NavigateTo("tests");
-}

@@ -10,7 +10,7 @@
 @inject NotificationService NotificationService
 @inject IDbContextFactory<ApplicationDbContext> ContextFactory
 @inject CatalogUpdateService CatalogUpdateService
-
+@attribute [Authorize]
 @rendermode InteractiveServer
 
 <style>
@@ -763,98 +763,3 @@
 </RadzenTabs>
 </RadzenTemplateForm>
 </div>
-
-@code {
-    [Parameter] public int? Id { get; set; }
-    private CyberScenario Item { get; set; } = new();
-
-    private List<ApplicationUser> users = new();
-    private List<UserTeam> teams = new();
-    private List<ApplicationUser> addedUsers = new();
-    private List<UserTeam> addedTeams = new();
-
-    private ScenarioDevice? selectedDevice;
-    private int selectedTabIndex = 0;
-    private bool isIndividual = true;
-    private readonly List<string> difficulties = new() { "Легкий", "Средний", "Сложный" };
-
-    private bool IsStep1Valid => !string.IsNullOrWhiteSpace(Item.Title);
-    private bool IsStep2Valid => Item.Questions.Any() && Item.Questions.All(q => !string.IsNullOrWhiteSpace(q.Text) && !string.IsNullOrWhiteSpace(q.CorrectAnswer));
-
-    protected override async Task OnInitializedAsync()
-    {
-        using var context = await ContextFactory.CreateDbContextAsync();
-        users = await context.Set<ApplicationUser>().AsNoTracking().ToListAsync();
-        teams = await context.Set<UserTeam>().AsNoTracking().ToListAsync();
-
-        if (Id.HasValue)
-        {
-            Item = await context.Scenarios
-                .Include(s => s.Questions)
-                .Include(s => s.Documents)
-                .Include(s => s.Devices)
-                .Include(s => s.Connections)
-                .FirstOrDefaultAsync(s => s.Id == Id.Value) ?? new CyberScenario();
-
-            isIndividual = Item.Scope != VisibilityScope.TeamOnly;
-
-            if (!string.IsNullOrEmpty(Item.AllowedUserIds)) { var userIds = Item.AllowedUserIds.Split(',', StringSplitOptions.RemoveEmptyEntries); addedUsers = users.Where(u => userIds.Contains(u.Id)).ToList(); }
-            if (!string.IsNullOrEmpty(Item.AllowedTeamIds)) { var teamIds = Item.AllowedTeamIds.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse); addedTeams = teams.Where(t => teamIds.Contains(t.Id)).ToList(); }
-        }
-        else
-        {
-            Item = new CyberScenario { Questions = new List<ScenarioQuestion>(), Documents = new List<ScenarioDocument>(), Devices = new List<ScenarioDevice>(), Connections = new List<ScenarioConnection>(), IsVisible = false, GameMode = ScenarioGameMode.AllAtOnce };
-        }
-    }
-
-    private void SetIndividualMode() => isIndividual = true;
-    private void SetTeamMode() => isIndividual = false;
-    private string GetUserDisplayName(ApplicationUser? u) => u != null ? $"{u.LastName} {u.FirstName}".Trim() : "User";
-    private void AddQuestion() => Item.Questions.Add(new ScenarioQuestion { AwardPoints = 10, PenaltyPoints = 5 });
-    private void AddDocumentSlot() => Item.Documents.Add(new ScenarioDocument());
-
-    private void AddDevice()
-    {
-        var newDev = new ScenarioDevice { Name = $"Узел {Item.Devices.Count + 1}", MapX = 100, MapY = 100, Type = "dns" };
-        Item.Devices.Add(newDev);
-        selectedDevice = newDev;
-    }
-
-    private void AddConnection()
-    {
-        if (Item.Devices.Count >= 2) { Item.Connections.Add(new ScenarioConnection { FromDevice = Item.Devices[0], ToDevice = Item.Devices[1], LinkType = "Ethernet" }); }
-        else { NotificationService.Notify(NotificationSeverity.Info, "Внимание", "Добавьте минимум 2 устройства для связи."); }
-    }
-
-    private void SetConnectionFrom(ScenarioConnection c, object val) { if (int.TryParse(val?.ToString(), out int idx) && idx >= 0) { c.FromDevice = Item.Devices[idx]; c.FromDeviceId = c.FromDevice.Id; } }
-    private void SetConnectionTo(ScenarioConnection c, object val) { if (int.TryParse(val?.ToString(), out int idx) && idx >= 0) { c.ToDevice = Item.Devices[idx]; c.ToDeviceId = c.ToDevice.Id; } }
-
-    private void HandleCanvasClick(MouseEventArgs e)
-    {
-        if (selectedDevice != null) { selectedDevice.MapX = (int)e.OffsetX; selectedDevice.MapY = (int)e.OffsetY; StateHasChanged(); }
-    }
-
-    private async Task UploadDocumentToDb(InputFileChangeEventArgs e, ScenarioDocument doc)
-    {
-        using var ms = new MemoryStream();
-        await e.File.OpenReadStream(maxAllowedSize: 1024 * 1024 * 25).CopyToAsync(ms);
-        doc.FilePath = $"data:{e.File.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}";
-        if (string.IsNullOrWhiteSpace(doc.Title)) doc.Title = e.File.Name;
-    }
-
-    private async Task OnSave()
-    {
-        Item.SchemaPath = "INTERNAL_BUILDER";
-        if (isIndividual) { Item.AllowedTeamIds = null; Item.AllowedUserIds = addedUsers.Any() ? string.Join(",", addedUsers.Select(u => u.Id)) : null; Item.Scope = string.IsNullOrEmpty(Item.AllowedUserIds) ? VisibilityScope.Public : VisibilityScope.GroupOnly; }
-        else { Item.AllowedUserIds = null; Item.AllowedTeamIds = addedTeams.Any() ? string.Join(",", addedTeams.Select(t => t.Id)) : null; Item.Scope = VisibilityScope.TeamOnly; }
-
-        using var context = await ContextFactory.CreateDbContextAsync();
-        if (Item.Id == 0) context.Scenarios.Add(Item); else context.Scenarios.Update(Item);
-
-        await context.SaveChangesAsync();
-        CatalogUpdateService.NotifyCatalogChanged();
-        NotificationService.Notify(NotificationSeverity.Success, "Успех", "Сценарий сохранен!");
-        NavigationManager.NavigateTo("scenario");
-    }
-    private void Cancel() => NavigationManager.NavigateTo("scenario");
-}
