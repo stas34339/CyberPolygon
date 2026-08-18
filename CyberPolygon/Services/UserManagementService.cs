@@ -1,6 +1,7 @@
 ﻿using CyberPolygon.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Components.Authorization;
 
 namespace CyberPolygon.Services
 {
@@ -8,11 +9,13 @@ namespace CyberPolygon.Services
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly AuthenticationStateProvider _authStateProvider;
 
-        public UserManagementService(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
+        public UserManagementService(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, AuthenticationStateProvider authStateProvider)
         {
             _userManager = userManager;
             _roleManager = roleManager;
+            _authStateProvider = authStateProvider;
         }
 
         public async Task<(bool Success, string Error)> CreateUserAsync(string login, string password, string firstName, string lastName, string middleName, bool isAdmin)
@@ -27,6 +30,14 @@ namespace CyberPolygon.Services
                 MiddleName = middleName,
                 EmailConfirmed = true
             };
+
+            // ПРОВЕРКА ПРАВ: Только SuperAdmin может назначать других Админов
+            if (isAdmin)
+            {
+                var authState = await _authStateProvider.GetAuthenticationStateAsync();
+                if (!authState.User.IsInRole("SuperAdmin"))
+                    return (false, "ОТКАЗ СИСТЕМЫ: Только СуперАдминистратор может назначать привилегированные права.");
+            }
 
             var result = await _userManager.CreateAsync(user, password);
             if (!result.Succeeded)
@@ -54,6 +65,11 @@ namespace CyberPolygon.Services
 
         public async Task<bool> ToggleAdminRoleAsync(string userId)
         {
+            // ПРОВЕРКА ПРАВ: Снимать или выдавать админку на лету может только SuperAdmin
+            var authState = await _authStateProvider.GetAuthenticationStateAsync();
+            if (!authState.User.IsInRole("SuperAdmin"))
+                return false;
+
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null) return false;
 
@@ -69,7 +85,9 @@ namespace CyberPolygon.Services
         {
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null) return false;
-            return await _userManager.IsInRoleAsync(user, "Admin");
+
+            // Считаем администратором и Admin и SuperAdmin
+            return await _userManager.IsInRoleAsync(user, "Admin") || await _userManager.IsInRoleAsync(user, "SuperAdmin");
         }
 
         public async Task<List<ApplicationUser>> GetAllUsersAsync()
@@ -79,7 +97,5 @@ namespace CyberPolygon.Services
                 .Include(u => u.Teams)
                 .ToListAsync();
         }
-       
-
     }
 }

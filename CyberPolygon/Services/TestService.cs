@@ -245,4 +245,22 @@ public class TestService
 
         return newProgress;
     }
+    public async Task RequestRetakeAsync(int progressId)
+    {
+        using var context = await _contextFactory.CreateDbContextAsync();
+        var progress = await context.UserTestProgresses.FindAsync(progressId);
+        if (progress != null) { progress.IsRetakeRequested = true; await context.SaveChangesAsync(); }
+    }
+    public async Task GrantRetakeAsync(int progressId)
+    {
+        using var context = await _contextFactory.CreateDbContextAsync();
+        var progress = await context.UserTestProgresses.FindAsync(progressId);
+        if (progress != null) { progress.IsRetakeRequested = false; progress.IsRetakeGranted = true; await context.SaveChangesAsync(); }
+    }
+    public async Task RejectRetakeAsync(int progressId)
+    {
+        using var context = await _contextFactory.CreateDbContextAsync();
+        var progress = await context.UserTestProgresses.FindAsync(progressId);
+        if (progress != null) { progress.IsRetakeRequested = false; progress.IsRetakeGranted = false; await context.SaveChangesAsync(); }
+    }
 }

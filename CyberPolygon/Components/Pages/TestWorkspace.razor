@@ -483,7 +483,25 @@
                     <div class="result-box">
                         <h4>ТЕСТ ЗАВЕРШЕН</h4>
                         <p>Результат: <span class="score">@correctCount</span> из <b>@test.Questions.Count</b></p>
-                        <button class="btn-retry" @onclick="RestartTest">ПРОЙТИ ПОВТОРНО</button>
+
+                        @if (progress!.IsRetakeGranted)
+                        {
+                            <button class="btn-retry w-100 mt-2" style="background: linear-gradient(135deg, var(--success-color) 0%, #5ba3e3 100%);" @onclick="RestartTest">
+                                <RadzenIcon Icon="play_arrow" /> НАЧАТЬ ПОВТОРНУЮ ПОПЫТКУ
+                            </button>
+                        }
+                        else if (progress!.IsRetakeRequested)
+                        {
+                            <button class="btn-outline-danger w-100 mt-2" disabled style="border-color: var(--border-color); color: var(--text-muted); cursor: not-allowed;">
+                                <RadzenIcon Icon="pending_actions" /> ЗАПРОС ОТПРАВЛЕН
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn-retry w-100 mt-2" style="background: linear-gradient(135deg, var(--warning-color) 0%, #c29d59 100%);" @onclick="RequestRetake">
+                                <RadzenIcon Icon="restart_alt" /> ЗАПРОСИТЬ ПОВТОР
+                            </button>
+                        }
                     </div>
                 }
             </div>
@@ -555,6 +573,15 @@
                                                 <span>@currentOpt.Text</span>
                                             </div>
                                         }
+                                    </div>
+                                }
+
+                                <!-- ВЫВОД ПРИМЕРА ОТВЕТА -->
+                                @if (!string.IsNullOrEmpty(state.Question.ExampleAnswer))
+                                {
+                                    <div style="margin-bottom: 15px; font-size: 0.85rem; color: var(--text-muted); font-family: monospace;">
+                                        <RadzenIcon Icon="help_outline" Style="font-size: 1rem; vertical-align: middle; margin-right: 4px; color: var(--accent-cyan);" />
+                                        Формат ответа: <span style="color: var(--accent-light-blue); background: rgba(126,200,248,0.1); padding: 2px 6px; border-radius: 4px;">@state.Question.ExampleAnswer</span>
                                     </div>
                                 }
 

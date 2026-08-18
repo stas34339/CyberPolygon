@@ -10,12 +10,11 @@ using static CyberPolygon.Data.ApplicationDbContext;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
-// Сервис для работы с бд
+// Сервисы для работы с БД и логикой
 builder.Services.AddScoped<ScenarioService>();
-//Подключение сервиса Radzen
 builder.Services.AddRazorPages();
-builder.Services.AddRadzenComponents();
+
+builder.Services.AddScoped<ThemeService>();
 builder.Services.AddScoped<DialogService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<TooltipService>();
@@ -35,6 +34,11 @@ builder.Services.AddRadzenCookieThemeService(options =>
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
+    .AddHubOptions(options =>
+    {
+        // Увеличиваем лимит сообщений SignalR до 50 МБ
+        options.MaximumReceiveMessageSize = 50 * 1024 * 1024;
+    })
     .AddInteractiveWebAssemblyComponents();
 
 builder.Services.AddCascadingAuthenticationState();
@@ -42,10 +46,10 @@ builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 
 builder.Services.AddAuthentication(options =>
-    {
-        options.DefaultScheme = IdentityConstants.ApplicationScheme;
-        options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
-    })
+{
+    options.DefaultScheme = IdentityConstants.ApplicationScheme;
+    options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+})
     .AddIdentityCookies();
 
 
@@ -53,31 +57,26 @@ builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
-// 2. Регистрируем обычный Scoped контекст, который берется из этой фабрики (для ASP.NET Core Identity)
+
+// Регистрируем обычный Scoped контекст для ASP.NET Core Identity
 builder.Services.AddScoped(p =>
-    p.GetRequiredService<IDbContextFactory<ApplicationDbContext>>().CreateDbContext()); 
+    p.GetRequiredService<IDbContextFactory<ApplicationDbContext>>().CreateDbContext());
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options => {
-        options.SignIn.RequireConfirmedAccount = false;
-        // Твои настройки паролей, если нужны
-    })
+    options.SignIn.RequireConfirmedAccount = false;
+})
     .AddErrorDescriber<RussianIdentityErrorDescriber>()
     .AddRoles<IdentityRole>() // ВКЛЮЧАЕМ РОЛИ
-    .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddSignInManager()
-    .AddDefaultTokenProviders()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager()
     .AddDefaultTokenProviders();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
-
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
@@ -85,41 +84,43 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
-
 app.UseAntiforgery();
-
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
-
-// Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();
 
 
+// ИНИЦИАЛИЗАЦИЯ БАЗЫ ДАННЫХ И РОЛЕЙ
 using (var scope = app.Services.CreateScope())
 {
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
-    // 1. ПРОВЕРКА И СОЗДАНИЕ РОЛИ АДМИНА
+    // 1. ПРОВЕРКА И СОЗДАНИЕ РОЛЕЙ
     string adminRoleName = "Admin";
+    string superAdminRoleName = "SuperAdmin"; // НОВАЯ РОЛЬ
+
     if (!await roleManager.RoleExistsAsync(adminRoleName))
     {
-        var roleResult = await roleManager.CreateAsync(new IdentityRole(adminRoleName));
-        if (roleResult.Succeeded)
-        {
-            Console.WriteLine($"====== [УСПЕХ] Роль '{adminRoleName}' успешно создана в БД! ======");
-        }
+        await roleManager.CreateAsync(new IdentityRole(adminRoleName));
+        Console.WriteLine($"====== [УСПЕХ] Роль '{adminRoleName}' успешно создана! ======");
     }
 
-    // 2. СОЗДАНИЕ ПЕРВОГО АДМИНИСТРАТОРА (stas34339)
+    if (!await roleManager.RoleExistsAsync(superAdminRoleName))
+    {
+        await roleManager.CreateAsync(new IdentityRole(superAdminRoleName));
+        Console.WriteLine($"====== [УСПЕХ] Роль '{superAdminRoleName}' успешно создана! ======");
+    }
+
+    // 2. СОЗДАНИЕ ПЕРВОГО СУПЕРАДМИНИСТРАТОРА (stas34339)
     string adminEmail1 = "stas34339@gmail.COM";
     var existingAdmin1 = await userManager.FindByEmailAsync(adminEmail1);
+
     if (existingAdmin1 == null)
     {
         var newAdmin1 = new ApplicationUser
@@ -133,8 +134,8 @@ using (var scope = app.Services.CreateScope())
 
         if (adminResult1.Succeeded)
         {
-            await userManager.AddToRoleAsync(newAdmin1, adminRoleName);
-            Console.WriteLine($"====== [УСПЕХ] Администратор '{adminEmail1}' создан и получил роль '{adminRoleName}'! ======");
+            await userManager.AddToRoleAsync(newAdmin1, superAdminRoleName);
+            Console.WriteLine($"====== [УСПЕХ] Администратор '{adminEmail1}' создан и получил роль '{superAdminRoleName}'! ======");
         }
         else
         {
@@ -142,8 +143,15 @@ using (var scope = app.Services.CreateScope())
             foreach (var error in adminResult1.Errors) Console.WriteLine($"- {error.Description}");
         }
     }
+    else
+    {
+        // Гарантируем, что существующий профиль имеет права SuperAdmin
+        if (!await userManager.IsInRoleAsync(existingAdmin1, superAdminRoleName))
+        {
+            await userManager.AddToRoleAsync(existingAdmin1, superAdminRoleName);
+            Console.WriteLine($"====== [УСПЕХ] Права профиля '{adminEmail1}' повышены до '{superAdminRoleName}'! ======");
+        }
+    }
 }
-
-
 
 app.Run();

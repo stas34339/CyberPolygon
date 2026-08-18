@@ -2,17 +2,26 @@
 using CyberPolygon.Data;
 using Microsoft.EntityFrameworkCore;
 using Radzen;
+using System.Security.Claims;
 
 namespace CyberPolygon.Components.Pages
 {
     public partial class Scenario
     {
         List<CyberScenario>? scenarios;
-        private Dictionary<int, AttemptStatus> userProgresses = new();
         private string currentUserId = string.Empty;
         private int? currentTeamId = null;
         private bool isAdmin = false;
         private readonly SemaphoreSlim _lock = new(1, 1);
+
+        public class ProgressState
+        {
+            public AttemptStatus Status { get; set; } = AttemptStatus.NotStarted;
+            public bool IsRetakeRequested { get; set; } = false;
+            public bool IsRetakeGranted { get; set; } = false;
+        }
+
+        private Dictionary<int, ProgressState> userProgresses = new();
 
         protected override async Task OnInitializedAsync()
         {
@@ -45,7 +54,6 @@ namespace CyberPolygon.Components.Pages
 
         async Task Refresh()
         {
-            // Предотвращаем одновременные конкурентные запросы к контексту данных
             if (!await _lock.WaitAsync(0)) return;
 
             try
@@ -54,7 +62,7 @@ namespace CyberPolygon.Components.Pages
                 var authState = await AuthStateProvider.GetAuthenticationStateAsync();
                 var userPrincipal = authState.User;
                 currentUserId = userPrincipal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
-                isAdmin = userPrincipal.IsInRole("Admin");
+                isAdmin = userPrincipal.IsInRole("Admin") || userPrincipal.IsInRole("SuperAdmin");
 
                 userProgresses.Clear();
 
@@ -64,7 +72,6 @@ namespace CyberPolygon.Components.Pages
                     var dbUser = await context.Set<ApplicationUser>().Include(u => u.Teams).AsNoTracking().FirstOrDefaultAsync(u => u.Id == currentUserId);
                     currentTeamId = dbUser?.Teams?.FirstOrDefault()?.Id;
 
-                    // ОПТИМИЗАЦИЯ: Извлекаем из БД строго записи текущего пользователя или его команды
                     var progresses = await context.Set<UserScenarioProgress>()
                         .Where(p => p.UserId == currentUserId || (currentTeamId.HasValue && p.TeamId == currentTeamId.Value))
                         .AsNoTracking()
@@ -78,7 +85,15 @@ namespace CyberPolygon.Components.Pages
                         else
                             p = progresses.FirstOrDefault(x => x.CyberScenarioId == item.Id && x.UserId == currentUserId && !x.IsTeamAttempt);
 
-                        if (p != null) userProgresses[item.Id] = p.Status;
+                        if (p != null)
+                        {
+                            userProgresses[item.Id] = new ProgressState
+                            {
+                                Status = p.Status,
+                                IsRetakeRequested = p.IsRetakeRequested,
+                                IsRetakeGranted = p.IsRetakeGranted
+                            };
+                        }
                     }
                 }
 
@@ -98,7 +113,7 @@ namespace CyberPolygon.Components.Pages
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Ошибка загрузки каталога сценариев: {ex.Message}");
+                Console.WriteLine($"Ошибка загрузки: {ex.Message}");
                 scenarios ??= new List<CyberScenario>();
             }
             finally
@@ -135,6 +150,5 @@ namespace CyberPolygon.Components.Pages
             CatalogUpdateService.OnCatalogChanged -= HandleExternalUpdate;
             SessionManager.TeamProgressChanged -= OnTeamProgressChanged;
         }
-
     }
 }

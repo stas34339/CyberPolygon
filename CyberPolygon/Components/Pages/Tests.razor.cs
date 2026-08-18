@@ -7,10 +7,19 @@ namespace CyberPolygon.Components.Pages
     public partial class Tests
     {
         List<CyberTest>? tests;
-        private Dictionary<int, AttemptStatus> userProgresses = new();
         private string currentUserId = string.Empty;
         private bool isAdmin = false;
         private readonly SemaphoreSlim _lock = new(1, 1);
+
+        // ОБНОВЛЕНО: Используем класс для хранения статуса и флагов ретейка
+        public class ProgressState
+        {
+            public AttemptStatus Status { get; set; } = AttemptStatus.NotStarted;
+            public bool IsRetakeRequested { get; set; } = false;
+            public bool IsRetakeGranted { get; set; } = false;
+        }
+
+        private Dictionary<int, ProgressState> userProgresses = new();
 
         protected override async Task OnInitializedAsync()
         {
@@ -37,7 +46,7 @@ namespace CyberPolygon.Components.Pages
                 var authState = await AuthStateProvider.GetAuthenticationStateAsync();
                 var userPrincipal = authState.User;
                 currentUserId = userPrincipal.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
-                isAdmin = userPrincipal.IsInRole("Admin");
+                isAdmin = userPrincipal.IsInRole("Admin") || userPrincipal.IsInRole("SuperAdmin");
 
                 userProgresses.Clear();
 
@@ -58,7 +67,12 @@ namespace CyberPolygon.Components.Pages
                         }
                         if (!userProgresses.ContainsKey(p.CyberTestId) || p.Status == AttemptStatus.InProgress)
                         {
-                            userProgresses[p.CyberTestId] = p.Status;
+                            userProgresses[p.CyberTestId] = new ProgressState
+                            {
+                                Status = p.Status,
+                                IsRetakeRequested = p.IsRetakeRequested,
+                                IsRetakeGranted = p.IsRetakeGranted
+                            };
                         }
                     }
                 }

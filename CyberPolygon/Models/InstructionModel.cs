@@ -21,6 +21,7 @@ namespace CyberPolygon.Data.Models
 
         public int Order { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public string? AuthorId { get; set; }
     }
     public class InstructionAttachment
     {

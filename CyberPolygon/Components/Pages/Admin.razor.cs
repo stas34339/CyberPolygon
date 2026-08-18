@@ -10,6 +10,7 @@ namespace CyberPolygon.Components.Pages
     {
         private int activeTabIndex = 0;
         private bool isLoaded = false;
+        private bool isProcessing = false; // Защита от двойных кликов при сохранении
 
         // Списки данных
         private List<UserGroup> groupsList = new();
@@ -19,6 +20,8 @@ namespace CyberPolygon.Components.Pages
         private List<UserTestProgress> allTestProgressList = new();
 
         private HashSet<string> adminUserIds = new();
+        private HashSet<string> superAdminUserIds = new(); // Для отслеживания СуперАдминов
+        private bool isCurrentUserSuperAdmin = false;
 
         // Переменные для модалок распределения
         private bool showGroupDistributionModal = false;
@@ -31,7 +34,7 @@ namespace CyberPolygon.Components.Pages
         private bool showEditUserModal = false;
         private UserEditModel? editUserModel;
 
-        private bool showCreateUserModal = false; // <-- НОВАЯ ПЕРЕМЕННАЯ
+        private bool showCreateUserModal = false;
 
         private string newGroupName = "";
         private string newTeamName = "";
@@ -94,19 +97,51 @@ namespace CyberPolygon.Components.Pages
 
         private async Task LoadAdminData()
         {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            isCurrentUserSuperAdmin = authState.User.IsInRole("SuperAdmin");
+
             using var c = await ContextFactory.CreateDbContextAsync();
             groupsList = await c.UserGroups.ToListAsync();
             teamsList = await c.UserTeams.Include(t => t.Group).Include(t => t.Users).ToListAsync();
             usersList = await c.Set<ApplicationUser>().Include(u => u.Group).Include(u => u.Teams).ToListAsync();
 
-            allScenarioProgressList = await c.UserProgresses.Include(p => p.Scenario).OrderByDescending(p => p.StartedAt).ToListAsync();
-            allTestProgressList = await c.Set<UserTestProgress>().Include(tp => tp.Test).OrderByDescending(tp => tp.StartedAt).ToListAsync();
+            // Сортируем: сначала те, у кого запрошен Retake
+            allScenarioProgressList = await c.UserProgresses.Include(p => p.Scenario)
+                .OrderByDescending(p => p.IsRetakeRequested)
+                .ThenByDescending(p => p.StartedAt)
+                .ToListAsync();
 
+            allTestProgressList = await c.Set<UserTestProgress>().Include(tp => tp.Test)
+                .OrderByDescending(tp => tp.IsRetakeRequested)
+                .ThenByDescending(tp => tp.StartedAt)
+                .ToListAsync();
+
+            // ОПТИМИЗАЦИЯ: Получаем всех админов и суперадминов одним запросом
             adminUserIds.Clear();
-            foreach (var u in usersList)
+            superAdminUserIds.Clear();
+
+            var adminRoleIds = await c.Roles
+                .Where(r => r.Name == "Admin" || r.Name == "SuperAdmin")
+                .Select(r => new { r.Id, r.Name })
+                .ToListAsync();
+
+            if (adminRoleIds.Any())
             {
-                if (await UserManagementService.IsUserAdminAsync(u.Id))
-                    adminUserIds.Add(u.Id);
+                var roleIds = adminRoleIds.Select(r => r.Id).ToList();
+                var userRoles = await c.UserRoles
+                    .Where(ur => roleIds.Contains(ur.RoleId))
+                    .ToListAsync();
+
+                var superAdminRoleId = adminRoleIds.FirstOrDefault(r => r.Name == "SuperAdmin")?.Id;
+
+                foreach (var ur in userRoles)
+                {
+                    adminUserIds.Add(ur.UserId);
+                    if (superAdminRoleId != null && ur.RoleId == superAdminRoleId)
+                    {
+                        superAdminUserIds.Add(ur.UserId);
+                    }
+                }
             }
 
             // Поддерживаем актуальность открытых модалок при обновлении данных
@@ -212,7 +247,7 @@ namespace CyberPolygon.Components.Pages
                 FirstName = u.FirstName ?? "",
                 LastName = u.LastName ?? "",
                 MiddleName = u.MiddleName ?? "",
-                IsAdmin = adminUserIds.Contains(u.Id)
+                IsAdmin = adminUserIds.Contains(u.Id) || superAdminUserIds.Contains(u.Id)
             };
             showEditUserModal = true;
         }
@@ -259,49 +294,83 @@ namespace CyberPolygon.Components.Pages
             }
         }
 
-        private async Task ResetScenarioProgress(int id)
+        // --- НОВЫЕ МЕТОДЫ ОДОБРЕНИЯ/ОТКЛОНЕНИЯ ПОВТОРОВ ---
+
+        private async Task GrantScenarioRetake(int id)
         {
-            var ok = await DialogService.Confirm("Сбросить сессию сценария?", "Сброс", new ConfirmOptions { OkButtonText = "Сбросить", CancelButtonText = "Отмена" });
-            if (ok == true)
-            {
-                using var c = await ContextFactory.CreateDbContextAsync();
-                var p = await c.UserProgresses.FindAsync(id);
-                if (p != null) { c.UserProgresses.Remove(p); await c.SaveChangesAsync(); await LoadAdminData(); }
-            }
+            await ScenarioService.GrantRetakeAsync(id);
+            NotificationService.Notify(NotificationSeverity.Success, "Одобрено", "Доступ открыт.");
+            await LoadAdminData();
         }
 
-        private async Task ResetTestProgress(int id)
+        private async Task RejectScenarioRetake(int id)
         {
-            var ok = await DialogService.Confirm("Сбросить сессию теста?", "Сброс", new ConfirmOptions { OkButtonText = "Сбросить", CancelButtonText = "Отмена" });
-            if (ok == true)
-            {
-                using var c = await ContextFactory.CreateDbContextAsync();
-                var p = await c.Set<UserTestProgress>().FindAsync(id);
-                if (p != null) { c.Set<UserTestProgress>().Remove(p); await c.SaveChangesAsync(); await LoadAdminData(); }
-            }
+            await ScenarioService.RejectRetakeAsync(id);
+            NotificationService.Notify(NotificationSeverity.Info, "Отклонено", "Запрос отменен.");
+            await LoadAdminData();
+        }
+
+        private async Task GrantTestRetake(int id)
+        {
+            await TestService.GrantRetakeAsync(id);
+            NotificationService.Notify(NotificationSeverity.Success, "Одобрено", "Доступ открыт.");
+            await LoadAdminData();
+        }
+
+        private async Task RejectTestRetake(int id)
+        {
+            await TestService.RejectRetakeAsync(id);
+            NotificationService.Notify(NotificationSeverity.Info, "Отклонено", "Запрос отменен.");
+            await LoadAdminData();
         }
 
         // --- CRUD ПОЛЬЗОВАТЕЛЕЙ ---
         private async Task CreateUser()
         {
-            var (success, error) = await UserManagementService.CreateUserAsync(
-                newUserModel.Login, newUserModel.Password, newUserModel.FirstName, newUserModel.LastName, newUserModel.MiddleName, newUserModel.IsAdmin
-            );
-            if (success)
+            if (isProcessing) return;
+            isProcessing = true;
+
+            try
             {
-                NotificationService.Notify(NotificationSeverity.Success, "Успех", $"Пользователь {newUserModel.Login} создан");
+                var (success, error) = await UserManagementService.CreateUserAsync(
+                    newUserModel.Login, newUserModel.Password, newUserModel.FirstName, newUserModel.LastName, newUserModel.MiddleName, newUserModel.IsAdmin
+                );
 
-                // Закрываем окно после успешного создания
-                CloseCreateUserModal();
-
-                await LoadAdminData();
+                if (success)
+                {
+                    NotificationService.Notify(NotificationSeverity.Success, "Успех", $"Пользователь {newUserModel.Login} создан");
+                    CloseCreateUserModal();
+                    await LoadAdminData();
+                }
+                else
+                {
+                    NotificationService.Notify(NotificationSeverity.Error, "Ошибка создания", error);
+                }
             }
-            else { NotificationService.Notify(NotificationSeverity.Error, "Ошибка создания", error); }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Критическая ошибка", ex.Message);
+            }
+            finally
+            {
+                isProcessing = false;
+            }
         }
 
         private async Task UpdateUser()
         {
-            if (editUserModel == null) return;
+            if (editUserModel == null || isProcessing) return;
+
+            // Серверная защита от изменения СуперАдмина обычным Админом
+            if (superAdminUserIds.Contains(editUserModel.Id) && !isCurrentUserSuperAdmin)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Отказ доступа", "Вы не можете редактировать профиль СуперАдминистратора.");
+                CloseEditUserModal();
+                return;
+            }
+
+            isProcessing = true;
+
             try
             {
                 using var c = await ContextFactory.CreateDbContextAsync();
@@ -311,18 +380,32 @@ namespace CyberPolygon.Components.Pages
                     u.UserName = editUserModel.Login; u.Email = editUserModel.Login; u.FirstName = editUserModel.FirstName; u.LastName = editUserModel.LastName; u.MiddleName = editUserModel.MiddleName;
                     c.Update(u); await c.SaveChangesAsync();
 
-                    bool currentlyAdmin = adminUserIds.Contains(u.Id);
+                    bool currentlyAdmin = adminUserIds.Contains(u.Id) || superAdminUserIds.Contains(u.Id);
                     if (currentlyAdmin != editUserModel.IsAdmin) await UserManagementService.ToggleAdminRoleAsync(u.Id);
 
                     NotificationService.Notify(NotificationSeverity.Success, "Успех", "Данные пользователя сохранены");
                     CloseEditUserModal(); await LoadAdminData();
                 }
             }
-            catch (Exception ex) { NotificationService.Notify(NotificationSeverity.Error, "Ошибка БД", "Не удалось сохранить: " + ex.Message); }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Ошибка БД", "Не удалось сохранить: " + ex.Message);
+            }
+            finally
+            {
+                isProcessing = false;
+            }
         }
 
         private async Task DeleteUser(string userId)
         {
+            // Серверная защита от удаления СуперАдмина
+            if (superAdminUserIds.Contains(userId) && !isCurrentUserSuperAdmin)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Отказ доступа", "У вас нет прав для удаления СуперАдминистратора.");
+                return;
+            }
+
             var ok = await DialogService.Confirm("Удалить пользователя навсегда? Это действие необратимо.", "Удаление", new ConfirmOptions { OkButtonText = "Удалить", CancelButtonText = "Отмена" });
             if (ok == true)
             {
@@ -334,6 +417,13 @@ namespace CyberPolygon.Components.Pages
 
         private async Task ToggleAdminRole(string userId)
         {
+            // Серверная защита: Обычный админ не может трогать роли СуперАдмина
+            if (superAdminUserIds.Contains(userId) && !isCurrentUserSuperAdmin)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Отказ доступа", "Вы не можете изменить роль СуперАдминистратора.");
+                return;
+            }
+
             await UserManagementService.ToggleAdminRoleAsync(userId);
             await LoadAdminData();
             NotificationService.Notify(NotificationSeverity.Success, "Успех", "Права доступа изменены");

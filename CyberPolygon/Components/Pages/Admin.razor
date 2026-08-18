@@ -7,14 +7,16 @@
 @using Microsoft.AspNetCore.Authorization
 @using System.ComponentModel.DataAnnotations
 
-@* ЗАЩИТА: На эту страницу зайдет только Администратор *@
-@attribute [Authorize(Roles = "Admin")]
+@attribute [Authorize(Roles = "Admin, SuperAdmin")]
 
 @inject NavigationManager NavigationManager
 @inject NotificationService NotificationService
 @inject DialogService DialogService
 @inject UserManagementService UserManagementService
 @inject IDbContextFactory<ApplicationDbContext> ContextFactory
+@inject AuthenticationStateProvider AuthStateProvider
+@inject ScenarioService ScenarioService
+@inject TestService TestService
 @rendermode InteractiveServer
 
 <RadzenDialog />
@@ -26,7 +28,7 @@
         --bg-main: #0b0f17;
         --bg-card: #131924;
         --bg-card-hover: #1a2435;
-        --bg-input: #131924;
+        --bg-input: #0d1117;
         --text-muted: #8fa0b5;
         --text-light: #cbe0f5;
         --accent-cyan: #4ec3d1;
@@ -42,7 +44,6 @@
         background-color: var(--bg-main) !important;
     }
 
-    /* Обертка на всю ширину для однородного фона */
     .full-page-wrapper {
         background-color: var(--bg-main) !important;
         min-height: calc(100vh - 60px);
@@ -163,12 +164,28 @@
             box-shadow: 0 0 0 0 rgba(126, 200, 248, 0);
         }
     }
+    @@keyframes pulseWarning {
+        0% {
+            box-shadow: 0 0 0 0 rgba(229, 192, 123, 0.7);
+        }
+
+        70% {
+            box-shadow: 0 0 0 10px rgba(229, 192, 123, 0);
+        }
+
+        100% {
+            box-shadow: 0 0 0 0 rgba(229, 192, 123, 0);
+        }
+    }
+
+    .pulse-warning {
+        animation: pulseWarning 2s infinite;
+    }
 
     .cyber-shell-body {
         padding: 30px;
     }
 
-    /* Внутренние секции */
     .cyber-section {
         background-color: rgba(0, 0, 0, 0.2);
         border: 1px solid var(--border-color);
@@ -278,7 +295,7 @@
         align-items: center;
         justify-content: center;
         gap: 8px;
-        white-space: nowrap; /* Предотвращает перенос текста кнопки */
+        white-space: nowrap;
     }
 
         .btn-main:hover {
@@ -324,13 +341,32 @@
         align-items: center;
         gap: 6px;
         text-transform: uppercase;
-        white-space: nowrap; /* Предотвращает перенос текста кнопки */
+        white-space: nowrap;
     }
 
         .btn-detail:hover {
             background: rgba(78, 195, 209, 0.1);
             border-style: solid;
             box-shadow: 0 0 10px rgba(78, 195, 209, 0.2);
+        }
+
+    .btn-icon {
+        background: transparent;
+        border: 1px solid var(--border-color);
+        padding: 5px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        flex-shrink: 0;
+    }
+
+        .btn-icon:hover {
+            background: rgba(255, 255, 255, 0.05);
         }
 
     .btn-icon-danger {
@@ -428,7 +464,6 @@
         border: 1px solid rgba(224, 108, 117, 0.4);
     }
 
-    /* GRID ДЛЯ СТРУКТУРЫ (ПОДРАЗДЕЛЕНИЯ / КОМАНДЫ) */
     .admin-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
@@ -552,7 +587,6 @@
         opacity: 0;
         animation: fadeIn 0.3s forwards;
     }
-
     @@keyframes fadeIn {
         to {
             opacity: 1;
@@ -576,7 +610,6 @@
         .cyber-modal-content.wide {
             max-width: 900px;
         }
-
     @@keyframes slideUp {
         to {
             transform: translateY(0);
@@ -636,7 +669,6 @@
         }
         else
         {
-            <!-- СЕТКА НАВИГАЦИИ -->
             <div class="tabs-navigation">
                 <button class="tab-trigger @(activeTabIndex == 0 ? "active" : "")" @onclick="() => activeTabIndex = 0"><RadzenIcon Icon="people" /> ПОЛЬЗОВАТЕЛИ</button>
                 <button class="tab-trigger @(activeTabIndex == 1 ? "active" : "")" @onclick="() => activeTabIndex = 1"><RadzenIcon Icon="lan" /> СТРУКТУРА И КОМАНДЫ</button>
@@ -674,7 +706,11 @@
                                     </RadzenDataGridColumn>
                                     <RadzenDataGridColumn TItem="ApplicationUser" Title="ДОПУСК" Width="120px" TextAlign="TextAlign.Center">
                                         <Template Context="u">
-                                            @if (adminUserIds.Contains(u.Id))
+                                            @if (superAdminUserIds.Contains(u.Id))
+                                            {
+                                                <span class="status-badge-mini status-completed" style="border-color: var(--warning-color); color: var(--warning-color);">СУПЕРАДМИН</span>
+                                            }
+                                            else if (adminUserIds.Contains(u.Id))
                                             {
                                                 <span class="status-badge-mini status-completed" style="border-color: var(--success-color);">АДМИН</span>
                                             }
@@ -689,10 +725,21 @@
                                     </RadzenDataGridColumn>
                                     <RadzenDataGridColumn TItem="ApplicationUser" Title="УПРАВЛЕНИЕ" Width="240px" TextAlign="TextAlign.Center">
                                         <Template Context="u">
+                                            @{
+                                                bool isTargetSuperAdmin = superAdminUserIds.Contains(u.Id);
+                                                bool canManage = isCurrentUserSuperAdmin || !isTargetSuperAdmin;
+                                            }
                                             <div class="d-flex justify-content-center gap-2">
-                                                <button class="btn-detail" @onclick="@(() => OpenEditUserModal(u))" title="Редактировать"><RadzenIcon Icon="edit" style="font-size: 1rem;" /> Изменить</button>
-                                                <button class="btn-icon-danger" style="border-color: var(--accent-cyan); color: var(--accent-cyan);" @onclick="@(() => ToggleAdminRole(u.Id))" title="Сменить роль"><RadzenIcon Icon="admin_panel_settings" style="font-size: 1rem;" /></button>
-                                                <button class="btn-icon-danger" @onclick="@(() => DeleteUser(u.Id))" title="Удалить"><RadzenIcon Icon="delete_forever" style="font-size: 1rem;" /></button>
+                                                @if (canManage)
+                                                {
+                                                    <button class="btn-detail" @onclick="@(() => OpenEditUserModal(u))" title="Редактировать"><RadzenIcon Icon="edit" style="font-size: 1rem;" /> Изменить</button>
+                                                    <button class="btn-icon-danger" style="border-color: var(--accent-cyan); color: var(--accent-cyan);" @onclick="@(() => ToggleAdminRole(u.Id))" title="Сменить роль"><RadzenIcon Icon="admin_panel_settings" style="font-size: 1rem;" /></button>
+                                                    <button class="btn-icon-danger" @onclick="@(() => DeleteUser(u.Id))" title="Удалить"><RadzenIcon Icon="delete_forever" style="font-size: 1rem;" /></button>
+                                                }
+                                                else
+                                                {
+                                                    <span style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; font-weight: 700; margin-top: 5px;">Защищено</span>
+                                                }
                                             </div>
                                         </Template>
                                     </RadzenDataGridColumn>
@@ -813,39 +860,55 @@
                                         <RadzenDataGridColumn TItem="UserScenarioProgress" Title="БОЕВОЙ СЦЕНАРИЙ">
                                             <Template Context="data"><span style="color: var(--text-light); font-weight: 700;">@(data.Scenario?.Title ?? "—")</span></Template>
                                         </RadzenDataGridColumn>
-                                        <RadzenDataGridColumn TItem="UserScenarioProgress" Title="СТАТУС" Width="130px" TextAlign="TextAlign.Center">
+                                        <RadzenDataGridColumn TItem="UserScenarioProgress" Title="СТАТУС" Width="170px" TextAlign="TextAlign.Center">
                                             <Template Context="data">
-                                                @switch (data.Status)
-                                                {
-                                                    case AttemptStatus.InProgress:
-                                                        <span class="status-badge-mini status-in-progress">В процессе</span>
-                                                        break;
-                                                    case AttemptStatus.Completed:
+                                                <div class="d-flex flex-column align-items-center justify-content-center" style="gap: 6px;">
+                                                    @switch (data.Status)
+                                                    {
+                                                        case AttemptStatus.InProgress:
+                                                            <span class="status-badge-mini status-in-progress">В процессе</span>
+                                                            break;
+                                                        case AttemptStatus.Completed:
 
-                                                        <span class="status-badge-mini status-completed">Завершен</span>
-                                                        break;
-                                                    case AttemptStatus.Failed:
+                                                            <span class="status-badge-mini status-completed">Завершен</span>
+                                                            break;
+                                                        case AttemptStatus.Failed:
 
-                                                        <span class="status-badge-mini status-failed">Неудача</span>
-                                                        break;
-                                                    default:
+                                                            <span class="status-badge-mini status-failed">Неудача</span>
+                                                            break;
+                                                        default:
 
-                                                        <span class="status-badge-mini" style="background: rgba(143,160,181,0.15); color: var(--text-muted); border: 1px solid var(--border-color);">@data.Status</span>
-                                                        break;
-                                                }
+                                                            <span class="status-badge-mini" style="background: rgba(143,160,181,0.15); color: var(--text-muted); border: 1px solid var(--border-color);">@data.Status</span>
+                                                            break;
+                                                    }
+                                                    @if (data.IsRetakeRequested)
+                                                    {
+                                                        <span class="status-badge-mini pulse-warning" style="background: rgba(229, 192, 123, 0.2); color: var(--warning-color); border: 1px solid var(--warning-color); box-shadow: 0 0 8px rgba(229, 192, 123, 0.4);">ЗАПРОС СБРОСА</span>
+                                                    }
+                                                </div>
                                             </Template>
                                         </RadzenDataGridColumn>
                                         <RadzenDataGridColumn TItem="UserScenarioProgress" Title="XP" Width="90px" TextAlign="TextAlign.Center">
                                             <Template Context="data"><span style="color: var(--accent-cyan); font-weight: bold; font-family: monospace; font-size: 1.2rem;">@data.Score</span></Template>
                                         </RadzenDataGridColumn>
-                                        <RadzenDataGridColumn TItem="UserScenarioProgress" Title="ДАТА ЗАПУСКА" Width="150px" TextAlign="TextAlign.Center">
-                                            <Template Context="data"><span style="font-size: 0.85rem; color: var(--text-muted); font-family: monospace;">@(data.StartedAt?.ToString("dd.MM.yyyy HH:mm") ?? "—")</span></Template>
+                                        <RadzenDataGridColumn TItem="UserScenarioProgress" Title="ДАТА ЗАПУСКА" Width="130px" TextAlign="TextAlign.Center">
+                                            <Template Context="data"><span style="font-size: 0.85rem; color: var(--text-muted); font-family: monospace;">@(data.StartedAt?.ToString("dd.MM.yy HH:mm") ?? "—")</span></Template>
                                         </RadzenDataGridColumn>
-                                        <RadzenDataGridColumn TItem="UserScenarioProgress" Title="УПРАВЛЕНИЕ" Width="180px" TextAlign="TextAlign.Center">
+                                        <RadzenDataGridColumn TItem="UserScenarioProgress" Title="УПРАВЛЕНИЕ" Width="220px" TextAlign="TextAlign.Center">
                                             <Template Context="data">
-                                                <div class="d-flex justify-content-center gap-2">
-                                                    <button class="btn-detail" @onclick="@(() => NavigationManager.NavigateTo($"/admin/scenario-attempt/{data.Id}"))"><RadzenIcon Icon="visibility" style="font-size: 1rem;" /> Детали</button>
-                                                    <button class="btn-icon-danger" @onclick="@(() => ResetScenarioProgress(data.Id))" title="Сбросить и удалить попытку сессии"><RadzenIcon Icon="refresh" style="font-size: 1rem;" /></button>
+                                                <div class="d-flex justify-content-center align-items-center gap-2">
+                                                    @if (data.IsRetakeRequested)
+                                                    {
+                                                        <button class="btn-icon pulse-warning" style="color: var(--success-color); border-color: var(--success-color);" @onclick="@(() => GrantScenarioRetake(data.Id))" title="Одобрить повтор">
+                                                            <RadzenIcon Icon="check" style="font-size: 1.1rem;" />
+                                                        </button>
+                                                        <button class="btn-icon" style="color: var(--danger-color); border-color: var(--danger-color);" @onclick="@(() => RejectScenarioRetake(data.Id))" title="Отклонить">
+                                                            <RadzenIcon Icon="close" style="font-size: 1.1rem;" />
+                                                        </button>
+                                                    }
+                                                    <button class="btn-detail" @onclick="@(() => NavigationManager.NavigateTo($"/admin/scenario-attempt/{data.Id}"))">
+                                                        <RadzenIcon Icon="visibility" style="font-size: 1rem;" /> Детали
+                                                    </button>
                                                 </div>
                                             </Template>
                                         </RadzenDataGridColumn>
@@ -894,26 +957,32 @@
                                                 <span style="color: @dc; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; font-size: 0.75rem;">@dt</span>
                                             </Template>
                                         </RadzenDataGridColumn>
-                                        <RadzenDataGridColumn TItem="UserTestProgress" Title="СТАТУС" Width="130px" TextAlign="TextAlign.Center">
+                                        <RadzenDataGridColumn TItem="UserTestProgress" Title="СТАТУС" Width="170px" TextAlign="TextAlign.Center">
                                             <Template Context="data">
-                                                @switch (data.Status)
-                                                {
-                                                    case AttemptStatus.InProgress:
-                                                        <span class="status-badge-mini status-in-progress">В процессе</span>
-                                                        break;
-                                                    case AttemptStatus.Completed:
+                                                <div class="d-flex flex-column align-items-center justify-content-center" style="gap: 6px;">
+                                                    @switch (data.Status)
+                                                    {
+                                                        case AttemptStatus.InProgress:
+                                                            <span class="status-badge-mini status-in-progress">В процессе</span>
+                                                            break;
+                                                        case AttemptStatus.Completed:
 
-                                                        <span class="status-badge-mini status-completed">Завершен</span>
-                                                        break;
-                                                    case AttemptStatus.Failed:
+                                                            <span class="status-badge-mini status-completed">Завершен</span>
+                                                            break;
+                                                        case AttemptStatus.Failed:
 
-                                                        <span class="status-badge-mini status-failed">Неудача</span>
-                                                        break;
-                                                    default:
+                                                            <span class="status-badge-mini status-failed">Неудача</span>
+                                                            break;
+                                                        default:
 
-                                                        <span class="status-badge-mini" style="background: rgba(143,160,181,0.15); color: var(--text-muted); border: 1px solid var(--border-color);">@data.Status</span>
-                                                        break;
-                                                }
+                                                            <span class="status-badge-mini" style="background: rgba(143,160,181,0.15); color: var(--text-muted); border: 1px solid var(--border-color);">@data.Status</span>
+                                                            break;
+                                                    }
+                                                    @if (data.IsRetakeRequested)
+                                                    {
+                                                        <span class="status-badge-mini pulse-warning" style="background: rgba(229, 192, 123, 0.2); color: var(--warning-color); border: 1px solid var(--warning-color); box-shadow: 0 0 8px rgba(229, 192, 123, 0.4);">ЗАПРОС СБРОСА</span>
+                                                    }
+                                                </div>
                                             </Template>
                                         </RadzenDataGridColumn>
                                         <RadzenDataGridColumn TItem="UserTestProgress" Title="РЕЗУЛЬТАТ" Width="110px" TextAlign="TextAlign.Center">
@@ -924,11 +993,21 @@
                                                 <span style="color: var(--accent-cyan); font-weight: bold; font-family: monospace; font-size: 1.2rem;">@data.Score <span style="color: var(--text-muted); font-size: 0.9rem;">/ @tq</span></span>
                                             </Template>
                                         </RadzenDataGridColumn>
-                                        <RadzenDataGridColumn TItem="UserTestProgress" Title="УПРАВЛЕНИЕ" Width="180px" TextAlign="TextAlign.Center">
+                                        <RadzenDataGridColumn TItem="UserTestProgress" Title="УПРАВЛЕНИЕ" Width="220px" TextAlign="TextAlign.Center">
                                             <Template Context="data">
-                                                <div class="d-flex justify-content-center gap-2">
-                                                    <button class="btn-detail" @onclick="@(() => NavigationManager.NavigateTo($"/admin/test-attempt/{data.Id}"))"><RadzenIcon Icon="visibility" style="font-size: 1rem;" /> Детали</button>
-                                                    <button class="btn-icon-danger" @onclick="@(() => ResetTestProgress(data.Id))" title="Сбросить попытку теста"><RadzenIcon Icon="refresh" style="font-size: 1rem;" /></button>
+                                                <div class="d-flex justify-content-center align-items-center gap-2">
+                                                    @if (data.IsRetakeRequested)
+                                                    {
+                                                        <button class="btn-icon pulse-warning" style="color: var(--success-color); border-color: var(--success-color);" @onclick="@(() => GrantTestRetake(data.Id))" title="Одобрить повтор">
+                                                            <RadzenIcon Icon="check" style="font-size: 1.1rem;" />
+                                                        </button>
+                                                        <button class="btn-icon" style="color: var(--danger-color); border-color: var(--danger-color);" @onclick="@(() => RejectTestRetake(data.Id))" title="Отклонить">
+                                                            <RadzenIcon Icon="close" style="font-size: 1.1rem;" />
+                                                        </button>
+                                                    }
+                                                    <button class="btn-detail" @onclick="@(() => NavigationManager.NavigateTo($"/admin/test-attempt/{data.Id}"))">
+                                                        <RadzenIcon Icon="visibility" style="font-size: 1rem;" /> Детали
+                                                    </button>
                                                 </div>
                                             </Template>
                                         </RadzenDataGridColumn>
@@ -1065,7 +1144,7 @@
     </div>
 }
 
-<!-- МОДАЛЬНОЕ ОКНО: РАСПРЕДЕЛЕНИЕ АГЕНТОВ В ПОДРАЗДЕЛЕНИЕ (ДВЕ КОЛОНКИ) -->
+<!-- МОДАЛЬНОЕ ОКНО: РАСПРЕДЕЛЕНИЕ АГЕНТОВ В ПОДРАЗДЕЛЕНИЕ -->
 @if (showGroupDistributionModal && activeGroupContext != null)
 {
     <div class="cyber-modal-overlay" @onclick="CloseGroupDistributionModal">
@@ -1114,7 +1193,7 @@
     </div>
 }
 
-<!-- МОДАЛЬНОЕ ОКНО: РАСПРЕДЕЛЕНИЕ АГЕНТОВ В КОМАНДУ (ДВЕ КОЛОНКИ) -->
+<!-- МОДАЛЬНОЕ ОКНО: РАСПРЕДЕЛЕНИЕ АГЕНТОВ В КОМАНДУ -->
 @if (showTeamDistributionModal && activeTeamContext != null)
 {
     <div class="cyber-modal-overlay" @onclick="CloseTeamDistributionModal">

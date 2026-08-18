@@ -1,6 +1,7 @@
 ﻿@page "/instruction"
 @using CyberPolygon.Data.Models
 @using CyberPolygon.Services
+@using System.Security.Claims
 @using Radzen
 @using Radzen.Blazor
 @rendermode InteractiveServer
@@ -647,7 +648,8 @@
             <p>Информационно-аналитический отдел Департамента охраны // Инструкции по работе с ситемой</p>
         </div>
 
-        <AuthorizeView Roles="Admin">
+        @* Изменено: Права создания блоков есть у Admin и SuperAdmin *@
+        <AuthorizeView Roles="Admin, SuperAdmin">
             <button type="button" class="btn-primary-gradient" @onclick="@(() => NavigationManager.NavigateTo("/instruction/edit"))">
                 <RadzenIcon Icon="add_circle" Style="font-size: 1.2rem;" /> Создать блок
             </button>
@@ -701,25 +703,34 @@
                                 <button class="btn-read-more" @onclick="() => OpenInstruction(item)">Подробнее</button>
                             </div>
 
-                            <AuthorizeView Roles="Admin">
-                                <div class="admin-card-footer">
-                                    <div class="move-buttons">
-                                        <button class="btn-icon move" title="Переместить вверх" disabled="@(index == 0)" @onclick="@(() => MoveInstruction(index, -1))">
-                                            <RadzenIcon Icon="keyboard_arrow_up" />
-                                        </button>
-                                        <button class="btn-icon move" title="Переместить вниз" disabled="@(index == instructions.Count - 1)" @onclick="@(() => MoveInstruction(index, 1))">
-                                            <RadzenIcon Icon="keyboard_arrow_down" />
-                                        </button>
+                            @* Изменено: Управление видимостью кнопок удаления/редактирования *@
+                            <AuthorizeView Roles="Admin, SuperAdmin" Context="authContext">
+                                @{
+                                    var isSuperAdmin = authContext.User.IsInRole("SuperAdmin");
+                                    var currentUserId = authContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                                    var canManage = isSuperAdmin || item.AuthorId == currentUserId;
+                                }
+                                @if (canManage)
+                                {
+                                    <div class="admin-card-footer">
+                                        <div class="move-buttons">
+                                            <button class="btn-icon move" title="Переместить вверх" disabled="@(index == 0)" @onclick="@(() => MoveInstruction(index, -1))">
+                                                <RadzenIcon Icon="keyboard_arrow_up" />
+                                            </button>
+                                            <button class="btn-icon move" title="Переместить вниз" disabled="@(index == instructions.Count - 1)" @onclick="@(() => MoveInstruction(index, 1))">
+                                                <RadzenIcon Icon="keyboard_arrow_down" />
+                                            </button>
+                                        </div>
+                                        <div class="action-buttons">
+                                            <button class="btn-icon edit" title="Редактировать" @onclick="@(() => NavigationManager.NavigateTo($"/instruction/edit/{item.Id}"))">
+                                                <RadzenIcon Icon="edit" />
+                                            </button>
+                                            <button class="btn-icon delete" title="Удалить" @onclick="@(() => ShowDeleteConfirmation(item.Id))">
+                                                <RadzenIcon Icon="delete_forever" />
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div class="action-buttons">
-                                        <button class="btn-icon edit" title="Редактировать" @onclick="@(() => NavigationManager.NavigateTo($"/instruction/edit/{item.Id}"))">
-                                            <RadzenIcon Icon="edit" />
-                                        </button>
-                                        <button class="btn-icon delete" title="Удалить" @onclick="@(() => ShowDeleteConfirmation(item.Id))">
-                                            <RadzenIcon Icon="delete_forever" />
-                                        </button>
-                                    </div>
-                                </div>
+                                }
                             </AuthorizeView>
                         </div>
                     }

@@ -376,10 +376,14 @@ namespace CyberPolygon.Components.Pages
                 SessionManager.NotifyTeamUpdate(currentTeamId.Value);
         }
 
-        private async Task RestartScenario()
+        private async Task RequestRetake()
         {
-            StopTimer();
-            await StartScenario();
+            if (currentUserProgress != null)
+            {
+                await ScenarioService.RequestRetakeAsync(currentUserProgress.Id);
+                await LoadUserState();
+                NotificationService.Notify(NotificationSeverity.Success, "Запрос отправлен", "Ожидайте решения администратора.");
+            }
         }
 
         public void Dispose()

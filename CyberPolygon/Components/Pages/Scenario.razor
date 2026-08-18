@@ -2,6 +2,7 @@
 @using CyberPolygon.Data
 @using CyberPolygon.Services
 @using Microsoft.EntityFrameworkCore
+@using System.Security.Claims
 @rendermode InteractiveServer
 @attribute [Authorize]
 @implements IDisposable
@@ -13,6 +14,8 @@
 @inject IDbContextFactory<CyberPolygon.Data.ApplicationDbContext> ContextFactory
 @inject CatalogUpdateService CatalogUpdateService
 @inject ScenarioSessionManager SessionManager
+
+<PageTitle>Сценарии | Киберполигон</PageTitle>
 
 <style>
     /* Строгая киберпанк-тема */
@@ -35,7 +38,6 @@
         background-color: var(--bg-main) !important;
     }
 
-    /* Обертка на всю ширину для однородного фона */
     .full-page-wrapper {
         background-color: var(--bg-main) !important;
         min-height: calc(100vh - 60px);
@@ -44,7 +46,6 @@
         box-sizing: border-box;
     }
 
-    /* Внутренний контейнер с ограничением ширины по центру */
     .page-container {
         color: var(--text-light);
         max-width: 1300px;
@@ -502,6 +503,19 @@
                 box-shadow: 0 0 15px rgba(152, 195, 121, 0.2);
             }
 
+        .btn-action.granted {
+            border-color: var(--success-color);
+            background: rgba(152, 195, 121, 0.1);
+            color: var(--success-color);
+            border-style: solid;
+            box-shadow: 0 0 10px rgba(152, 195, 121, 0.2);
+        }
+
+            .btn-action.granted:hover {
+                background: rgba(152, 195, 121, 0.2);
+                box-shadow: 0 0 15px rgba(152, 195, 121, 0.4);
+            }
+
     /* === ПАНЕЛЬ АДМИНИСТРАТОРА (ВНУТРИ КАРТОЧКИ) === */
     .admin-card-footer {
         background: rgba(0, 0, 0, 0.3);
@@ -628,10 +642,10 @@
         <div class="page-header">
             <div class="header-text">
                 <h1>Каталог сценариев</h1>
-                <p>Информационно-аналитический отдел департамента охраны // Симуляции</p>
+                <p>Информационно-аналитический департамент // Симуляции</p>
             </div>
 
-            <AuthorizeView Roles="Admin">
+            <AuthorizeView Roles="Admin, SuperAdmin">
                 <button type="button" class="btn-main" @onclick="@(() => NavigationManager.NavigateTo("/scenario/edit"))">
                     <RadzenIcon Icon="add_circle" Style="font-size: 1.2rem;" /> Новый сценарий
                 </button>
@@ -683,7 +697,8 @@
                             <div class="modules-grid">
                                 @foreach (var item in group)
                                 {
-                                    var currentStatus = userProgresses.ContainsKey(item.Id) ? userProgresses[item.Id] : AttemptStatus.NotStarted;
+                                    var pState = userProgresses.ContainsKey(item.Id) ? userProgresses[item.Id] : new ProgressState();
+                                    var currentStatus = pState.Status;
 
                                     <div class="module-card" @key="item.Id">
                                         <div class="module-visual">
@@ -734,8 +749,16 @@
                                                 @(string.IsNullOrWhiteSpace(item.Description) ? "Описание отсутствует." : item.Description)
                                             </p>
 
-                                            <button class="btn-action @(currentStatus == AttemptStatus.Completed ? "success" : "")" @onclick="@(() => NavigationManager.NavigateTo($"/scenario/{item.Id}/workspace"))">
-                                                @if (currentStatus == AttemptStatus.InProgress)
+                                            <button class="btn-action @(pState.IsRetakeGranted ? "granted" : (currentStatus == AttemptStatus.Completed && !pState.IsRetakeRequested ? "success" : ""))" @onclick="@(() => NavigationManager.NavigateTo($"/scenario/{item.Id}/workspace"))">
+                                                @if (pState.IsRetakeGranted)
+                                                {
+                                                    <RadzenIcon Icon="play_arrow" /> <span>Начать новую попытку</span>
+                                                }
+                                                else if (pState.IsRetakeRequested)
+                                                {
+                                                    <RadzenIcon Icon="pending_actions" /> <span>Запрос на повтор отправлен</span>
+                                                }
+                                                else if (currentStatus == AttemptStatus.InProgress)
                                                 {
                                                     <RadzenIcon Icon="play_arrow" /> <span>Продолжить симуляцию</span>
                                                 }
@@ -750,17 +773,25 @@
                                             </button>
                                         </div>
 
-                                        <AuthorizeView Roles="Admin">
-                                            <div class="admin-card-footer">
-                                                <div class="action-buttons">
-                                                    <button class="btn-icon edit" @onclick="@(() => OpenEditDialog(item))" title="Редактировать">
-                                                        <RadzenIcon Icon="edit" />
-                                                    </button>
-                                                    <button class="btn-icon delete" @onclick="@(() => DeleteItem(item.Id))" title="Удалить">
-                                                        <RadzenIcon Icon="delete_forever" />
-                                                    </button>
+                                        <AuthorizeView Roles="Admin, SuperAdmin" Context="authContext">
+                                            @{
+                                                var isSuperAdmin = authContext.User.IsInRole("SuperAdmin");
+                                                var currentUserId = authContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                                                var canManage = isSuperAdmin || item.AuthorId == currentUserId;
+                                            }
+                                            @if (canManage)
+                                            {
+                                                <div class="admin-card-footer">
+                                                    <div class="action-buttons">
+                                                        <button class="btn-icon edit" @onclick="@(() => OpenEditDialog(item))" title="Редактировать">
+                                                            <RadzenIcon Icon="edit" />
+                                                        </button>
+                                                        <button class="btn-icon delete" @onclick="@(() => DeleteItem(item.Id))" title="Удалить">
+                                                            <RadzenIcon Icon="delete_forever" />
+                                                        </button>
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            }
                                         </AuthorizeView>
                                     </div>
                                 }

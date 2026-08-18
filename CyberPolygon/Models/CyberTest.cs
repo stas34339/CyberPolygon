@@ -26,6 +26,7 @@ public class CyberTest
     public string? Tags { get; set; } = string.Empty; // Если нужны теги
     public string? AllowedUserIds { get; set; }
     public string? AllowedTeamIds { get; set; }
+    public string? AuthorId { get; set; }
 }
 
 public class TestQuestion
@@ -36,6 +37,7 @@ public class TestQuestion
     public QuestionType Type { get; set; } = QuestionType.ManualText;
     public string? CorrectTextAnswer { get; set; } // Для ручного ввода
     public List<TestOption> Options { get; set; } = new();
+    public string? ExampleAnswer { get; set; }
 }
 
 public class TestOption
@@ -64,6 +66,8 @@ public class UserTestProgress
     public DateTime? StartedAt { get; set; }
     public DateTime? TargetEndTime { get; set; }
     public DateTime? CompletedAt { get; set; }
+    public bool IsRetakeRequested { get; set; } = false;
+    public bool IsRetakeGranted { get; set; } = false;
 
     public CyberTest Test { get; set; } = null!;
 }

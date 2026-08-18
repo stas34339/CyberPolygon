@@ -80,6 +80,7 @@ public class CyberScenario
     public string Difficulty { get; set; } = "Easy";
     public string? AllowedUserIds { get; set; }
     public string? AllowedTeamIds { get; set; }
+    public string? AuthorId { get; set; }
 
 }
 
@@ -116,6 +117,8 @@ public class UserScenarioProgress
     public CyberScenario Scenario { get; set; } = null!;
 
     public UserTeam? Team { get; set; }
+    public bool IsRetakeRequested { get; set; } = false;
+    public bool IsRetakeGranted { get; set; } = false;
 }
 
 public class UserScenarioProgressDto

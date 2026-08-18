@@ -1,6 +1,7 @@
 ﻿@page "/tests"
 @using Microsoft.EntityFrameworkCore
 @using CyberPolygon.Services
+@using System.Security.Claims
 @rendermode InteractiveServer
 @attribute [Authorize]
 @implements IDisposable
@@ -11,6 +12,8 @@
 @inject AuthenticationStateProvider AuthStateProvider
 @inject IDbContextFactory<CyberPolygon.Data.ApplicationDbContext> ContextFactory
 @inject CatalogUpdateService CatalogUpdateService
+
+<PageTitle>Каталог тестов | Киберполигон</PageTitle>
 
 <style>
     /* Строгая киберпанк-тема */
@@ -500,6 +503,19 @@
                 box-shadow: 0 0 15px rgba(152, 195, 121, 0.2);
             }
 
+        .btn-action.granted {
+            border-color: var(--success-color);
+            background: rgba(152, 195, 121, 0.1);
+            color: var(--success-color);
+            border-style: solid;
+            box-shadow: 0 0 10px rgba(152, 195, 121, 0.2);
+        }
+
+            .btn-action.granted:hover {
+                background: rgba(152, 195, 121, 0.2);
+                box-shadow: 0 0 15px rgba(152, 195, 121, 0.4);
+            }
+
     /* === ПАНЕЛЬ АДМИНИСТРАТОРА (ВНУТРИ КАРТОЧКИ) === */
     .admin-card-footer {
         background: rgba(0, 0, 0, 0.3);
@@ -626,10 +642,10 @@
         <div class="page-header">
             <div class="header-text">
                 <h1>Каталог тестирования</h1>
-                <p>Информационно-аналитический отдел департамента охраны// Оценка компетенций</p>
+                <p>Информационно-аналитический департамент // Оценка компетенций</p>
             </div>
 
-            <AuthorizeView Roles="Admin">
+            <AuthorizeView Roles="Admin, SuperAdmin">
                 <button type="button" class="btn-main" @onclick="@(() => NavigationManager.NavigateTo("/admin/test/edit"))">
                     <RadzenIcon Icon="add_circle" Style="font-size: 1.2rem;" /> Новый тест
                 </button>
@@ -659,7 +675,7 @@
                 else if (!tests.Any())
                 {
                     <div class="text-center" style="padding: 60px 20px; border: 1px dashed var(--accent-cyan); border-radius: 12px; background: rgba(78, 195, 209, 0.05);">
-                        <RadzenIcon Icon="assignment_late" Style="font-size: 4rem; color: var(--accent-cyan); margin-bottom: 15px; filter: drop-shadow(0 0 10px rgba(78,195,209,0.5));" />
+                        <RadzenIcon Icon="data_object" Style="font-size: 4rem; color: var(--accent-cyan); margin-bottom: 15px; filter: drop-shadow(0 0 10px rgba(78,195,209,0.5));" />
                         <p style="color: var(--text-light); font-size: 1.1rem; font-weight: 600; text-transform: uppercase;">Каталог пуст</p>
                         <p style="color: var(--text-muted); font-size: 0.9rem;">В данный момент вам не назначено ни одного тестирования.</p>
                     </div>
@@ -681,7 +697,8 @@
                             <div class="modules-grid">
                                 @foreach (var item in group)
                                 {
-                                    var currentStatus = userProgresses.ContainsKey(item.Id) ? userProgresses[item.Id] : AttemptStatus.NotStarted;
+                                    var pState = userProgresses.ContainsKey(item.Id) ? userProgresses[item.Id] : new ProgressState();
+                                    var currentStatus = pState.Status;
 
                                     <div class="module-card" @key="item.Id">
                                         <div class="module-visual">
@@ -696,21 +713,20 @@
                                             <h3 class="module-title" title="@item.Title">@item.Title</h3>
 
                                             <div class="d-flex gap-2 mb-3 flex-wrap">
-                                                @if (currentStatus == AttemptStatus.InProgress)
+                                                @switch (currentStatus)
                                                 {
-                                                    <span class="status-badge-mini status-in-progress"><RadzenIcon Icon="clock_loader_40" Style="font-size: 0.9rem;" /> В процессе</span>
-                                                }
-                                                else if (currentStatus == AttemptStatus.Completed)
-                                                {
-                                                    <span class="status-badge-mini status-completed"><RadzenIcon Icon="check" Style="font-size: 0.9rem;" /> Выполнено</span>
-                                                }
-                                                else if (currentStatus == AttemptStatus.Failed)
-                                                {
-                                                    <span class="status-badge-mini status-failed"><RadzenIcon Icon="error_outline" Style="font-size: 0.9rem;" /> Провалено</span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="status-badge-mini status-available"><RadzenIcon Icon="domain_verification" Style="font-size: 0.9rem;" /> Доступно</span>
+                                                    case AttemptStatus.InProgress:
+                                                        <span class="status-badge-mini status-in-progress"><RadzenIcon Icon="clock_loader_40" Style="font-size: 0.9rem;" /> В процессе</span>
+                                                        break;
+                                                    case AttemptStatus.Completed:
+                                                        <span class="status-badge-mini status-completed"><RadzenIcon Icon="check" Style="font-size: 0.9rem;" /> Выполнено</span>
+                                                        break;
+                                                    case AttemptStatus.Failed:
+                                                        <span class="status-badge-mini status-failed"><RadzenIcon Icon="error_outline" Style="font-size: 0.9rem;" /> Провалено</span>
+                                                        break;
+                                                    default:
+                                                        <span class="status-badge-mini status-available"><RadzenIcon Icon="domain_verification" Style="font-size: 0.9rem;" /> Доступно</span>
+                                                        break;
                                                 }
 
                                                 @if (!string.IsNullOrEmpty(item.Tags))
@@ -726,8 +742,16 @@
                                                 @(string.IsNullOrWhiteSpace(item.ShortDescription) ? "Описание отсутствует." : item.ShortDescription)
                                             </p>
 
-                                            <button class="btn-action @(currentStatus == AttemptStatus.Completed ? "success" : "")" @onclick="@(() => NavigationManager.NavigateTo($"/test/{item.Id}/workspace"))">
-                                                @if (currentStatus == AttemptStatus.InProgress)
+                                            <button class="btn-action @(pState.IsRetakeGranted ? "granted" : (currentStatus == AttemptStatus.Completed && !pState.IsRetakeRequested ? "success" : ""))" @onclick="@(() => NavigationManager.NavigateTo($"/test/{item.Id}/workspace"))">
+                                                @if (pState.IsRetakeGranted)
+                                                {
+                                                    <RadzenIcon Icon="play_arrow" /> <span>Начать новую попытку</span>
+                                                }
+                                                else if (pState.IsRetakeRequested)
+                                                {
+                                                    <RadzenIcon Icon="pending_actions" /> <span>Запрос на повтор отправлен</span>
+                                                }
+                                                else if (currentStatus == AttemptStatus.InProgress)
                                                 {
                                                     <RadzenIcon Icon="play_arrow" /> <span>Продолжить тестирование</span>
                                                 }
@@ -742,17 +766,25 @@
                                             </button>
                                         </div>
 
-                                        <AuthorizeView Roles="Admin">
-                                            <div class="admin-card-footer">
-                                                <div class="action-buttons">
-                                                    <button class="btn-icon edit" @onclick="@(() => NavigationManager.NavigateTo($"/admin/test/edit/{item.Id}"))" title="Редактировать">
-                                                        <RadzenIcon Icon="edit" />
-                                                    </button>
-                                                    <button class="btn-icon delete" @onclick="@(() => DeleteItem(item.Id))" title="Удалить">
-                                                        <RadzenIcon Icon="delete_forever" />
-                                                    </button>
+                                        <AuthorizeView Roles="Admin, SuperAdmin" Context="authContext">
+                                            @{
+                                                var isSuperAdmin = authContext.User.IsInRole("SuperAdmin");
+                                                var currentUserId = authContext.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                                                var canManage = isSuperAdmin || item.AuthorId == currentUserId;
+                                            }
+                                            @if (canManage)
+                                            {
+                                                <div class="admin-card-footer">
+                                                    <div class="action-buttons">
+                                                        <button class="btn-icon edit" @onclick="@(() => NavigationManager.NavigateTo($"/admin/test/edit/{item.Id}"))" title="Редактировать">
+                                                            <RadzenIcon Icon="edit" />
+                                                        </button>
+                                                        <button class="btn-icon delete" @onclick="@(() => DeleteItem(item.Id))" title="Удалить">
+                                                            <RadzenIcon Icon="delete_forever" />
+                                                        </button>
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            }
                                         </AuthorizeView>
                                     </div>
                                 }

@@ -37,7 +37,6 @@
         background-color: var(--bg-main) !important;
     }
 
-    /* Обертка на всю ширину для однородного фона */
     .full-page-wrapper {
         background-color: var(--bg-main) !important;
         min-height: calc(100vh - 60px);
@@ -94,7 +93,6 @@
         letter-spacing: 1px;
     }
 
-    /* === ОБОЛОЧКА (CYBER-SHELL) === */
     .cyber-shell {
         background-color: rgba(19, 25, 36, 0.6);
         border: 1px solid rgba(78, 195, 209, 0.3);
@@ -163,7 +161,6 @@
         padding: 30px;
     }
 
-    /* Внутренние карточки-секции */
     .cyber-section {
         background-color: rgba(0, 0, 0, 0.2);
         border: 1px solid var(--border-color);
@@ -183,7 +180,6 @@
         font-weight: 700;
     }
 
-    /* === СТИЛИЗАЦИЯ ВКЛАДОК RADZEN === */
     .custom-tabs, .rz-tabview-panels, .rz-tabview-panel {
         overflow: visible !important;
         contain: none !important;
@@ -217,7 +213,6 @@
                     background-color: rgba(255, 255, 255, 0.03) !important;
                 }
 
-                /* АКТИВНАЯ ВКЛАДКА */
                 .custom-tabs .rz-tabview-nav li.rz-tabview-selected {
                     background: linear-gradient(180deg, rgba(78, 195, 209, 0.15) 0%, rgba(19, 25, 36, 0) 100%) !important;
                     border: 1px solid rgba(78, 195, 209, 0.3) !important;
@@ -228,8 +223,7 @@
                         border-bottom: 3px solid var(--accent-cyan) !important;
                     }
 
-                        .custom-tabs .rz-tabview-nav li.rz-tabview-selected a span,
-                        .custom-tabs .rz-tabview-nav li.rz-tabview-selected a i {
+                        .custom-tabs .rz-tabview-nav li.rz-tabview-selected a span, .custom-tabs .rz-tabview-nav li.rz-tabview-selected a i {
                             color: var(--accent-cyan) !important;
                             text-shadow: 0 0 10px rgba(78, 195, 209, 0.5) !important;
                         }
@@ -240,7 +234,6 @@
             padding: 0 !important;
         }
 
-    /* Инпуты Radzen */
     .dark-input, .rz-textbox, .rz-textarea, .rz-dropdown, .rz-numeric {
         background-color: var(--bg-card) !important;
         border: 1px solid var(--border-color) !important;
@@ -276,7 +269,6 @@
             color: var(--accent-cyan) !important;
         }
 
-    /* Radzen HTML Editor */
     .rz-html-editor {
         background-color: var(--bg-card) !important;
         border: 1px solid var(--border-color) !important;
@@ -294,7 +286,6 @@
             color: var(--text-light) !important;
         }
 
-    /* Кнопки */
     .btn-main {
         background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue));
         color: var(--bg-main);
@@ -355,7 +346,6 @@
             border-color: var(--danger-color);
         }
 
-    /* Заголовки (Задания) */
     .sticky-questions-header {
         position: sticky;
         top: 85px;
@@ -393,7 +383,6 @@
         border-color: var(--success-color) !important;
     }
 
-    /* Добавление пользователей */
     .added-item-row {
         background: rgba(0, 0, 0, 0.3);
         border: 1px solid var(--border-color);
@@ -410,7 +399,6 @@
             border-color: rgba(78, 195, 209, 0.4);
         }
 
-    /* ЗОНА ЗАГРУЗКИ */
     .upload-zone {
         position: relative;
         border: 1px dashed var(--accent-cyan);
@@ -472,17 +460,12 @@
         </div>
 
         <RadzenTemplateForm TItem="CyberTest" Data="@Item" Submit="@OnSave">
-
             <div class="cyber-shell">
                 <div class="cyber-shell-header">
                     <div class="shell-title">
-                        <RadzenIcon Icon="quiz" Style="font-size: 1.2rem;" />
-                        SYS.ADMIN_TERMINAL // TEST_BUILDER
+                        <RadzenIcon Icon="quiz" Style="font-size: 1.2rem;" /> SYS.ADMIN_TERMINAL // TEST_BUILDER
                     </div>
-                    <div class="shell-status">
-                        <span class="status-dot"></span>
-                        ONLINE
-                    </div>
+                    <div class="shell-status"><span class="status-dot"></span> ONLINE</div>
                 </div>
 
                 <div class="cyber-shell-body">
@@ -586,8 +569,16 @@
                                             <div class="mt-2" style="background: rgba(0,0,0,0.3); padding: 20px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
                                                 @if (q.Type == QuestionType.ManualText)
                                                 {
-                                                    <label class="cyber-label" style="color: var(--success-color) !important;">Эталонный ответ</label>
-                                                    <RadzenTextBox @bind-Value="@q.CorrectTextAnswer" class="w-100 dark-input" Placeholder="Ожидаемый текст" />
+                                                    <div class="row">
+                                                        <div class="col-md-6 mb-3">
+                                                            <label class="cyber-label" style="color: var(--success-color) !important;">Эталонный ответ</label>
+                                                            <RadzenTextBox @bind-Value="@q.CorrectTextAnswer" class="w-100 dark-input" Placeholder="Ожидаемый текст" />
+                                                        </div>
+                                                        <div class="col-md-6 mb-3">
+                                                            <label class="cyber-label" style="color: var(--accent-light-blue) !important;">Пример ответа (Подсказка для формата)</label>
+                                                            <RadzenTextBox @bind-Value="@q.ExampleAnswer" class="w-100 dark-input" Placeholder="Например: 192.168.1.1 или flag{...}" />
+                                                        </div>
+                                                    </div>
                                                 }
                                                 else
                                                 {

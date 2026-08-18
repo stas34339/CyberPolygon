@@ -662,7 +662,7 @@
                                 @if (currentUserProgress.Status == AttemptStatus.NotStarted)
                                 {
                                     <button class="btn-main w-100 py-3" style="font-size: 1rem;" @onclick="StartScenario">
-                                        <RadzenIcon Icon="play_circle_outline" Style="font-size: 1.4rem;" /> НАЧАТЬ СИМУЛЯЦИЮ
+                                        <RadzenIcon Icon="play_arrow" Style="font-size: 1.4rem;" /> НАЧАТЬ СИМУЛЯЦИЮ
                                     </button>
                                 }
                                 else if (currentUserProgress.Status == AttemptStatus.InProgress)
@@ -675,22 +675,53 @@
                                         <RadzenIcon Icon="stop_circle" Style="font-size: 1.2rem;" /> ЗАВЕРШИТЬ МИССИЮ
                                     </button>
                                 }
-                                else if (currentUserProgress.Status == AttemptStatus.Completed)
+                                else if (currentUserProgress.Status == AttemptStatus.Completed || currentUserProgress.Status == AttemptStatus.Failed)
                                 {
-                                    <div class="p-4 text-center rounded" style="border: 1px solid var(--success-color); background: rgba(152,195,121,0.1); box-shadow: inset 0 0 20px rgba(152,195,121,0.1);">
-                                        <h4 style="color: var(--success-color); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;">Сценарий завершен</h4>
-                                        <p style="margin: 0; color: var(--text-light); font-size: 1rem;">Итоговый счет:<br /><b style="font-size: 2rem; font-family: monospace; color: var(--success-color);">@currentUserProgress.Score XP</b></p>
+                                    <div class="p-4 text-center rounded mb-3" style="border: 1px solid @(currentUserProgress.Status == AttemptStatus.Completed ? "var(--success-color)" : "var(--danger-color)"); background: @(currentUserProgress.Status == AttemptStatus.Completed ? "rgba(152,195,121,0.1)" : "rgba(224,108,117,0.1)");">
+                                        <h4 style="color: @(currentUserProgress.Status == AttemptStatus.Completed ? "var(--success-color)" : "var(--danger-color)"); font-weight: 800; text-transform: uppercase;">
+                                            @(currentUserProgress.Status == AttemptStatus.Completed ? "Сценарий завершен" : "Миссия провалена")
+                                        </h4>
+                                        <p style="margin: 0; color: var(--text-light);">Итоговый счет:<br /><b style="font-size: 2rem; font-family: monospace; color: @(currentUserProgress.Status == AttemptStatus.Completed ? "var(--success-color)" : "var(--danger-color)");">@currentUserProgress.Score XP</b></p>
                                     </div>
+
+                                    @if (currentUserProgress.IsRetakeGranted)
+                                    {
+                                        <button class="btn-main w-100 py-2" style="background: linear-gradient(90deg, var(--success-color), #5ba3e3);" @onclick="StartScenario">
+                                            <RadzenIcon Icon="play_arrow" /> НАЧАТЬ ПОВТОРНУЮ ПОПЫТКУ
+                                        </button>
+                                    }
+                                    else if (currentUserProgress.IsRetakeRequested)
+                                    {
+                                        <button class="btn-outline-light w-100 py-2" disabled style="opacity: 0.5; cursor: not-allowed;">
+                                            <RadzenIcon Icon="pending_actions" /> ЗАПРОС ОТПРАВЛЕН
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn-main w-100 py-2" style="background: linear-gradient(90deg, var(--warning-color), #c29d59);" @onclick="RequestRetake">
+                                            <RadzenIcon Icon="restart_alt" /> ЗАПРОСИТЬ ПОВТОР
+                                        </button>
+                                    }
+                              
                                 }
                                 else if (currentUserProgress.Status == AttemptStatus.Failed)
                                 {
-                                    <div class="p-4 text-center rounded" style="border: 1px solid var(--danger-color); background: rgba(224,108,117,0.1); box-shadow: inset 0 0 20px rgba(224,108,117,0.1);">
-                                        <h4 style="color: var(--danger-color); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;">Миссия провалена</h4>
-                                        <p style="margin: 0; color: var(--text-light); margin-bottom: 20px;">Отведенное время истекло.</p>
-                                        <button class="btn-main w-100 py-2" style="background: linear-gradient(90deg, var(--danger-color), #b74b54);" @onclick="RestartScenario">
-                                            <RadzenIcon Icon="refresh" /> ПОПРОБОВАТЬ СНОВА
-                                        </button>
-                                    </div>
+                                <div class="p-4 text-center rounded" style="border: 1px solid var(--danger-color); background: rgba(224,108,117,0.1); box-shadow: inset 0 0 20px rgba(224,108,117,0.1); margin-bottom: 15px;">
+                                    <h4 style="color: var(--danger-color); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;">Миссия провалена</h4>
+                                    <p style="margin: 0; color: var(--text-light); margin-bottom: 20px;">Отведенное время истекло.</p>
+                                </div>
+                                @if (currentUserProgress.IsRetakeRequested)
+                                {
+                                    <button class="btn-outline-light w-100 py-2" disabled style="opacity: 0.5; cursor: not-allowed;">
+                                        <RadzenIcon Icon="pending_actions" /> ЗАПРОС НА ПОВТОР ОТПРАВЛЕН
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="btn-main w-100 py-2" style="background: linear-gradient(90deg, var(--warning-color), #c29d59);" @onclick="RequestRetake">
+                                        <RadzenIcon Icon="restart_alt" /> ЗАПРОСИТЬ ПОВТОР
+                                    </button>
+                                }
                                 }
                             </div>
                         </div>

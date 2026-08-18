@@ -87,6 +87,7 @@ namespace CyberPolygon.Components.Pages
                 StartTimer();
         }
 
+        // ВОССТАНОВЛЕННЫЙ МЕТОД ДЛЯ ПОВТОРНОГО ЗАПУСКА
         private async Task RestartTest()
         {
             await TestService.RestartTestAsync(currentUserId, Id);
@@ -95,6 +96,17 @@ namespace CyberPolygon.Components.Pages
             await LoadProgress();
             if (progress?.TargetEndTime.HasValue == true)
                 StartTimer();
+        }
+
+        // МЕТОД ЗАПРОСА НА ПЕРЕСДАЧУ
+        private async Task RequestRetake()
+        {
+            if (progress != null)
+            {
+                await TestService.RequestRetakeAsync(progress.Id);
+                await LoadProgress();
+                NotificationService.Notify(NotificationSeverity.Success, "Запрос отправлен", "Ожидайте решения администратора.");
+            }
         }
 
         private async Task ConfirmAnswer(QuestionUIState state)
@@ -169,7 +181,6 @@ namespace CyberPolygon.Components.Pages
         {
             if (progress?.TargetEndTime != null)
             {
-                // ИСПРАВЛЕНО: Использование строго UtcNow
                 timeLeft = progress.TargetEndTime.Value - DateTime.UtcNow;
 
                 if (timeLeft.TotalSeconds <= 0)
