@@ -21,40 +21,52 @@
 <PageTitle>Панель управления | Киберполигон</PageTitle>
 
 <style>
-    /* ГЛОБАЛЬНЫЕ ЦВЕТА И СТИЛИ */
+    /* Строгая киберпанк-тема */
     :root {
         --bg-main: #0b0f17;
         --bg-card: #131924;
-        --bg-card-hover: #1a2332;
-        --bg-input: #0d1117;
+        --bg-card-hover: #1a2435;
+        --bg-input: #131924;
         --text-muted: #8fa0b5;
         --text-light: #cbe0f5;
-        --accent-blue: #5ba3e3;
         --accent-cyan: #4ec3d1;
+        --accent-blue: #5ba3e3;
+        --accent-light-blue: #7ec8f8;
         --border-color: #2a3a4a;
         --success-color: #98c379;
-        --danger-color: #e06c75;
         --warning-color: #e5c07b;
+        --danger-color: #e06c75;
     }
 
-    .admin-container {
-        background-color: var(--bg-main);
+    html, body {
+        background-color: var(--bg-main) !important;
+    }
+
+    /* Обертка на всю ширину для однородного фона */
+    .full-page-wrapper {
+        background-color: var(--bg-main) !important;
         min-height: calc(100vh - 60px);
+        width: 100%;
+        padding: 30px 20px;
+        box-sizing: border-box;
+    }
+
+    .page-container {
         color: var(--text-light);
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         max-width: 1400px;
         margin: 0 auto;
-        padding: 30px 20px;
+        font-family: 'Segoe UI', system-ui, sans-serif;
     }
 
     .page-header {
         display: flex;
-        align-items: center;
-        gap: 20px;
-        margin-bottom: 30px;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 35px;
         padding-bottom: 20px;
         border-bottom: 2px solid var(--border-color);
         position: relative;
+        gap: 20px;
     }
 
         .page-header::after {
@@ -68,41 +80,125 @@
             box-shadow: 0 0 10px rgba(78, 195, 209, 0.5);
         }
 
-    .cyber-card {
-        background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-card-hover) 100%);
-        border: 1px solid var(--border-color);
-        border-radius: 10px;
-        padding: 25px;
-        margin-bottom: 25px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-        transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    .header-text h1 {
+        color: var(--accent-cyan);
+        font-weight: 800;
+        text-transform: uppercase;
+        margin: 0 0 8px 0;
+        font-size: 1.8rem;
+        letter-spacing: 2px;
+        text-shadow: 0 0 15px rgba(78, 195, 209, 0.3);
     }
 
-        .cyber-card:hover {
-            border-color: rgba(78, 195, 209, 0.3);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
-        }
+    .header-text p {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        margin: 0;
+        line-height: 1.5;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
 
-    .section-title {
+    /* === ОБОЛОЧКА (CYBER-SHELL) === */
+    .cyber-shell {
+        background-color: rgba(19, 25, 36, 0.6);
+        border: 1px solid rgba(78, 195, 209, 0.3);
+        border-radius: 12px;
+        box-shadow: 0 0 40px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(78, 195, 209, 0.05);
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 30px;
+    }
+
+    .cyber-shell-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 25px;
+        background: linear-gradient(90deg, rgba(78,195,209,0.1) 0%, transparent 100%);
+        border-bottom: 1px solid rgba(78, 195, 209, 0.3);
+        font-family: 'Courier New', Courier, monospace;
+    }
+
+    .shell-title {
         color: var(--accent-cyan);
-        font-size: 1.1rem;
-        font-weight: 600;
-        margin-bottom: 20px;
+        font-size: 0.95rem;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+
+    .shell-status {
+        color: var(--text-muted);
+        font-size: 0.85rem;
         display: flex;
         align-items: center;
         gap: 8px;
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .status-dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        background-color: var(--accent-light-blue);
+        border-radius: 50%;
+        box-shadow: 0 0 10px var(--accent-light-blue);
+        animation: pulse 2s infinite;
+    }
+
+    @@keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(126, 200, 248, 0.7);
+        }
+
+        70% {
+            box-shadow: 0 0 0 10px rgba(126, 200, 248, 0);
+        }
+
+        100% {
+            box-shadow: 0 0 0 0 rgba(126, 200, 248, 0);
+        }
+    }
+
+    .cyber-shell-body {
+        padding: 30px;
+    }
+
+    /* Внутренние секции */
+    .cyber-section {
+        background-color: rgba(0, 0, 0, 0.2);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 25px;
+        margin-bottom: 25px;
     }
 
     .cyber-label {
-        color: var(--accent-cyan);
+        color: var(--accent-cyan) !important;
         font-size: 0.85rem;
         text-transform: uppercase;
         letter-spacing: 1px;
-        margin-bottom: 6px;
+        margin-bottom: 8px;
         display: block;
-        font-weight: 600;
+        font-weight: 700;
+    }
+
+    .section-title {
+        color: var(--accent-light-blue);
+        font-size: 1.15rem;
+        font-weight: 800;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        border-bottom: 1px dashed rgba(78, 195, 209, 0.3);
+        padding-bottom: 15px;
     }
 
     /* ВКЛАДКИ НАВИГАЦИИ */
@@ -116,85 +212,132 @@
 
     .tab-trigger {
         background: transparent;
-        border: none;
-        padding: 12px 24px;
+        border: 1px solid transparent;
+        border-bottom: none;
+        padding: 12px 20px;
         color: var(--text-muted);
-        font-weight: 600;
+        font-weight: 700;
         cursor: pointer;
         transition: all 0.3s;
-        border-bottom: 2px solid transparent;
-        margin-bottom: -2px;
+        border-radius: 8px 8px 0 0;
         font-size: 0.9rem;
-        letter-spacing: 0.5px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
         display: flex;
         align-items: center;
         gap: 8px;
     }
 
         .tab-trigger:hover {
+            background-color: rgba(255, 255, 255, 0.03);
             color: var(--text-light);
         }
 
         .tab-trigger.active {
+            background: linear-gradient(180deg, rgba(78, 195, 209, 0.15) 0%, rgba(19, 25, 36, 0) 100%);
+            border: 1px solid rgba(78, 195, 209, 0.3);
+            border-bottom: 3px solid var(--accent-cyan);
             color: var(--accent-cyan);
-            border-bottom: 2px solid var(--accent-cyan);
+            text-shadow: 0 0 10px rgba(78, 195, 209, 0.4);
         }
 
-    /* ВАЛИДАЦИЯ */
-    .validation-message {
-        color: var(--danger-color);
-        font-size: 0.75rem;
-        margin-top: 4px;
-        display: block;
-        font-weight: bold;
+    /* ПОЛЯ ВВОДА */
+    .dark-input, .rz-textbox, .rz-dropdown {
+        background-color: var(--bg-card) !important;
+        border: 1px solid var(--border-color) !important;
+        color: var(--text-light) !important;
+        border-radius: 6px !important;
+        transition: all 0.3s ease;
     }
 
-    .invalid {
-        border-color: var(--danger-color) !important;
-        box-shadow: 0 0 5px rgba(224, 108, 117, 0.3);
-    }
+        .dark-input:focus, .rz-textbox:focus, .rz-dropdown:focus {
+            border-color: var(--accent-cyan) !important;
+            box-shadow: 0 0 10px rgba(78, 195, 209, 0.2) !important;
+            outline: none;
+        }
+
+        .dark-input::placeholder {
+            color: #5c6a7a !important;
+            font-style: italic;
+        }
 
     /* КНОПКИ */
-    .btn-primary-gradient {
-        background: linear-gradient(135deg, var(--accent-cyan) 0%, var(--accent-blue) 100%);
-        color: #1a1d21;
-        font-weight: bold;
+    .btn-main {
+        background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue));
+        color: var(--bg-main);
+        font-weight: 800;
         border: none;
         padding: 10px 24px;
         border-radius: 8px;
         cursor: pointer;
-        transition: all 0.3s;
+        transition: all 0.3s ease;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
         display: inline-flex;
         align-items: center;
+        justify-content: center;
         gap: 8px;
+        white-space: nowrap; /* Предотвращает перенос текста кнопки */
     }
 
-        .btn-primary-gradient:hover {
+        .btn-main:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(78, 195, 209, 0.4);
         }
 
     .btn-outline-light {
         background: transparent;
-        color: var(--text-light);
+        color: var(--text-muted);
         border: 1px solid var(--border-color);
-        padding: 8px 20px;
-        border-radius: 6px;
+        padding: 10px 20px;
+        border-radius: 8px;
         cursor: pointer;
-        transition: 0.3s;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        white-space: nowrap;
     }
 
         .btn-outline-light:hover {
-            background: rgba(255,255,255,0.05);
-            border-color: var(--accent-cyan);
-            color: var(--accent-cyan);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-light);
+            border-color: var(--text-muted);
+        }
+
+    .btn-detail {
+        background: transparent;
+        color: var(--accent-cyan);
+        border: 1px dashed rgba(78, 195, 209, 0.5);
+        padding: 6px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-size: 0.8rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        text-transform: uppercase;
+        white-space: nowrap; /* Предотвращает перенос текста кнопки */
+    }
+
+        .btn-detail:hover {
+            background: rgba(78, 195, 209, 0.1);
+            border-style: solid;
+            box-shadow: 0 0 10px rgba(78, 195, 209, 0.2);
         }
 
     .btn-icon-danger {
         background: transparent;
         color: var(--danger-color);
         border: 1px solid rgba(224, 108, 117, 0.3);
-        padding: 4px 6px;
+        padding: 5px;
         border-radius: 6px;
         cursor: pointer;
         transition: all 0.2s;
@@ -203,59 +346,144 @@
         justify-content: center;
         width: 32px;
         height: 32px;
+        flex-shrink: 0;
     }
 
         .btn-icon-danger:hover {
             background: rgba(224, 108, 117, 0.15);
             border-color: var(--danger-color);
-            transform: scale(1.05);
         }
 
-    .btn-detail {
-        background: transparent;
-        color: var(--accent-cyan);
-        border: 1px solid rgba(78, 195, 209, 0.3);
-        padding: 6px 12px;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: all 0.2s;
-        font-size: 0.8rem;
-        font-weight: 600;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
+    /* ТАБЛИЦЫ (DATAGRID) */
+    ::deep .rz-datagrid {
+        background-color: var(--bg-card) !important;
+        border: none !important;
+        border-radius: 8px !important;
+        overflow: hidden;
     }
 
-        .btn-detail:hover {
-            background: rgba(78, 195, 209, 0.15);
-            border-color: var(--accent-cyan);
+    ::deep .rz-grid-table thead th {
+        background-color: rgba(0,0,0,0.3) !important;
+        color: var(--accent-cyan) !important;
+        border-bottom: 1px dashed var(--border-color) !important;
+        border-right: none !important;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 12px 10px !important;
+    }
+
+    ::deep .rz-grid-table tbody tr {
+        background-color: transparent !important;
+        color: var(--text-light) !important;
+        transition: background-color 0.2s;
+    }
+
+        ::deep .rz-grid-table tbody tr:hover {
+            background-color: rgba(78, 195, 209, 0.08) !important;
         }
 
-    /* ДВУХКОЛОНОЧНЫЙ ИНТЕРФЕЙС РАСПРЕДЕЛЕНИЯ (В МОДАЛКАХ) */
+    ::deep .rz-grid-table td {
+        border-bottom: 1px solid var(--border-color) !important;
+        color: var(--text-light) !important;
+        border-right: none !important;
+        padding: 10px !important;
+        font-size: 0.85rem;
+    }
+
+    ::deep .rz-pager {
+        background-color: rgba(0,0,0,0.3) !important;
+        border-top: 1px dashed var(--border-color) !important;
+        color: var(--text-muted) !important;
+        padding: 8px !important;
+    }
+
+    /* БЭЙДЖИ И СТАТУСЫ */
+    .status-badge-mini {
+        font-size: 0.7rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        padding: 4px 8px;
+        border-radius: 4px;
+        display: inline-block;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+    }
+
+    .status-in-progress {
+        background: rgba(78, 195, 209, 0.15);
+        color: var(--accent-cyan);
+        border: 1px solid rgba(78, 195, 209, 0.4);
+    }
+
+    .status-completed {
+        background: rgba(152, 195, 121, 0.15);
+        color: var(--success-color);
+        border: 1px solid rgba(152, 195, 121, 0.4);
+    }
+
+    .status-failed {
+        background: rgba(224, 108, 117, 0.15);
+        color: var(--danger-color);
+        border: 1px solid rgba(224, 108, 117, 0.4);
+    }
+
+    /* GRID ДЛЯ СТРУКТУРЫ (ПОДРАЗДЕЛЕНИЯ / КОМАНДЫ) */
+    .admin-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+        gap: 30px;
+    }
+
+    .admin-row {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+    }
+
+    .admin-row-input {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .admin-row-btn {
+        flex-shrink: 0;
+    }
+
+    .validation-message {
+        color: var(--danger-color);
+        font-size: 0.75rem;
+        margin-top: 6px;
+        display: block;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+
+    /* ДВУХКОЛОНОЧНЫЙ ИНТЕРФЕЙС (СПИСКИ) */
     .scroll-list-panel {
-        background: var(--bg-input);
+        background: var(--bg-card);
         border: 1px solid var(--border-color);
-        border-radius: 6px;
-        height: 300px;
+        border-radius: 8px;
+        height: 350px;
         overflow-y: auto;
-        padding: 10px;
+        padding: 15px;
     }
 
         .scroll-list-panel.selected {
             border-color: rgba(78, 195, 209, 0.3);
-            background: rgba(0, 0, 0, 0.15);
+            background: rgba(0, 0, 0, 0.2);
         }
 
     .list-item-inline {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        background: rgba(255, 255, 255, 0.02);
+        background: rgba(0, 0, 0, 0.3);
         border: 1px solid var(--border-color);
-        padding: 8px 12px;
+        padding: 10px 15px;
         border-radius: 6px;
-        margin-bottom: 8px;
-        gap: 8px;
+        margin-bottom: 10px;
+        gap: 10px;
         transition: 0.2s;
     }
 
@@ -265,21 +493,21 @@
         }
 
         .list-item-inline .item-text {
-            font-size: 0.85rem;
-            color: var(--text-light) !important;
+            font-size: 0.9rem;
+            color: var(--text-light);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             flex-grow: 1;
-            font-weight: 500;
+            font-weight: 600;
         }
 
     .btn-item-action {
         background: transparent;
-        border-radius: 4px;
-        padding: 2px;
-        width: 28px;
-        height: 28px;
+        border-radius: 6px;
+        padding: 4px;
+        width: 32px;
+        height: 32px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -308,172 +536,6 @@
                 border-color: var(--danger-color);
             }
 
-    /* ГЛУБОКАЯ СТИЛИЗАЦИЯ ТАБЛИЦ RADZEN */
-    ::deep .rz-datagrid {
-        background-color: var(--bg-input) !important;
-        border: 1px solid var(--border-color) !important;
-        border-radius: 8px !important;
-        overflow: hidden;
-    }
-
-    ::deep .rz-grid-table thead th {
-        background-color: #111827 !important;
-        color: var(--accent-cyan) !important;
-        border-bottom: 2px solid var(--border-color) !important;
-        border-right: 1px solid var(--border-color) !important;
-        font-size: 0.75rem;
-        text-transform: uppercase;
-        font-weight: 700;
-        padding: 12px 10px !important;
-        letter-spacing: 0.5px;
-    }
-
-    ::deep .rz-grid-table tbody tr {
-        background-color: transparent !important;
-        color: var(--text-light) !important;
-        transition: background-color 0.2s;
-    }
-
-        ::deep .rz-grid-table tbody tr:hover {
-            background-color: rgba(78, 195, 209, 0.05) !important;
-        }
-
-    ::deep .rz-grid-table td {
-        border-bottom: 1px solid var(--border-color) !important;
-        color: var(--text-light) !important;
-        border-right: 1px solid var(--border-color) !important;
-        padding: 12px 10px !important;
-        font-size: 0.85rem;
-    }
-
-    ::deep .rz-pager {
-        background-color: #111827 !important;
-        border-top: 1px solid var(--border-color) !important;
-        color: var(--text-muted) !important;
-        padding: 10px !important;
-    }
-
-    /* ПОЛЯ ВВОДА И ВЫПАДАЮЩИЕ СПИСКИ (ЖЕСТКАЯ ПОДСВЕТКА ТЕКСТА) */
-    .dark-input, ::deep .rz-dropdown, ::deep .rz-multiselect {
-        background-color: var(--bg-input) !important;
-        border: 1px solid var(--border-color) !important;
-        color: var(--text-light) !important;
-        border-radius: 6px !important;
-        transition: all 0.3s ease;
-    }
-
-        .dark-input:focus, ::deep .rz-dropdown.rz-state-focused, ::deep .rz-multiselect.rz-state-focused {
-            border-color: var(--accent-cyan) !important;
-            box-shadow: 0 0 8px rgba(78, 195, 209, 0.3) !important;
-        }
-
-        .dark-input::placeholder, .rz-textbox::placeholder {
-            color: #5c6a7a !important;
-            font-style: italic;
-        }
-
-    ::deep .rz-dropdown-label, ::deep .rz-multiselect-label {
-        color: var(--text-light) !important;
-        font-weight: 500;
-    }
-
-    ::deep .rz-dropdown-panel, ::deep .rz-multiselect-panel {
-        background-color: #111827 !important;
-        border: 1px solid var(--accent-cyan) !important;
-        border-radius: 6px !important;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.6) !important;
-    }
-
-    ::deep .rz-dropdown-item, ::deep .rz-multiselect-item {
-        background: transparent !important;
-        padding: 8px 12px !important;
-        transition: 0.2s;
-    }
-
-        /* Принудительно делаем текст светлым, перебивая дефолтные спаны Radzen */
-        ::deep .rz-dropdown-item, ::deep .rz-dropdown-item span, ::deep .rz-multiselect-item, ::deep .rz-multiselect-item span {
-            color: var(--text-light) !important;
-        }
-
-            /* При наведении подсвечиваем циановым */
-            ::deep .rz-dropdown-item:hover, ::deep .rz-dropdown-item:hover span, ::deep .rz-multiselect-item:hover, ::deep .rz-multiselect-item:hover span {
-                background-color: rgba(78, 195, 209, 0.15) !important;
-                color: var(--accent-cyan) !important;
-            }
-
-            /* Подсветка выбранного пункта */
-            ::deep .rz-dropdown-item.rz-state-highlight, ::deep .rz-dropdown-item.rz-state-highlight span, ::deep .rz-multiselect-item.rz-state-highlight, ::deep .rz-multiselect-item.rz-state-highlight span {
-                background-color: var(--bg-card-hover) !important;
-                color: var(--accent-cyan) !important;
-                font-weight: bold;
-            }
-
-    ::deep .rz-chkbox-box {
-        background-color: var(--bg-input) !important;
-        border-color: var(--border-color) !important;
-    }
-
-    ::deep .rz-chkbox.rz-state-active .rz-chkbox-box {
-        background-color: var(--accent-cyan) !important;
-        border-color: var(--accent-cyan) !important;
-    }
-
-    /* БЕЙДЖИ И СТАТУСЫ */
-    .status-badge-mini {
-        font-size: 0.7rem;
-        font-weight: bold;
-        text-transform: uppercase;
-        padding: 4px 8px;
-        border-radius: 4px;
-        display: inline-block;
-        letter-spacing: 0.5px;
-    }
-
-    .status-in-progress {
-        background: rgba(78, 195, 209, 0.15);
-        color: var(--accent-cyan);
-        border: 1px solid rgba(78, 195, 209, 0.4);
-    }
-
-    .status-completed {
-        background: rgba(152, 195, 121, 0.15);
-        color: var(--success-color);
-        border: 1px solid rgba(152, 195, 121, 0.4);
-    }
-
-    .status-failed {
-        background: rgba(224, 108, 117, 0.15);
-        color: var(--danger-color);
-        border: 1px solid rgba(224, 108, 117, 0.4);
-    }
-
-    .admin-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
-        gap: 25px;
-        margin-bottom: 25px;
-    }
-
-    .admin-row {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-    }
-
-    .admin-row-input {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .admin-row-btn {
-        flex-shrink: 0;
-    }
-
-    .loading-container {
-        text-align: center;
-        padding: 80px 20px;
-    }
-
     /* МОДАЛЬНЫЕ ОКНА */
     .cyber-modal-overlay {
         position: fixed;
@@ -481,394 +543,524 @@
         left: 0;
         width: 100vw;
         height: 100vh;
-        background: rgba(0,0,0,0.85);
+        background: rgba(11, 15, 23, 0.85);
         backdrop-filter: blur(8px);
+        z-index: 2147483647;
         display: flex;
-        justify-content: center;
         align-items: center;
-        z-index: 9999;
+        justify-content: center;
+        opacity: 0;
+        animation: fadeIn 0.3s forwards;
+    }
+
+    @@keyframes fadeIn {
+        to {
+            opacity: 1;
+        }
     }
 
     .cyber-modal-content {
+        width: 90%;
+        max-width: 550px;
         background: var(--bg-card);
         border: 1px solid var(--accent-cyan);
-        border-radius: 10px;
-        width: 550px;
-        max-width: 95vw;
-        padding: 30px;
-        box-shadow: 0 0 50px rgba(78, 195, 209, 0.2);
+        border-radius: 12px;
+        box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(78, 195, 209, 0.1);
+        display: flex;
+        flex-direction: column;
         position: relative;
+        transform: translateY(20px);
+        animation: slideUp 0.3s forwards ease-out;
     }
 
         .cyber-modal-content.wide {
-            width: 850px;
-            max-width: 95vw;
+            max-width: 900px;
         }
 
-    .cyber-modal-title {
-        color: var(--accent-light-blue);
-        margin: 0 0 10px 0;
-        font-weight: 700;
-        font-size: 1.3rem;
+    @@keyframes slideUp {
+        to {
+            transform: translateY(0);
+        }
+    }
+
+    .modal-header {
+        padding: 25px 30px;
+        border-bottom: 1px solid var(--border-color);
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 20px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 12px 12px 0 0;
+    }
+
+    .modal-title-group {
+        flex-grow: 1;
+    }
+
+    .modal-title {
+        color: var(--accent-cyan);
+        font-size: 1.4rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin: 0;
+    }
+
+    .modal-body {
+        padding: 30px;
+        overflow-y: auto;
+        flex-grow: 1;
+    }
+
+    .loading-container {
+        text-align: center;
+        padding: 80px 20px;
     }
 </style>
 
-<div class="admin-container">
-    @if (!isLoaded)
-    {
-        <div class="loading-container">
-            <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" Style="background-color: var(--border-color); width: 300px; margin: 0 auto;" />
-        </div>
-    }
-    else
-    {
+<div class="full-page-wrapper">
+    <div class="page-container">
         <div class="page-header">
-            <RadzenIcon Icon="admin_panel_settings" Style="color: var(--accent-cyan); font-size: 2.5rem;" />
-            <h2 style="color: var(--accent-light-blue); margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Панель администратора</h2>
+            <div class="header-text">
+                <h1>Панель управления</h1>
+                <p>Информационно-аналитический департамент // Терминал администратора</p>
+            </div>
         </div>
 
-        <!-- СЕТКА НАВИГАЦИИ -->
-        <div class="tabs-navigation">
-            <button class="tab-trigger @(activeTabIndex == 0 ? "active" : "")" @onclick="() => activeTabIndex = 0"><RadzenIcon Icon="people" /> ПОЛЬЗОВАТЕЛИ</button>
-            <button class="tab-trigger @(activeTabIndex == 1 ? "active" : "")" @onclick="() => activeTabIndex = 1"><RadzenIcon Icon="lan" /> СТРУКТУРА И КОМАНДЫ</button>
-            <button class="tab-trigger @(activeTabIndex == 2 ? "active" : "")" @onclick="() => activeTabIndex = 2"><RadzenIcon Icon="crisis_alert" /> АКТИВНОСТЬ В СЦЕНАРИЯХ</button>
-            <button class="tab-trigger @(activeTabIndex == 3 ? "active" : "")" @onclick="() => activeTabIndex = 3"><RadzenIcon Icon="assignment" /> АКТИВНОСТЬ В ТЕСТАХ</button>
-        </div>
-
-        @if (activeTabIndex == 0)
+        @if (!isLoaded)
         {
-            <!-- ВКЛАДКА 1: ПОЛЬЗОВАТЕЛИ -->
-            <div class="cyber-card" style="margin-bottom: 25px;">
-                <h4 class="section-title"><RadzenIcon Icon="person_add" /> Создание нового пользователя</h4>
+            <div class="loading-container">
+                <RadzenProgressBar Mode="ProgressBarMode.Indeterminate" Style="background-color: var(--border-color); height: 6px; width: 300px; margin: 0 auto;" />
+                <p style="color: var(--accent-cyan); margin-top: 15px; font-size: 0.9rem; font-weight: bold; letter-spacing: 2px;">СИНХРОНИЗАЦИЯ С БАЗОЙ ДАННЫХ...</p>
+            </div>
+        }
+        else
+        {
+            <!-- СЕТКА НАВИГАЦИИ -->
+            <div class="tabs-navigation">
+                <button class="tab-trigger @(activeTabIndex == 0 ? "active" : "")" @onclick="() => activeTabIndex = 0"><RadzenIcon Icon="people" /> ПОЛЬЗОВАТЕЛИ</button>
+                <button class="tab-trigger @(activeTabIndex == 1 ? "active" : "")" @onclick="() => activeTabIndex = 1"><RadzenIcon Icon="lan" /> СТРУКТУРА И КОМАНДЫ</button>
+                <button class="tab-trigger @(activeTabIndex == 2 ? "active" : "")" @onclick="() => activeTabIndex = 2"><RadzenIcon Icon="crisis_alert" /> ЖУРНАЛ СЦЕНАРИЕВ</button>
+                <button class="tab-trigger @(activeTabIndex == 3 ? "active" : "")" @onclick="() => activeTabIndex = 3"><RadzenIcon Icon="assignment" /> ЖУРНАЛ ТЕСТОВ</button>
+            </div>
 
+            @if (activeTabIndex == 0)
+            {
+                <!-- ВКЛАДКА 1: ПОЛЬЗОВАТЕЛИ -->
+                <div class="cyber-shell">
+                    <div class="cyber-shell-header">
+                        <div class="shell-title"><RadzenIcon Icon="admin_panel_settings" Style="font-size: 1.2rem;" /> SYS.ADMIN_TERMINAL // USERS</div>
+                        <div class="shell-status"><span class="status-dot"></span> ONLINE</div>
+                    </div>
+                    <div class="cyber-shell-body">
+
+                        <div class="cyber-section" style="margin-bottom: 0;">
+                            <div class="d-flex justify-content-between align-items-center mb-4 pb-3" style="border-bottom: 1px dashed rgba(78, 195, 209, 0.3);">
+                                <h4 class="section-title" style="margin-bottom: 0; border: none; padding: 0;">
+                                    <RadzenIcon Icon="people" /> Реестр пользователей (@usersList.Count)
+                                </h4>
+                                <button class="btn-main" @onclick="OpenCreateUserModal">
+                                    <RadzenIcon Icon="person_add" Style="font-size: 1.2rem;" /> ЗАРЕГИСТРИРОВАТЬ АГЕНТА
+                                </button>
+                            </div>
+
+                            <RadzenDataGrid Data="@usersList" TItem="ApplicationUser" AllowPaging="true" PageSize="15">
+                                <Columns>
+                                    <RadzenDataGridColumn TItem="ApplicationUser" Title="ЛОГИН" Width="220px">
+                                        <Template Context="u"><span style="color: var(--accent-light-blue); font-weight: 700;">@u.UserName</span></Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="ApplicationUser" Title="ФИО" Width="250px">
+                                        <Template Context="u"><span style="color: var(--text-light); font-weight: 600;">@GetUserDisplayName(u)</span></Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="ApplicationUser" Title="ДОПУСК" Width="120px" TextAlign="TextAlign.Center">
+                                        <Template Context="u">
+                                            @if (adminUserIds.Contains(u.Id))
+                                            {
+                                                <span class="status-badge-mini status-completed" style="border-color: var(--success-color);">АДМИН</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="status-badge-mini" style="background: rgba(143,160,181,0.15); color: var(--text-muted); border: 1px solid var(--border-color);">АГЕНТ</span>
+                                            }
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="ApplicationUser" Title="ПОДРАЗДЕЛЕНИЕ" Width="180px">
+                                        <Template Context="u"><span style="color: var(--text-muted); font-weight: 600; text-transform: uppercase;">@(u.Group?.Name ?? "—")</span></Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn TItem="ApplicationUser" Title="УПРАВЛЕНИЕ" Width="240px" TextAlign="TextAlign.Center">
+                                        <Template Context="u">
+                                            <div class="d-flex justify-content-center gap-2">
+                                                <button class="btn-detail" @onclick="@(() => OpenEditUserModal(u))" title="Редактировать"><RadzenIcon Icon="edit" style="font-size: 1rem;" /> Изменить</button>
+                                                <button class="btn-icon-danger" style="border-color: var(--accent-cyan); color: var(--accent-cyan);" @onclick="@(() => ToggleAdminRole(u.Id))" title="Сменить роль"><RadzenIcon Icon="admin_panel_settings" style="font-size: 1rem;" /></button>
+                                                <button class="btn-icon-danger" @onclick="@(() => DeleteUser(u.Id))" title="Удалить"><RadzenIcon Icon="delete_forever" style="font-size: 1rem;" /></button>
+                                            </div>
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                </Columns>
+                            </RadzenDataGrid>
+                        </div>
+                    </div>
+                </div>
+            }
+            else if (activeTabIndex == 1)
+            {
+                <!-- ВКЛАДКА 2: СТРУКТУРА И КОМАНДЫ -->
+                <div class="cyber-shell">
+                    <div class="cyber-shell-header">
+                        <div class="shell-title"><RadzenIcon Icon="lan" Style="font-size: 1.2rem;" /> SYS.ADMIN_TERMINAL // STRUCTURE</div>
+                        <div class="shell-status"><span class="status-dot"></span> ONLINE</div>
+                    </div>
+                    <div class="cyber-shell-body" style="padding-bottom: 5px;">
+                        <div class="admin-grid">
+                            <!-- БЛОК 1: ПОДРАЗДЕЛЕНИЯ -->
+                            <div class="cyber-section">
+                                <h4 class="section-title"><RadzenIcon Icon="account_balance" /> Управление подразделениями</h4>
+                                <div class="admin-row mb-4">
+                                    <div class="admin-row-input"><RadzenTextBox @bind-Value="@newGroupName" Placeholder="Название нового подразделения..." class="w-100 dark-input" /></div>
+                                    <div class="admin-row-btn"><button class="btn-main" @onclick="CreateGroup"><RadzenIcon Icon="add" /> СОЗДАТЬ</button></div>
+                                </div>
+
+                                <RadzenDataGrid Data="@groupsList" TItem="UserGroup" Height="400px">
+                                    <Columns>
+                                        <RadzenDataGridColumn TItem="UserGroup" Title="НАЗВАНИЕ">
+                                            <Template Context="grp"><span style="color: var(--text-light); font-weight: 700; text-transform: uppercase;">@grp.Name</span></Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="UserGroup" Title="ШТАТ" Width="180px" TextAlign="TextAlign.Center">
+                                            <Template Context="grp">
+                                                <button class="btn-detail" @onclick="@(() => OpenGroupDistributionModal(grp))" title="Распределить агентов">
+                                                    <RadzenIcon Icon="group_add" style="font-size: 1rem;" /> Состав (@usersList.Count(u => u.GroupId == grp.Id))
+                                                </button>
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="UserGroup" Title="" Width="70px" TextAlign="TextAlign.Center">
+                                            <Template Context="grp"><button class="btn-icon-danger" @onclick="@(async () => await DeleteGroup(grp.Id))"><RadzenIcon Icon="delete_forever" style="font-size: 1.1rem;" /></button></Template>
+                                        </RadzenDataGridColumn>
+                                    </Columns>
+                                </RadzenDataGrid>
+                            </div>
+
+                            <!-- БЛОК 2: КОМАНДЫ -->
+                            <div class="cyber-section">
+                                <h4 class="section-title"><RadzenIcon Icon="groups" /> Управление командами</h4>
+                                <div class="mb-4">
+                                    <RadzenDropDown TValue="int" Data="@groupsList" TextProperty="Name" ValueProperty="Id" @bind-Value="@selectedGroupIdForTeam" Placeholder="Выберите подразделение привязки..." style="width: 100%;" class="dark-input" />
+                                </div>
+                                <div class="admin-row mb-4">
+                                    <div class="admin-row-input"><RadzenTextBox @bind-Value="@newTeamName" Placeholder="Название новой команды..." class="w-100 dark-input" /></div>
+                                    <div class="admin-row-btn"><button class="btn-main" @onclick="CreateTeam"><RadzenIcon Icon="group_add" /> СОЗДАТЬ</button></div>
+                                </div>
+
+                                <RadzenDataGrid Data="@teamsList" TItem="UserTeam" Height="335px">
+                                    <Columns>
+                                        <RadzenDataGridColumn TItem="UserTeam" Title="КОМАНДА">
+                                            <Template Context="t">
+                                                <span style="color: var(--text-light); font-weight: 700;">@t.Name</span><br />
+                                                <span style="font-size:0.75rem; color:var(--accent-cyan); font-weight:600; text-transform: uppercase;">@t.Group?.Name</span>
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="UserTeam" Title="РАСЧЕТ" Width="180px" TextAlign="TextAlign.Center">
+                                            <Template Context="tm">
+                                                <button class="btn-detail" @onclick="@(() => OpenTeamDistributionModal(tm))" title="Настроить боевой расчет">
+                                                    <RadzenIcon Icon="settings_accessibility" style="font-size: 1rem;" /> Состав (@(tm.Users?.Count ?? 0))
+                                                </button>
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="UserTeam" Title="" Width="70px" TextAlign="TextAlign.Center">
+                                            <Template Context="tm"><button class="btn-icon-danger" @onclick="@(async () => await DeleteTeam(tm.Id))"><RadzenIcon Icon="delete_forever" style="font-size: 1.1rem;" /></button></Template>
+                                        </RadzenDataGridColumn>
+                                    </Columns>
+                                </RadzenDataGrid>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+            else if (activeTabIndex == 2)
+            {
+                <!-- ВКЛАДКА 3: АКТИВНОСТЬ В СЦЕНАРИЯХ -->
+                <div class="cyber-shell">
+                    <div class="cyber-shell-header">
+                        <div class="shell-title"><RadzenIcon Icon="crisis_alert" Style="font-size: 1.2rem;" /> SYS.ADMIN_TERMINAL // SCENARIO_LOGS</div>
+                        <div class="shell-status"><span class="status-dot"></span> ONLINE</div>
+                    </div>
+                    <div class="cyber-shell-body">
+                        <div class="cyber-section" style="margin-bottom: 0;">
+                            <h4 class="section-title"><RadzenIcon Icon="history" /> Журнал активности симуляций (Глобальный)</h4>
+                            @if (!allScenarioProgressList.Any())
+                            {
+                                <div class="text-center py-5" style="border: 1px dashed var(--accent-cyan); border-radius: 8px; background: rgba(78, 195, 209, 0.05);">
+                                    <RadzenIcon Icon="cloud_off" Style="font-size: 4rem; color: var(--accent-cyan); margin-bottom: 15px; filter: drop-shadow(0 0 10px rgba(78,195,209,0.5));" />
+                                    <p style="color: var(--text-light); font-size: 1.1rem; font-weight: 600; text-transform: uppercase;">Записи отсутствуют</p>
+                                </div>
+                            }
+                            else
+                            {
+                                <RadzenDataGrid Data="@allScenarioProgressList" TItem="UserScenarioProgress" AllowPaging="true" PageSize="15">
+                                    <Columns>
+                                        <RadzenDataGridColumn TItem="UserScenarioProgress" Title="ОПЕРАТИВНИК / КОМАНДА" Width="220px">
+                                            <Template Context="data">
+                                                @if (data.IsTeamAttempt)
+                                                {
+                                                    <span style="color: var(--warning-color); font-weight: 700; text-transform: uppercase; font-size: 0.85rem;"><RadzenIcon Icon="groups" Style="font-size:1rem; margin-top:-2px;" /> @(teamsList.FirstOrDefault(t => t.Id == data.TeamId)?.Name ?? "Команда")</span>
+                                                }
+                                                else
+                                                {
+                                                    var usr = usersList.FirstOrDefault(u => u.Id == data.UserId);
+                                                    <span style="color: var(--accent-light-blue); font-weight: 600;"><RadzenIcon Icon="person" Style="font-size:1rem; margin-top:-2px;" /> @GetUserDisplayName(usr)</span>
+                                                }
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="UserScenarioProgress" Title="БОЕВОЙ СЦЕНАРИЙ">
+                                            <Template Context="data"><span style="color: var(--text-light); font-weight: 700;">@(data.Scenario?.Title ?? "—")</span></Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="UserScenarioProgress" Title="СТАТУС" Width="130px" TextAlign="TextAlign.Center">
+                                            <Template Context="data">
+                                                @switch (data.Status)
+                                                {
+                                                    case AttemptStatus.InProgress:
+                                                        <span class="status-badge-mini status-in-progress">В процессе</span>
+                                                        break;
+                                                    case AttemptStatus.Completed:
+
+                                                        <span class="status-badge-mini status-completed">Завершен</span>
+                                                        break;
+                                                    case AttemptStatus.Failed:
+
+                                                        <span class="status-badge-mini status-failed">Неудача</span>
+                                                        break;
+                                                    default:
+
+                                                        <span class="status-badge-mini" style="background: rgba(143,160,181,0.15); color: var(--text-muted); border: 1px solid var(--border-color);">@data.Status</span>
+                                                        break;
+                                                }
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="UserScenarioProgress" Title="XP" Width="90px" TextAlign="TextAlign.Center">
+                                            <Template Context="data"><span style="color: var(--accent-cyan); font-weight: bold; font-family: monospace; font-size: 1.2rem;">@data.Score</span></Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="UserScenarioProgress" Title="ДАТА ЗАПУСКА" Width="150px" TextAlign="TextAlign.Center">
+                                            <Template Context="data"><span style="font-size: 0.85rem; color: var(--text-muted); font-family: monospace;">@(data.StartedAt?.ToString("dd.MM.yyyy HH:mm") ?? "—")</span></Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="UserScenarioProgress" Title="УПРАВЛЕНИЕ" Width="180px" TextAlign="TextAlign.Center">
+                                            <Template Context="data">
+                                                <div class="d-flex justify-content-center gap-2">
+                                                    <button class="btn-detail" @onclick="@(() => NavigationManager.NavigateTo($"/admin/scenario-attempt/{data.Id}"))"><RadzenIcon Icon="visibility" style="font-size: 1rem;" /> Детали</button>
+                                                    <button class="btn-icon-danger" @onclick="@(() => ResetScenarioProgress(data.Id))" title="Сбросить и удалить попытку сессии"><RadzenIcon Icon="refresh" style="font-size: 1rem;" /></button>
+                                                </div>
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                    </Columns>
+                                </RadzenDataGrid>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+            else if (activeTabIndex == 3)
+            {
+                <!-- ВКЛАДКА 4: АКТИВНОСТЬ В ТЕСТАХ -->
+                <div class="cyber-shell">
+                    <div class="cyber-shell-header">
+                        <div class="shell-title"><RadzenIcon Icon="assignment" Style="font-size: 1.2rem;" /> SYS.ADMIN_TERMINAL // TEST_LOGS</div>
+                        <div class="shell-status"><span class="status-dot"></span> ONLINE</div>
+                    </div>
+                    <div class="cyber-shell-body">
+                        <div class="cyber-section" style="margin-bottom: 0;">
+                            <h4 class="section-title"><RadzenIcon Icon="quiz" /> Журнал проверки академических тестов (Глобальный)</h4>
+                            @if (!allTestProgressList.Any())
+                            {
+                                <div class="text-center py-5" style="border: 1px dashed var(--accent-cyan); border-radius: 8px; background: rgba(78, 195, 209, 0.05);">
+                                    <RadzenIcon Icon="cloud_off" Style="font-size: 4rem; color: var(--accent-cyan); margin-bottom: 15px; filter: drop-shadow(0 0 10px rgba(78,195,209,0.5));" />
+                                    <p style="color: var(--text-light); font-size: 1.1rem; font-weight: 600; text-transform: uppercase;">Записи отсутствуют</p>
+                                </div>
+                            }
+                            else
+                            {
+                                <RadzenDataGrid Data="@allTestProgressList" TItem="UserTestProgress" AllowPaging="true" PageSize="15">
+                                    <Columns>
+                                        <RadzenDataGridColumn TItem="UserTestProgress" Title="КУРСАНТ" Width="200px">
+                                            <Template Context="data"><span style="color: var(--accent-light-blue); font-weight: 600;"><RadzenIcon Icon="person" Style="font-size:1rem; margin-top:-2px;" /> @GetUserDisplayName(usersList.FirstOrDefault(u => u.Id == data.UserId))</span></Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="UserTestProgress" Title="НАЗВАНИЕ ТЕСТА">
+                                            <Template Context="data"><span style="color: var(--text-light); font-weight: 700;">@(data.Test?.Title ?? "—")</span></Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="UserTestProgress" Title="СЛОЖНОСТЬ" Width="120px" TextAlign="TextAlign.Center">
+                                            <Template Context="data">
+                                                @{
+                                                    var d = data.Test?.Difficulty;
+                                                    var dt = d switch { TestDifficulty.Easy => "Лёгкий", TestDifficulty.Medium => "Средний", TestDifficulty.Hard => "Сложный", _ => "—" };
+                                                    var dc = d switch { TestDifficulty.Easy => "var(--success-color)", TestDifficulty.Medium => "var(--warning-color)", TestDifficulty.Hard => "var(--danger-color)", _ => "var(--text-muted)" };
+                                                }
+                                                <span style="color: @dc; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; font-size: 0.75rem;">@dt</span>
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="UserTestProgress" Title="СТАТУС" Width="130px" TextAlign="TextAlign.Center">
+                                            <Template Context="data">
+                                                @switch (data.Status)
+                                                {
+                                                    case AttemptStatus.InProgress:
+                                                        <span class="status-badge-mini status-in-progress">В процессе</span>
+                                                        break;
+                                                    case AttemptStatus.Completed:
+
+                                                        <span class="status-badge-mini status-completed">Завершен</span>
+                                                        break;
+                                                    case AttemptStatus.Failed:
+
+                                                        <span class="status-badge-mini status-failed">Неудача</span>
+                                                        break;
+                                                    default:
+
+                                                        <span class="status-badge-mini" style="background: rgba(143,160,181,0.15); color: var(--text-muted); border: 1px solid var(--border-color);">@data.Status</span>
+                                                        break;
+                                                }
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="UserTestProgress" Title="РЕЗУЛЬТАТ" Width="110px" TextAlign="TextAlign.Center">
+                                            <Template Context="data">
+                                                @{
+                                                    var tq = data.Test?.Questions?.Count ?? 0;
+                                                }
+                                                <span style="color: var(--accent-cyan); font-weight: bold; font-family: monospace; font-size: 1.2rem;">@data.Score <span style="color: var(--text-muted); font-size: 0.9rem;">/ @tq</span></span>
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="UserTestProgress" Title="УПРАВЛЕНИЕ" Width="180px" TextAlign="TextAlign.Center">
+                                            <Template Context="data">
+                                                <div class="d-flex justify-content-center gap-2">
+                                                    <button class="btn-detail" @onclick="@(() => NavigationManager.NavigateTo($"/admin/test-attempt/{data.Id}"))"><RadzenIcon Icon="visibility" style="font-size: 1rem;" /> Детали</button>
+                                                    <button class="btn-icon-danger" @onclick="@(() => ResetTestProgress(data.Id))" title="Сбросить попытку теста"><RadzenIcon Icon="refresh" style="font-size: 1rem;" /></button>
+                                                </div>
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                    </Columns>
+                                </RadzenDataGrid>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО: СОЗДАНИЕ ПОЛЬЗОВАТЕЛЯ -->
+@if (showCreateUserModal)
+{
+    <div class="cyber-modal-overlay" @onclick="CloseCreateUserModal">
+        <div class="cyber-modal-content" @onclick:stopPropagation>
+            <div class="modal-header">
+                <RadzenIcon Icon="person_add" Style="font-size: 2.2rem; color: var(--accent-cyan);" />
+                <div class="modal-title-group">
+                    <h3 class="modal-title">Регистрация агента</h3>
+                    <div style="color: var(--text-muted); font-size: 0.8rem; font-family: monospace; letter-spacing: 1px; margin-top: 5px;">SYS.REQ // CREATE_USER</div>
+                </div>
+            </div>
+
+            <div class="modal-body">
                 <EditForm Model="@newUserModel" OnValidSubmit="CreateUser">
                     <DataAnnotationsValidator />
+
+                    <div class="mb-4">
+                        <label class="cyber-label">Логин (Email)</label>
+                        <InputText @bind-Value="newUserModel.Login" class="form-control dark-input" placeholder="user@polygon.do" />
+                        <ValidationMessage For="@(() => newUserModel.Login)" class="validation-message" />
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="cyber-label">Пароль</label>
+                        <InputText @bind-Value="newUserModel.Password" type="password" class="form-control dark-input" placeholder="Минимум 6 символов" />
+                        <ValidationMessage For="@(() => newUserModel.Password)" class="validation-message" />
+                    </div>
+
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="cyber-label">Логин (Email)</label>
-                            <InputText @bind-Value="newUserModel.Login" class="form-control dark-input" placeholder="user@polygon.do" />
-                            <ValidationMessage For="@(() => newUserModel.Login)" class="validation-message" />
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="cyber-label">Пароль</label>
-                            <InputText @bind-Value="newUserModel.Password" type="password" class="form-control dark-input" placeholder="Минимум 6 символов" />
-                            <ValidationMessage For="@(() => newUserModel.Password)" class="validation-message" />
-                        </div>
-                        <div class="col-md-4 mb-3">
+                        <div class="col-6 mb-4">
                             <label class="cyber-label">Фамилия</label>
                             <InputText @bind-Value="newUserModel.LastName" class="form-control dark-input" placeholder="Иванов" />
                             <ValidationMessage For="@(() => newUserModel.LastName)" class="validation-message" />
                         </div>
-                        <div class="col-md-4 mb-3">
+                        <div class="col-6 mb-4">
                             <label class="cyber-label">Имя</label>
                             <InputText @bind-Value="newUserModel.FirstName" class="form-control dark-input" placeholder="Иван" />
                             <ValidationMessage For="@(() => newUserModel.FirstName)" class="validation-message" />
                         </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="cyber-label">Отчество</label>
-                            <InputText @bind-Value="newUserModel.MiddleName" class="form-control dark-input" placeholder="Иванович" />
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="cyber-label">Отчество</label>
+                        <InputText @bind-Value="newUserModel.MiddleName" class="form-control dark-input" placeholder="Иванович" />
+                    </div>
+
+                    <div class="mb-4 p-3" style="background: rgba(0,0,0,0.3); border: 1px dashed var(--accent-cyan); border-radius: 8px;">
+                        <div class="d-flex align-items-center gap-3">
+                            <InputCheckbox @bind-Value="newUserModel.IsAdmin" class="form-check-input" style="background-color: var(--bg-input); border-color: var(--accent-cyan); cursor: pointer;" />
+                            <span style="color: var(--text-light); font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Выдать права Администратора</span>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <div class="d-flex align-items-center gap-3" style="height: 37px;">
-                                <InputCheckbox @bind-Value="newUserModel.IsAdmin" class="form-check-input" style="background-color: var(--bg-input); border-color: var(--border-color);" />
-                                <span style="color: var(--text-light); font-weight: 500;">Выдать права Администратора</span>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mb-3 text-end">
-                            <button type="submit" class="btn-primary-gradient">
-                                <RadzenIcon Icon="person_add" /> Создать пользователя
-                            </button>
-                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-3 mt-4">
+                        <button type="button" class="btn-outline-light" @onclick="CloseCreateUserModal">Отмена</button>
+                        <button type="submit" class="btn-main"><RadzenIcon Icon="save" /> СОЗДАТЬ ПРОФИЛЬ</button>
                     </div>
                 </EditForm>
             </div>
-
-            <div class="cyber-card">
-                <h4 class="section-title"><RadzenIcon Icon="people" /> База данных пользователей (@usersList.Count)</h4>
-                <RadzenDataGrid Data="@usersList" TItem="ApplicationUser" AllowPaging="true" PageSize="15">
-                    <Columns>
-                        <RadzenDataGridColumn TItem="ApplicationUser" Title="ЛОГИН" Width="200px">
-                            <Template Context="u"><span style="color: var(--accent-light-blue); font-weight: 600;">@u.UserName</span></Template>
-                        </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="ApplicationUser" Title="ФИО" Width="220px">
-                            <Template Context="u"><span style="color: var(--text-light); font-weight: 500;">@GetUserDisplayName(u)</span></Template>
-                        </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="ApplicationUser" Title="РОЛЬ" Width="100px" TextAlign="TextAlign.Center">
-                            <Template Context="u">
-                                @if (adminUserIds.Contains(u.Id))
-                                {
-                                    <span class="status-badge-mini status-completed">Админ</span>
-                                }
-                                else
-                                {
-                                    <span style="color: var(--text-muted); font-weight: 500;">Агент</span>
-                                }
-                            </Template>
-                        </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="ApplicationUser" Title="ПОДРАЗДЕЛЕНИЕ" Width="150px">
-                            <Template Context="u"><span style="color: var(--text-light);">@(u.Group?.Name ?? "—")</span></Template>
-                        </RadzenDataGridColumn>
-                        <RadzenDataGridColumn TItem="ApplicationUser" Title="ДЕЙСТВИЯ" Width="180px" TextAlign="TextAlign.Center">
-                            <Template Context="u">
-                                <button class="btn-detail" style="margin-right: 4px;" @onclick="@(() => OpenEditUserModal(u))" title="Редактировать профиль"><RadzenIcon Icon="edit" style="font-size: 0.9rem;" /> Изменить</button>
-                                <button class="btn-detail" style="margin-right: 4px;" @onclick="@(() => ToggleAdminRole(u.Id))" title="Сменить роль"><RadzenIcon Icon="swap_horiz" style="font-size: 0.9rem;" /></button>
-                                <button class="btn-icon-danger" @onclick="@(() => DeleteUser(u.Id))" title="Удалить"><RadzenIcon Icon="delete" style="font-size: 0.9rem;" /></button>
-                            </Template>
-                        </RadzenDataGridColumn>
-                    </Columns>
-                </RadzenDataGrid>
-            </div>
-        }
-        else if (activeTabIndex == 1)
-        {
-            <!-- ВКЛАДКА 2: СТРУКТУРА И КОМАНДЫ (С ДВУХКОЛОНОЧНЫМИ МОДАЛКАМИ) -->
-            <div class="admin-grid">
-                <!-- БЛОК 1: ПОДРАЗДЕЛЕНИЯ -->
-                <div class="cyber-card">
-                    <h4 class="section-title"><RadzenIcon Icon="lan" /> Управление подразделениями</h4>
-                    <div class="admin-row mb-4">
-                        <div class="admin-row-input"><RadzenTextBox @bind-Value="@newGroupName" Placeholder="Название нового подразделения..." class="w-100 dark-input" /></div>
-                        <div class="admin-row-btn"><button class="btn-primary-gradient" @onclick="CreateGroup"><RadzenIcon Icon="add" /> Создать</button></div>
-                    </div>
-
-                    <RadzenDataGrid Data="@groupsList" TItem="UserGroup" Height="400px">
-                        <Columns>
-                            <RadzenDataGridColumn TItem="UserGroup" Property="Name" Title="НАЗВАНИЕ" />
-                            <RadzenDataGridColumn TItem="UserGroup" Title="АГЕНТЫ" Width="140px" TextAlign="TextAlign.Center">
-                                <Template Context="grp">
-                                    <button class="btn-detail" @onclick="@(() => OpenGroupDistributionModal(grp))" title="Распределить агентов">
-                                        <RadzenIcon Icon="group_add" style="font-size: 0.9rem;" /> Состав (@usersList.Count(u => u.GroupId == grp.Id))
-                                    </button>
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="UserGroup" Title="" Width="60px" TextAlign="TextAlign.Center">
-                                <Template Context="grp"><button class="btn-icon-danger" @onclick="@(async () => await DeleteGroup(grp.Id))"><RadzenIcon Icon="delete" style="font-size: 1rem;" /></button></Template>
-                            </RadzenDataGridColumn>
-                        </Columns>
-                    </RadzenDataGrid>
-                </div>
-
-                <!-- БЛОК 2: КОМАНДЫ -->
-                <div class="cyber-card">
-                    <h4 class="section-title"><RadzenIcon Icon="groups" /> Управление командами</h4>
-                    <div class="mb-3">
-                        <RadzenDropDown TValue="int" Data="@groupsList" TextProperty="Name" ValueProperty="Id" @bind-Value="@selectedGroupIdForTeam" Placeholder="Выберите подразделение привязки..." style="width: 100%;" class="dark-input" />
-                    </div>
-                    <div class="admin-row mb-4">
-                        <div class="admin-row-input"><RadzenTextBox @bind-Value="@newTeamName" Placeholder="Название новой команды..." class="w-100 dark-input" /></div>
-                        <div class="admin-row-btn"><button class="btn-primary-gradient" @onclick="CreateTeam"><RadzenIcon Icon="group_add" /> Создать</button></div>
-                    </div>
-
-                    <RadzenDataGrid Data="@teamsList" TItem="UserTeam" Height="360px">
-                        <Columns>
-                            <RadzenDataGridColumn TItem="UserTeam" Title="КОМАНДА">
-                                <Template Context="t"><span style="color: var(--text-light); font-weight: 500;">@t.Name</span><br /><span style="font-size:0.75rem;color:var(--accent-cyan); font-weight:500;">@t.Group?.Name</span></Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="UserTeam" Title="УЧАСТНИКИ" Width="140px" TextAlign="TextAlign.Center">
-                                <Template Context="tm">
-                                    <button class="btn-detail" @onclick="@(() => OpenTeamDistributionModal(tm))" title="Настроить боевой расчет">
-                                        <RadzenIcon Icon="settings_accessibility" style="font-size: 0.9rem;" /> Состав (@(tm.Users?.Count ?? 0))
-                                    </button>
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="UserTeam" Title="" Width="60px" TextAlign="TextAlign.Center">
-                                <Template Context="tm"><button class="btn-icon-danger" @onclick="@(async () => await DeleteTeam(tm.Id))"><RadzenIcon Icon="delete" style="font-size: 1rem;" /></button></Template>
-                            </RadzenDataGridColumn>
-                        </Columns>
-                    </RadzenDataGrid>
-                </div>
-            </div>
-        }
-        else if (activeTabIndex == 2)
-        {
-            <!-- ВКЛАДКА 3: АКТИВНОСТЬ В СЦЕНАРИЯХ -->
-            <div class="cyber-card">
-                <h4 class="section-title"><RadzenIcon Icon="history" /> Журнал активности симуляции инфраструктуры (Все)</h4>
-                @if (!allScenarioProgressList.Any())
-                {
-                    <div class="text-center py-5 text-muted"><RadzenIcon Icon="cloud_off" Style="font-size: 3rem; color: var(--border-color);" /><br />Записи прохождения сценариев отсутствуют</div>
-                }
-                else
-                {
-                    <RadzenDataGrid Data="@allScenarioProgressList" TItem="UserScenarioProgress" AllowPaging="true" PageSize="15">
-                        <Columns>
-                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="ОПЕРАТИВНИК / КОМАНДА" Width="200px">
-                                <Template Context="data">
-                                    @if (data.IsTeamAttempt)
-                                    {
-                                        <span style="color: var(--accent-blue); font-weight: 600;">👥 @(teamsList.FirstOrDefault(t => t.Id == data.TeamId)?.Name ?? "Команда")</span>
-                                    }
-                                    else
-                                    {
-                                        var usr = usersList.FirstOrDefault(u => u.Id == data.UserId);
-                                        <span style="color: var(--text-light); font-weight: 500;">👤 @GetUserDisplayName(usr)</span>
-                                    }
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="БОЕВОЙ СЦЕНАРИЙ" Width="200px">
-                                <Template Context="data"><span style="color: var(--text-light); font-weight: 600;">@(data.Scenario?.Title ?? "—")</span></Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="ТЕКУЩИЙ СТАТУС" Width="120px" TextAlign="TextAlign.Center">
-                                <Template Context="data">
-                                    @switch (data.Status)
-                                    {
-                                        case AttemptStatus.InProgress:
-                                            <span class="status-badge-mini status-in-progress">В процессе</span>
-                                            break;
-                                        case AttemptStatus.Completed:
-
-                                            <span class="status-badge-mini status-completed">Завершен</span>
-                                            break;
-                                        case AttemptStatus.Failed:
-
-                                            <span class="status-badge-mini status-failed">Неудача</span>
-                                            break;
-                                        default:
-
-                                            <span class="status-badge-mini" style="background: rgba(143,160,181,0.15); color: var(--text-muted); border: 1px solid var(--border-color);">@data.Status</span>
-                                            break;
-                                    }
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="XP" Width="80px" TextAlign="TextAlign.Center">
-                                <Template Context="data"><span style="color: var(--accent-cyan); font-weight: bold; font-family: monospace; font-size: 1.1rem;">@data.Score</span></Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="ВРЕМЯ ЗАПУСКА" Width="140px" TextAlign="TextAlign.Center">
-                                <Template Context="data"><span style="font-size: 0.85rem; color: var(--text-muted);">@(data.StartedAt?.ToString("dd.MM.yyyy HH:mm") ?? "—")</span></Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="UserScenarioProgress" Title="УПРАВЛЕНИЕ" Width="140px" TextAlign="TextAlign.Center">
-                                <Template Context="data">
-                                    <button class="btn-detail" @onclick="@(() => NavigationManager.NavigateTo($"/admin/scenario-attempt/{data.Id}"))"><RadzenIcon Icon="visibility" style="font-size: 0.9rem;" /> Детали</button>
-                                    <button class="btn-icon-danger" style="margin-left: 4px;" @onclick="@(() => ResetScenarioProgress(data.Id))" title="Сбросить и удалить попытку сессии"><RadzenIcon Icon="refresh" style="font-size: 0.8rem;" /></button>
-                                </Template>
-                            </RadzenDataGridColumn>
-                        </Columns>
-                    </RadzenDataGrid>
-                }
-            </div>
-        }
-        else if (activeTabIndex == 3)
-        {
-            <!-- ВКЛАДКА 4: АКТИВНОСТЬ В ТЕСТАХ -->
-            <div class="cyber-card">
-                <h4 class="section-title"><RadzenIcon Icon="assignment" /> Журнал проверки академических тестов (Все)</h4>
-                @if (!allTestProgressList.Any())
-                {
-                    <div class="text-center py-5 text-muted"><RadzenIcon Icon="cloud_off" Style="font-size: 3rem; color: var(--border-color);" /><br />Записи прохождения тестов отсутствуют</div>
-                }
-                else
-                {
-                    <RadzenDataGrid Data="@allTestProgressList" TItem="UserTestProgress" AllowPaging="true" PageSize="15">
-                        <Columns>
-                            <RadzenDataGridColumn TItem="UserTestProgress" Title="КУРСАНТ" Width="180px">
-                                <Template Context="data"><span style="color: var(--text-light); font-weight: 500;">👤 @GetUserDisplayName(usersList.FirstOrDefault(u => u.Id == data.UserId))</span></Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="UserTestProgress" Title="НАЗВАНИЕ ТЕСТА" Width="200px">
-                                <Template Context="data"><span style="color: var(--text-light); font-weight: 600;">@(data.Test?.Title ?? "—")</span></Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="UserTestProgress" Title="СЛОЖНОСТЬ" Width="100px" TextAlign="TextAlign.Center">
-                                <Template Context="data">
-                                    @{
-                                        var d = data.Test?.Difficulty;
-                                        var dt = d switch { TestDifficulty.Easy => "Лёгкий", TestDifficulty.Medium => "Средний", TestDifficulty.Hard => "Сложный", _ => "—" };
-                                        var dc = d switch { TestDifficulty.Easy => "var(--success-color)", TestDifficulty.Medium => "var(--warning-color)", TestDifficulty.Hard => "var(--danger-color)", _ => "var(--text-muted)" };
-                                    }
-                                    <span style="color: @dc; font-weight: 600;">@dt</span>
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="UserTestProgress" Title="СТАТУС" Width="120px" TextAlign="TextAlign.Center">
-                                <Template Context="data">
-                                    @switch (data.Status)
-                                    {
-                                        case AttemptStatus.InProgress:
-                                            <span class="status-badge-mini status-in-progress">В процессе</span>
-                                            break;
-                                        case AttemptStatus.Completed:
-
-                                            <span class="status-badge-mini status-completed">Завершен</span>
-                                            break;
-                                        case AttemptStatus.Failed:
-
-                                            <span class="status-badge-mini status-failed">Неудача</span>
-                                            break;
-                                        default:
-
-                                            <span class="status-badge-mini" style="background: rgba(143,160,181,0.15); color: var(--text-muted); border: 1px solid var(--border-color);">@data.Status</span>
-                                            break;
-                                    }
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="UserTestProgress" Title="РЕЗУЛЬТАТ" Width="100px" TextAlign="TextAlign.Center">
-                                <Template Context="data">
-                                    @{
-                                        var tq = data.Test?.Questions?.Count ?? 0;
-                                    }
-                                    <span style="color: var(--accent-cyan); font-weight: bold; font-family: monospace; font-size: 1.1rem;">@data.Score / @tq</span>
-                                </Template>
-                            </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="UserTestProgress" Title="УПРАВЛЕНИЕ" Width="140px" TextAlign="TextAlign.Center">
-                                <Template Context="data">
-                                    <button class="btn-detail" @onclick="@(() => NavigationManager.NavigateTo($"/admin/test-attempt/{data.Id}"))"><RadzenIcon Icon="visibility" style="font-size: 0.9rem;" /> Детали</button>
-                                    <button class="btn-icon-danger" style="margin-left: 4px;" @onclick="@(() => ResetTestProgress(data.Id))" title="Сбросить попытку теста"><RadzenIcon Icon="refresh" style="font-size: 0.8rem;" /></button>
-                                </Template>
-                            </RadzenDataGridColumn>
-                        </Columns>
-                    </RadzenDataGrid>
-                }
-            </div>
-        }
-    }
-</div>
+        </div>
+    </div>
+}
 
 <!-- МОДАЛЬНОЕ ОКНО: РЕДАКТИРОВАНИЕ ПОЛЬЗОВАТЕЛЯ -->
 @if (showEditUserModal && editUserModel != null)
 {
-    <div class="cyber-modal-overlay">
-        <div class="cyber-modal-content">
-            <h4 class="cyber-modal-title"><RadzenIcon Icon="edit" /> Редактирование агента</h4>
-
-            <EditForm Model="@editUserModel" OnValidSubmit="UpdateUser">
-                <DataAnnotationsValidator />
-
-                <div class="mb-3 mt-3">
-                    <label class="cyber-label">Логин (Email)</label>
-                    <InputText @bind-Value="editUserModel.Login" class="form-control dark-input" />
-                    <ValidationMessage For="@(() => editUserModel.Login)" class="validation-message" />
+    <div class="cyber-modal-overlay" @onclick="CloseEditUserModal">
+        <div class="cyber-modal-content" @onclick:stopPropagation>
+            <div class="modal-header">
+                <RadzenIcon Icon="manage_accounts" Style="font-size: 2.2rem; color: var(--accent-cyan);" />
+                <div class="modal-title-group">
+                    <h3 class="modal-title">Редактирование агента</h3>
+                    <div style="color: var(--text-muted); font-size: 0.8rem; font-family: monospace; letter-spacing: 1px; margin-top: 5px;">SYS.REQ // UPDATE_USER</div>
                 </div>
+            </div>
 
-                <div class="row">
-                    <div class="col-6 mb-3">
-                        <label class="cyber-label">Фамилия</label>
-                        <InputText @bind-Value="editUserModel.LastName" class="form-control dark-input" />
-                        <ValidationMessage For="@(() => editUserModel.LastName)" class="validation-message" />
+            <div class="modal-body">
+                <EditForm Model="@editUserModel" OnValidSubmit="UpdateUser">
+                    <DataAnnotationsValidator />
+
+                    <div class="mb-4">
+                        <label class="cyber-label">Логин (Email)</label>
+                        <InputText @bind-Value="editUserModel.Login" class="form-control dark-input" />
+                        <ValidationMessage For="@(() => editUserModel.Login)" class="validation-message" />
                     </div>
-                    <div class="col-6 mb-3">
-                        <label class="cyber-label">Имя</label>
-                        <InputText @bind-Value="editUserModel.FirstName" class="form-control dark-input" />
-                        <ValidationMessage For="@(() => editUserModel.FirstName)" class="validation-message" />
+
+                    <div class="row">
+                        <div class="col-6 mb-4">
+                            <label class="cyber-label">Фамилия</label>
+                            <InputText @bind-Value="editUserModel.LastName" class="form-control dark-input" />
+                            <ValidationMessage For="@(() => editUserModel.LastName)" class="validation-message" />
+                        </div>
+                        <div class="col-6 mb-4">
+                            <label class="cyber-label">Имя</label>
+                            <InputText @bind-Value="editUserModel.FirstName" class="form-control dark-input" />
+                            <ValidationMessage For="@(() => editUserModel.FirstName)" class="validation-message" />
+                        </div>
                     </div>
-                </div>
 
-                <div class="mb-3">
-                    <label class="cyber-label">Отчество</label>
-                    <InputText @bind-Value="editUserModel.MiddleName" class="form-control dark-input" />
-                </div>
-
-                <div class="mb-4 mt-3 p-3" style="background: rgba(0,0,0,0.2); border: 1px dashed var(--border-color); border-radius: 6px;">
-                    <div class="d-flex align-items-center gap-3">
-                        <InputCheckbox @bind-Value="editUserModel.IsAdmin" class="form-check-input" style="background-color: var(--bg-input); border-color: var(--border-color);" />
-                        <span style="color: var(--text-light); font-weight: 500;">Права Администратора</span>
+                    <div class="mb-4">
+                        <label class="cyber-label">Отчество</label>
+                        <InputText @bind-Value="editUserModel.MiddleName" class="form-control dark-input" />
                     </div>
-                </div>
 
-                <div class="d-flex justify-content-end gap-3 mt-4">
-                    <button type="button" class="btn-outline-light" @onclick="CloseEditUserModal">Отмена</button>
-                    <button type="submit" class="btn-primary-gradient"><RadzenIcon Icon="save" /> Сохранить изменения</button>
-                </div>
-            </EditForm>
+                    <div class="mb-4 p-3" style="background: rgba(0,0,0,0.3); border: 1px dashed var(--accent-cyan); border-radius: 8px;">
+                        <div class="d-flex align-items-center gap-3">
+                            <InputCheckbox @bind-Value="editUserModel.IsAdmin" class="form-check-input" style="background-color: var(--bg-input); border-color: var(--accent-cyan); cursor: pointer;" />
+                            <span style="color: var(--text-light); font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">Права Администратора</span>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-3 mt-4">
+                        <button type="button" class="btn-outline-light" @onclick="CloseEditUserModal">Отмена</button>
+                        <button type="submit" class="btn-main"><RadzenIcon Icon="save" /> СОХРАНИТЬ ИЗМЕНЕНИЯ</button>
+                    </div>
+                </EditForm>
+            </div>
         </div>
     </div>
 }
@@ -876,40 +1068,47 @@
 <!-- МОДАЛЬНОЕ ОКНО: РАСПРЕДЕЛЕНИЕ АГЕНТОВ В ПОДРАЗДЕЛЕНИЕ (ДВЕ КОЛОНКИ) -->
 @if (showGroupDistributionModal && activeGroupContext != null)
 {
-    <div class="cyber-modal-overlay">
-        <div class="cyber-modal-content wide">
-            <h4 class="cyber-modal-title"><RadzenIcon Icon="lan" /> Состав подразделения</h4>
-            <p style="color: var(--text-light); font-weight: bold; font-size: 1.2rem; margin-bottom: 15px;">@activeGroupContext.Name</p>
-
-            <div class="row g-3">
-                <div class="col-6">
-                    <span class="cyber-label" style="font-size:0.75rem; color: var(--text-muted);">Все остальные агенты:</span>
-                    <div class="scroll-list-panel">
-                        @foreach (var u in usersList.Where(u => u.GroupId != activeGroupContext.Id))
-                        {
-                            <div class="list-item-inline" @key="u.Id">
-                                <span class="item-text" title="@u.UserName">👤 @GetUserDisplayName(u)</span>
-                                <button type="button" class="btn-item-action add" @onclick="() => AssignUserToGroup(u.Id, activeGroupContext.Id)"><RadzenIcon Icon="add" /></button>
-                            </div>
-                        }
-                    </div>
-                </div>
-                <div class="col-6">
-                    <span class="cyber-label" style="font-size:0.75rem; color: var(--accent-cyan);">В текущем подразделении:</span>
-                    <div class="scroll-list-panel selected">
-                        @foreach (var u in usersList.Where(u => u.GroupId == activeGroupContext.Id))
-                        {
-                            <div class="list-item-inline" @key="u.Id">
-                                <span class="item-text" title="@u.UserName">👤 @GetUserDisplayName(u)</span>
-                                <button type="button" class="btn-item-action remove" @onclick="() => AssignUserToGroup(u.Id, null)"><RadzenIcon Icon="remove" /></button>
-                            </div>
-                        }
-                    </div>
+    <div class="cyber-modal-overlay" @onclick="CloseGroupDistributionModal">
+        <div class="cyber-modal-content wide" @onclick:stopPropagation>
+            <div class="modal-header">
+                <RadzenIcon Icon="account_balance" Style="font-size: 2.2rem; color: var(--accent-cyan);" />
+                <div class="modal-title-group">
+                    <h3 class="modal-title">Состав подразделения</h3>
+                    <div style="color: var(--text-light); font-weight: bold; font-size: 1.1rem; margin-top: 5px; text-transform: uppercase;">@activeGroupContext.Name</div>
                 </div>
             </div>
 
-            <div class="d-flex justify-content-end mt-4">
-                <button class="btn-outline-light" @onclick="CloseGroupDistributionModal">Закрыть окно</button>
+            <div class="modal-body">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <span class="cyber-label" style="font-size:0.8rem; color: var(--text-muted); margin-bottom: 12px;">Свободные агенты (Вне отдела):</span>
+                        <div class="scroll-list-panel">
+                            @foreach (var u in usersList.Where(u => u.GroupId != activeGroupContext.Id))
+                            {
+                                <div class="list-item-inline" @key="u.Id">
+                                    <span class="item-text" title="@u.UserName">👤 @GetUserDisplayName(u)</span>
+                                    <button type="button" class="btn-item-action add" @onclick="() => AssignUserToGroup(u.Id, activeGroupContext.Id)"><RadzenIcon Icon="add" /></button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <span class="cyber-label" style="font-size:0.8rem; color: var(--accent-cyan); margin-bottom: 12px;">В текущем подразделении:</span>
+                        <div class="scroll-list-panel selected">
+                            @foreach (var u in usersList.Where(u => u.GroupId == activeGroupContext.Id))
+                            {
+                                <div class="list-item-inline" @key="u.Id">
+                                    <span class="item-text" title="@u.UserName">👤 @GetUserDisplayName(u)</span>
+                                    <button type="button" class="btn-item-action remove" @onclick="() => AssignUserToGroup(u.Id, null)"><RadzenIcon Icon="remove" /></button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end mt-4">
+                    <button class="btn-outline-light" @onclick="CloseGroupDistributionModal">ЗАКРЫТЬ ОКНО</button>
+                </div>
             </div>
         </div>
     </div>
@@ -918,46 +1117,55 @@
 <!-- МОДАЛЬНОЕ ОКНО: РАСПРЕДЕЛЕНИЕ АГЕНТОВ В КОМАНДУ (ДВЕ КОЛОНКИ) -->
 @if (showTeamDistributionModal && activeTeamContext != null)
 {
-    <div class="cyber-modal-overlay">
-        <div class="cyber-modal-content wide">
-            <h4 class="cyber-modal-title"><RadzenIcon Icon="groups" /> Состав боевого расчета</h4>
-            <p style="color: var(--text-light); font-weight: bold; font-size: 1.2rem; margin-bottom: 5px;">@activeTeamContext.Name</p>
-            <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 15px;">
-                Показаны агенты только из привязанного подразделения: <span style="color: var(--accent-cyan);">@activeTeamContext.Group?.Name</span>
-            </p>
-
-            <div class="row g-3">
-                <div class="col-6">
-                    <span class="cyber-label" style="font-size:0.75rem; color: var(--text-muted);">Свободные в отделе:</span>
-                    <div class="scroll-list-panel">
-                        @foreach (var u in usersList.Where(u => u.GroupId == activeTeamContext.GroupId && !(activeTeamContext.Users?.Any(tu => tu.Id == u.Id) ?? false)))
-                        {
-                            <div class="list-item-inline" @key="u.Id">
-                                <span class="item-text" title="@u.UserName">👤 @GetUserDisplayName(u)</span>
-                                <button type="button" class="btn-item-action add" @onclick="() => ToggleTeamMember(activeTeamContext.Id, u.Id, true)"><RadzenIcon Icon="add" /></button>
-                            </div>
-                        }
-                    </div>
-                </div>
-                <div class="col-6">
-                    <span class="cyber-label" style="font-size:0.75rem; color: var(--accent-blue);">В составе команды:</span>
-                    <div class="scroll-list-panel selected">
-                        @if (activeTeamContext.Users != null)
-                        {
-                            @foreach (var u in activeTeamContext.Users)
-                            {
-                                <div class="list-item-inline" @key="u.Id">
-                                    <span class="item-text" title="@u.UserName">👤 @GetUserDisplayName(u)</span>
-                                    <button type="button" class="btn-item-action remove" @onclick="() => ToggleTeamMember(activeTeamContext.Id, u.Id, false)"><RadzenIcon Icon="remove" /></button>
-                                </div>
-                            }
-                        }
-                    </div>
+    <div class="cyber-modal-overlay" @onclick="CloseTeamDistributionModal">
+        <div class="cyber-modal-content wide" @onclick:stopPropagation>
+            <div class="modal-header">
+                <RadzenIcon Icon="groups" Style="font-size: 2.2rem; color: var(--warning-color);" />
+                <div class="modal-title-group">
+                    <h3 class="modal-title" style="color: var(--warning-color);">Состав боевого расчета</h3>
+                    <div style="color: var(--text-light); font-weight: bold; font-size: 1.1rem; margin-top: 5px; text-transform: uppercase;">@activeTeamContext.Name</div>
                 </div>
             </div>
 
-            <div class="d-flex justify-content-end mt-4">
-                <button class="btn-outline-light" @onclick="CloseTeamDistributionModal">Закрыть окно</button>
+            <div class="modal-body">
+                <div class="p-3 mb-4 rounded text-center" style="background: rgba(78,195,209,0.05); border: 1px dashed var(--accent-cyan);">
+                    <span style="color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;">Показаны агенты только из привязанного подразделения:</span><br />
+                    <strong style="color: var(--accent-cyan); font-size: 1.1rem; text-transform: uppercase;">@activeTeamContext.Group?.Name</strong>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <span class="cyber-label" style="font-size:0.8rem; color: var(--text-muted); margin-bottom: 12px;">Свободные в отделе:</span>
+                        <div class="scroll-list-panel">
+                            @foreach (var u in usersList.Where(u => u.GroupId == activeTeamContext.GroupId && !(activeTeamContext.Users?.Any(tu => tu.Id == u.Id) ?? false)))
+                            {
+                                <div class="list-item-inline" @key="u.Id">
+                                    <span class="item-text" title="@u.UserName">👤 @GetUserDisplayName(u)</span>
+                                    <button type="button" class="btn-item-action add" @onclick="() => ToggleTeamMember(activeTeamContext.Id, u.Id, true)"><RadzenIcon Icon="add" /></button>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <span class="cyber-label" style="font-size:0.8rem; color: var(--warning-color); margin-bottom: 12px;">В составе команды:</span>
+                        <div class="scroll-list-panel selected" style="border-color: rgba(229,192,123,0.3);">
+                            @if (activeTeamContext.Users != null)
+                            {
+                                @foreach (var u in activeTeamContext.Users)
+                                {
+                                    <div class="list-item-inline" @key="u.Id">
+                                        <span class="item-text" title="@u.UserName">👤 @GetUserDisplayName(u)</span>
+                                        <button type="button" class="btn-item-action remove" @onclick="() => ToggleTeamMember(activeTeamContext.Id, u.Id, false)"><RadzenIcon Icon="remove" /></button>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end mt-4">
+                    <button class="btn-outline-light" @onclick="CloseTeamDistributionModal">ЗАКРЫТЬ ОКНО</button>
+                </div>
             </div>
         </div>
     </div>

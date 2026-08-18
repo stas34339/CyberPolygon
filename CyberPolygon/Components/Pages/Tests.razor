@@ -13,14 +13,15 @@
 @inject CatalogUpdateService CatalogUpdateService
 
 <style>
+    /* Строгая киберпанк-тема */
     :root {
-        --bg-main: #1e1e1e;
-        --bg-card: #1a2332;
-        --bg-card-hover: #1e2d3d;
+        --bg-main: #0b0f17;
+        --bg-card: #131924;
+        --bg-card-hover: #1a2435;
         --text-muted: #8fa0b5;
         --text-light: #cbe0f5;
-        --accent-blue: #5ba3e3;
         --accent-cyan: #4ec3d1;
+        --accent-blue: #5ba3e3;
         --accent-light-blue: #7ec8f8;
         --border-color: #2a3a4a;
         --success-color: #98c379;
@@ -28,23 +29,179 @@
         --warning-color: #e5c07b;
     }
 
-    .tests-container {
-        background-color: var(--bg-main);
+    html, body {
+        background-color: var(--bg-main) !important;
+    }
+
+    /* Обертка на всю ширину для однородного фона */
+    .full-page-wrapper {
+        background-color: var(--bg-main) !important;
         min-height: calc(100vh - 60px);
-        color: var(--text-muted);
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        padding: 30px;
+        width: 100%;
+        padding: 30px 20px;
+        box-sizing: border-box;
+    }
+
+    /* Внутренний контейнер с ограничением ширины по центру */
+    .page-container {
+        color: var(--text-light);
+        max-width: 1300px;
+        margin: 0 auto;
+        font-family: 'Segoe UI', system-ui, sans-serif;
     }
 
     .page-header {
         display: flex;
         justify-content: space-between;
-        align-items: center;
-        margin-bottom: 40px;
-        border-bottom: 1px solid var(--border-color);
-        padding-bottom: 15px;
+        align-items: flex-start;
+        margin-bottom: 35px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid var(--border-color);
+        position: relative;
+        gap: 20px;
     }
 
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 60px;
+            height: 2px;
+            background: var(--accent-cyan);
+            box-shadow: 0 0 10px rgba(78, 195, 209, 0.5);
+        }
+
+    .header-text h1 {
+        color: var(--accent-cyan);
+        font-weight: 800;
+        text-transform: uppercase;
+        margin: 0 0 8px 0;
+        font-size: 1.8rem;
+        letter-spacing: 2px;
+        text-shadow: 0 0 15px rgba(78, 195, 209, 0.3);
+    }
+
+    .header-text p {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        margin: 0;
+        line-height: 1.5;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .btn-main {
+        background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue));
+        color: var(--bg-main);
+        font-weight: 800;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .btn-main:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(78, 195, 209, 0.4);
+        }
+
+    .btn-outline-light {
+        background: transparent;
+        color: var(--text-muted);
+        border: 1px solid var(--border-color);
+        padding: 12px 30px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+    }
+
+        .btn-outline-light:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-light);
+            border-color: var(--text-muted);
+        }
+
+    /* === ОБОЛОЧКА (CYBER-SHELL) === */
+    .cyber-shell {
+        background-color: rgba(19, 25, 36, 0.6);
+        border: 1px solid rgba(78, 195, 209, 0.3);
+        border-radius: 12px;
+        box-shadow: 0 0 40px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(78, 195, 209, 0.05);
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 30px;
+    }
+
+    .cyber-shell-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 25px;
+        background: linear-gradient(90deg, rgba(78,195,209,0.1) 0%, transparent 100%);
+        border-bottom: 1px solid rgba(78, 195, 209, 0.3);
+        font-family: 'Courier New', Courier, monospace;
+    }
+
+    .shell-title {
+        color: var(--accent-cyan);
+        font-size: 0.95rem;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+
+    .shell-status {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        letter-spacing: 1px;
+    }
+
+    .status-dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        background-color: var(--accent-light-blue);
+        border-radius: 50%;
+        box-shadow: 0 0 10px var(--accent-light-blue);
+        animation: pulse 2s infinite;
+    }
+
+    @@keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(126, 200, 248, 0.7);
+        }
+
+        70% {
+            box-shadow: 0 0 0 10px rgba(126, 200, 248, 0);
+        }
+
+        100% {
+            box-shadow: 0 0 0 0 rgba(126, 200, 248, 0);
+        }
+    }
+
+    .cyber-shell-body {
+        padding: 30px;
+    }
+
+    /* === СЕКЦИИ И КАРТОЧКИ === */
     .difficulty-section {
         margin-bottom: 50px;
     }
@@ -55,174 +212,148 @@
         gap: 15px;
         margin-bottom: 30px;
         padding-bottom: 18px;
-        border-bottom: 2px solid var(--border-color);
-        position: relative;
+        border-bottom: 1px dashed rgba(78, 195, 209, 0.3);
     }
-
-        .section-title::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            width: 80px;
-            height: 2px;
-            background: var(--accent-cyan);
-            box-shadow: 0 0 10px rgba(78, 195, 209, 0.5);
-        }
 
         .section-title h3 {
             margin: 0;
             font-size: 1.3rem;
-            font-weight: 700;
+            font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 1.5px;
         }
 
-    .tests-grid {
+    .modules-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-        gap: 25px;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 30px;
     }
 
-    .test-card {
-        background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-card-hover) 100%);
+    .module-card {
+        background-color: var(--bg-card);
         border: 1px solid var(--border-color);
         border-radius: 10px;
-        padding: 25px;
-        position: relative;
-        transition: 0.3s;
+        overflow: hidden;
+        transition: all 0.3s ease-in-out;
         display: flex;
         flex-direction: column;
-        overflow: hidden;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        position: relative;
     }
 
-        .test-card:hover {
-            border-color: var(--accent-cyan);
-            box-shadow: 0 0 15px rgba(78, 195, 209, 0.2);
+        .module-card::before, .module-card::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            transition: all 0.4s ease-in-out;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .module-card::before {
+            top: 0;
+            left: 0;
+            border-top-color: var(--border-color);
+            border-left-color: var(--border-color);
+            border-top-left-radius: 10px;
+        }
+
+        .module-card::after {
+            bottom: 0;
+            right: 0;
+            border-bottom-color: var(--border-color);
+            border-right-color: var(--border-color);
+            border-bottom-right-radius: 10px;
+        }
+
+        .module-card:hover {
+            background-color: var(--bg-card-hover);
             transform: translateY(-5px);
-        }
-
-    .card-title {
-        color: var(--text-light);
-        margin-bottom: 15px;
-        font-weight: bold;
-        font-size: 1.25rem;
-        word-break: break-word;
-        overflow-wrap: break-word;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        padding-right: 70px;
-    }
-
-    .card-desc {
-        font-size: 0.95rem;
-        line-height: 1.5;
-        margin-bottom: 20px;
-        color: var(--text-muted);
-        flex-grow: 1;
-        word-break: break-word;
-        overflow-wrap: break-word;
-        display: -webkit-box;
-        -webkit-line-clamp: 4;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .admin-actions {
-        position: absolute;
-        top: 22px;
-        right: 20px;
-        display: flex;
-        gap: 8px;
-        z-index: 10;
-    }
-
-    .btn-icon {
-        background: transparent;
-        border: 1px solid var(--border-color);
-        border-radius: 6px;
-        color: var(--text-muted);
-        cursor: pointer;
-        padding: 6px;
-        transition: 0.2s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-        .btn-icon:hover {
-            color: var(--accent-cyan);
+            box-shadow: 0 10px 25px rgba(78, 195, 209, 0.2);
             border-color: var(--accent-cyan);
         }
 
-        .btn-icon.delete:hover {
-            color: var(--danger-color);
-            border-color: var(--danger-color);
-        }
+            .module-card:hover::before, .module-card:hover::after {
+                width: 100%;
+                height: 100%;
+                border-color: rgba(78, 195, 209, 0.3);
+                border-radius: 10px;
+            }
 
-    .btn-primary-gradient {
-        background: linear-gradient(135deg, #4ec3d1 0%, #5ba3e3 100%);
-        color: #1a1d21;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 8px;
-        font-weight: bold;
-        cursor: pointer;
-        transition: 0.3s;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-        .btn-primary-gradient:hover {
-            box-shadow: 0 5px 15px rgba(78, 195, 209, 0.4);
-            transform: translateY(-2px);
-        }
-
-    .btn-outline-light {
-        background: transparent;
-        color: var(--text-light);
-        border: 1px solid var(--border-color);
-        padding: 10px 24px;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: 0.3s;
-        width: 100%;
-        display: inline-flex;
+    .module-visual {
+        height: 140px;
+        background: linear-gradient(180deg, rgba(11, 15, 23, 0) 0%, var(--bg-card) 100%);
+        display: flex;
         align-items: center;
         justify-content: center;
-        gap: 8px;
+        border-bottom: 1px solid var(--border-color);
+        position: relative;
+        overflow: hidden;
     }
 
-        .btn-outline-light:hover {
-            background: rgba(255,255,255,0.05);
-            border-color: var(--accent-light-blue);
-            color: var(--accent-light-blue);
+        .module-visual::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: linear-gradient(rgba(78, 195, 209, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(78, 195, 209, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+            opacity: 0.8;
         }
+
+    .scanline {
+        position: absolute;
+        top: -10px;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: var(--accent-cyan);
+        box-shadow: 0 0 10px var(--accent-cyan), 0 0 20px var(--accent-cyan);
+        opacity: 0;
+        transition: opacity 0.3s;
+        z-index: 2;
+    }
+
+    .module-card:hover .scanline {
+        opacity: 0.6;
+        animation: scan 2s linear infinite;
+    }
 
     .cyber-badge {
-        padding: 4px 10px;
-        border-radius: 6px;
-        font-size: 0.75rem;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 1px;
+        text-transform: uppercase;
         display: inline-flex;
         align-items: center;
         gap: 4px;
-        font-weight: 600;
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
         white-space: nowrap;
     }
 
-        .cyber-badge.section-badge {
-            padding: 6px 14px;
-            font-size: 0.85rem;
-            margin: 0;
-        }
+    .module-visual .cyber-badge {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: rgba(11, 15, 23, 0.9);
+        border: 1px solid var(--border-color);
+        color: var(--accent-blue);
+        z-index: 3;
+        transition: all 0.3s ease;
+    }
+
+    .module-card:hover .module-visual .cyber-badge {
+        border-color: var(--accent-cyan);
+        color: var(--accent-cyan);
+        box-shadow: 0 0 10px rgba(78, 195, 209, 0.2);
+    }
+
+    .section-badge {
+        padding: 6px 14px;
+        font-size: 0.85rem;
+        margin: 0;
+    }
 
     .diff-easy {
         background: rgba(152, 195, 121, 0.15);
@@ -284,131 +415,379 @@
         color: var(--text-muted);
         border-color: var(--border-color);
     }
+
+    .module-icon {
+        font-size: 4rem !important;
+        color: var(--text-muted);
+        transition: color 0.3s ease, filter 0.3s ease, transform 0.3s ease;
+        z-index: 1;
+    }
+
+    .module-card:hover .module-icon {
+        color: var(--accent-cyan);
+        filter: drop-shadow(0 0 20px rgba(78, 195, 209, 0.8));
+        transform: scale(1.15);
+    }
+
+    .module-content {
+        padding: 20px;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        z-index: 2;
+    }
+
+    .module-title {
+        color: var(--accent-light-blue);
+        font-size: 1.15rem;
+        font-weight: 700;
+        margin-bottom: 12px;
+        transition: color 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .module-card:hover .module-title {
+        color: var(--text-light);
+        text-shadow: 0 0 8px rgba(203, 224, 245, 0.3);
+    }
+
+    .instruction-text-preview {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: pre-wrap;
+        line-height: 1.6;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+    }
+
+    .btn-action {
+        background: transparent;
+        border: 1px dashed var(--accent-cyan);
+        color: var(--accent-cyan);
+        width: 100%;
+        padding: 10px;
+        border-radius: 6px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-top: auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+        .btn-action:hover {
+            background: rgba(78, 195, 209, 0.1);
+            box-shadow: 0 0 15px rgba(78, 195, 209, 0.2);
+        }
+
+        .btn-action.success {
+            border-color: var(--success-color);
+            color: var(--success-color);
+        }
+
+            .btn-action.success:hover {
+                background: rgba(152, 195, 121, 0.1);
+                box-shadow: 0 0 15px rgba(152, 195, 121, 0.2);
+            }
+
+    /* === ПАНЕЛЬ АДМИНИСТРАТОРА (ВНУТРИ КАРТОЧКИ) === */
+    .admin-card-footer {
+        background: rgba(0, 0, 0, 0.3);
+        border-top: 1px solid var(--border-color);
+        padding: 12px 20px;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        z-index: 10;
+    }
+
+    .btn-icon {
+        background: transparent;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 5px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+    }
+
+        .btn-icon.edit {
+            color: var(--accent-light-blue);
+            border-color: rgba(126, 200, 248, 0.3);
+        }
+
+            .btn-icon.edit:hover {
+                background: rgba(126, 200, 248, 0.1);
+                border-color: var(--accent-light-blue);
+            }
+
+        .btn-icon.delete {
+            color: var(--danger-color);
+            border-color: rgba(224, 108, 117, 0.3);
+        }
+
+            .btn-icon.delete:hover {
+                background: rgba(224, 108, 117, 0.1);
+                border-color: var(--danger-color);
+            }
+
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+    }
+
+    /* === МОДАЛЬНОЕ ОКНО === */
+    .cyber-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(11, 15, 23, 0.85);
+        backdrop-filter: blur(8px);
+        z-index: 2147483647;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        animation: fadeIn 0.3s forwards;
+    }
+
+    @@keyframes fadeIn {
+        to {
+            opacity: 1;
+        }
+    }
+
+    .cyber-modal-content {
+        width: 90%;
+        max-width: 500px;
+        background: var(--bg-card);
+        border: 1px solid var(--danger-color);
+        border-radius: 12px;
+        box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(224, 108, 117, 0.1);
+        display: flex;
+        flex-direction: column;
+        transform: translateY(20px);
+        animation: slideUp 0.3s forwards ease-out;
+    }
+
+    @@keyframes slideUp {
+        to {
+            transform: translateY(0);
+        }
+    }
+
+    .modal-header {
+        padding: 25px 30px;
+        border-bottom: 1px solid var(--danger-color);
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        background: rgba(224, 108, 117, 0.1);
+        border-radius: 12px 12px 0 0;
+    }
+
+    .modal-title-group {
+        flex-grow: 1;
+    }
+
+    .modal-title {
+        color: var(--danger-color);
+        font-size: 1.6rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin: 0;
+    }
+
+    .modal-body {
+        padding: 30px;
+        text-align: center;
+    }
 </style>
 
-<div class="tests-container">
-    <div class="page-header">
-        <h2 style="color: var(--accent-light-blue); margin: 0; text-transform: uppercase; font-weight: 700;">Каталог тестирования</h2>
-        <AuthorizeView Roles="Admin">
-            <button class="btn-primary-gradient" @onclick="@(() => NavigationManager.NavigateTo("/admin/test/edit"))">
-                <RadzenIcon Icon="add" Style="vertical-align: middle;" /> Новый тест
-            </button>
-        </AuthorizeView>
-    </div>
+<div class="full-page-wrapper">
+    <div class="page-container">
+        <div class="page-header">
+            <div class="header-text">
+                <h1>Каталог тестирования</h1>
+                <p>Информационно-аналитический отдел департамента охраны// Оценка компетенций</p>
+            </div>
 
-    @if (tests == null)
-    {
-        <div class="text-center mt-5"><RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" /></div>
-    }
-    else if (!tests.Any())
-    {
-        <div class="text-center mt-5">
-            <RadzenIcon Icon="assignment_late" Style="font-size: 4rem; color: var(--border-color);" />
-            <h4 class="mt-3" style="color: var(--text-light);">Нет доступных тестов</h4>
-            <p>В данный момент вам не назначено ни одного тестирования.</p>
+            <AuthorizeView Roles="Admin">
+                <button type="button" class="btn-main" @onclick="@(() => NavigationManager.NavigateTo("/admin/test/edit"))">
+                    <RadzenIcon Icon="add_circle" Style="font-size: 1.2rem;" /> Новый тест
+                </button>
+            </AuthorizeView>
         </div>
-    }
-    else
-    {
-        var groupedTests = tests.GroupBy(t => t.Difficulty).OrderBy(g => (int)g.Key);
 
-        @foreach (var group in groupedTests)
-        {
-            <div class="difficulty-section" @key="group.Key">
-                <div class="section-title">
-                    <span class="cyber-badge section-badge @GetDifficultyClass(group.Key)">
-                        <RadzenIcon Icon="speed" Style="font-size: 1.1rem; margin-top: -2px;" /> Уровень: @GetDifficultyText(group.Key)
-                    </span>
-                    <h3 style="color: @GetDifficultyColor(group.Key);">Тесты</h3>
+        <div class="cyber-shell">
+            <div class="cyber-shell-header">
+                <div class="shell-title">
+                    <RadzenIcon Icon="quiz" Style="font-size: 1.2rem;" />
+                    SYS.ADMIN_TERMINAL // TESTS
                 </div>
+                <div class="shell-status">
+                    <span class="status-dot"></span>
+                    ONLINE
+                </div>
+            </div>
 
-                <div class="tests-grid">
-                    @foreach (var item in group)
+            <div class="cyber-shell-body">
+                @if (tests == null)
+                {
+                    <div class="text-center" style="padding: 80px 20px;">
+                        <RadzenProgressBar Mode="ProgressBarMode.Indeterminate" Style="background-color: var(--border-color); height: 6px;" />
+                        <p style="color: var(--accent-cyan); margin-top: 15px; font-size: 0.9rem; font-weight: bold; letter-spacing: 2px;">ЗАГРУЗКА БАЗЫ ТЕСТОВ...</p>
+                    </div>
+                }
+                else if (!tests.Any())
+                {
+                    <div class="text-center" style="padding: 60px 20px; border: 1px dashed var(--accent-cyan); border-radius: 12px; background: rgba(78, 195, 209, 0.05);">
+                        <RadzenIcon Icon="assignment_late" Style="font-size: 4rem; color: var(--accent-cyan); margin-bottom: 15px; filter: drop-shadow(0 0 10px rgba(78,195,209,0.5));" />
+                        <p style="color: var(--text-light); font-size: 1.1rem; font-weight: 600; text-transform: uppercase;">Каталог пуст</p>
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">В данный момент вам не назначено ни одного тестирования.</p>
+                    </div>
+                }
+                else
+                {
+                    var groupedTests = tests.GroupBy(t => t.Difficulty).OrderBy(g => (int)g.Key);
+
+                    @foreach (var group in groupedTests)
                     {
-                        var currentStatus = userProgresses.ContainsKey(item.Id) ? userProgresses[item.Id] : AttemptStatus.NotStarted;
-
-                        <div class="test-card" @key="item.Id">
-                            <AuthorizeView Roles="SuperAdmin">
-                                <div class="admin-actions">
-                                    <button class="btn-icon edit" @onclick="@(() => NavigationManager.NavigateTo($"/admin/test/edit/{item.Id}"))" title="Редактировать"><RadzenIcon Icon="edit" /></button>
-                                    <button class="btn-icon delete" @onclick="@(() => DeleteItem(item.Id))" title="Удалить"><RadzenIcon Icon="delete" /></button>
-                                </div>
-                            </AuthorizeView>
-
-                            <h3 class="card-title" title="@item.Title">@item.Title</h3>
-
-                            <div class="d-flex gap-2 mb-3 flex-wrap">
-                                @if (currentStatus == AttemptStatus.InProgress)
-                                {
-                                    <span class="status-badge-mini status-in-progress"><RadzenIcon Icon="clock_loader_40" Style="font-size: 0.9rem;" /> В процессе</span>
-                                }
-                                else if (currentStatus == AttemptStatus.Completed)
-                                {
-
-                                    <span class="status-badge-mini status-completed"><RadzenIcon Icon="check" Style="font-size: 0.9rem;" /> Выполнено</span>
-                                }
-                                else if (currentStatus == AttemptStatus.Failed)
-                                {
-
-                                    <span class="status-badge-mini status-failed"><RadzenIcon Icon="error_outline" Style="font-size: 0.9rem;" /> Провалено</span>
-                                }
-                                else
-                                {
-
-                                    <span class="status-badge-mini status-available"><RadzenIcon Icon="domain_verification" Style="font-size: 0.9rem;" /> Доступно</span>
-                                }
-
-                                <span class="cyber-badge" style="background: rgba(91,163,227,0.1); border: 1px solid var(--accent-blue); color: var(--accent-blue);">
-                                    <RadzenIcon Icon="person" Style="font-size: 0.9rem; margin-top: -2px;" /> Индивидуальный
+                        <div class="difficulty-section" @key="group.Key">
+                            <div class="section-title">
+                                <span class="cyber-badge section-badge @GetDifficultyClass(group.Key)">
+                                    <RadzenIcon Icon="speed" Style="font-size: 1.1rem; margin-top: -2px;" /> Уровень: @GetDifficultyText(group.Key)
                                 </span>
-
-                                @if (!string.IsNullOrEmpty(item.Tags))
-                                {
-                                    @foreach (var tag in item.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries))
-                                    {
-                                        <span class="cyber-badge cyber-tag"><RadzenIcon Icon="sell" Style="font-size: 0.9rem; margin-top: -2px;" /> @tag.Trim()</span>
-                                    }
-                                }
+                                <h3 style="color: @GetDifficultyColor(group.Key);">Тесты</h3>
                             </div>
 
-                            <p class="card-desc" title="@item.ShortDescription">@(string.IsNullOrWhiteSpace(item.ShortDescription) ? "Описание отсутствует." : item.ShortDescription)</p>
+                            <div class="modules-grid">
+                                @foreach (var item in group)
+                                {
+                                    var currentStatus = userProgresses.ContainsKey(item.Id) ? userProgresses[item.Id] : AttemptStatus.NotStarted;
 
-                            <div class="mt-auto pt-3" style="border-top: 1px solid var(--border-color);">
-                                <button class="btn-outline-light" @onclick="@(() => NavigationManager.NavigateTo($"/test/{item.Id}/workspace"))">
-                                    @if (currentStatus == AttemptStatus.InProgress)
-                                    {
-                                        <span><RadzenIcon Icon="play_arrow" Style="font-size: 1.2rem; margin-top: -2px;" /> Продолжить</span>
-                                    }
-                                    else if (currentStatus == AttemptStatus.Completed || currentStatus == AttemptStatus.Failed)
-                                    {
+                                    <div class="module-card" @key="item.Id">
+                                        <div class="module-visual">
+                                            <div class="scanline"></div>
 
-                                        <span><RadzenIcon Icon="visibility" Style="font-size: 1.2rem; margin-top: -2px;" /> Результаты</span>
-                                    }
-                                    else
-                                    {
+                                            <span class="cyber-badge" style="background: rgba(91,163,227,0.9); border-color: var(--accent-blue); color: #131924;">ИНДИВИДУАЛЬНЫЙ</span>
 
-                                        <span><RadzenIcon Icon="play_arrow" Style="font-size: 1.2rem; margin-top: -2px;" /> Начать тестирование</span>
-                                    }
-                                </button>
+                                            <RadzenIcon Icon="quiz" class="module-icon" />
+                                        </div>
+
+                                        <div class="module-content">
+                                            <h3 class="module-title" title="@item.Title">@item.Title</h3>
+
+                                            <div class="d-flex gap-2 mb-3 flex-wrap">
+                                                @if (currentStatus == AttemptStatus.InProgress)
+                                                {
+                                                    <span class="status-badge-mini status-in-progress"><RadzenIcon Icon="clock_loader_40" Style="font-size: 0.9rem;" /> В процессе</span>
+                                                }
+                                                else if (currentStatus == AttemptStatus.Completed)
+                                                {
+                                                    <span class="status-badge-mini status-completed"><RadzenIcon Icon="check" Style="font-size: 0.9rem;" /> Выполнено</span>
+                                                }
+                                                else if (currentStatus == AttemptStatus.Failed)
+                                                {
+                                                    <span class="status-badge-mini status-failed"><RadzenIcon Icon="error_outline" Style="font-size: 0.9rem;" /> Провалено</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="status-badge-mini status-available"><RadzenIcon Icon="domain_verification" Style="font-size: 0.9rem;" /> Доступно</span>
+                                                }
+
+                                                @if (!string.IsNullOrEmpty(item.Tags))
+                                                {
+                                                    @foreach (var tag in item.Tags.Split(',', StringSplitOptions.RemoveEmptyEntries))
+                                                    {
+                                                        <span class="cyber-badge cyber-tag">@tag.Trim()</span>
+                                                    }
+                                                }
+                                            </div>
+
+                                            <p class="instruction-text-preview" title="@item.ShortDescription">
+                                                @(string.IsNullOrWhiteSpace(item.ShortDescription) ? "Описание отсутствует." : item.ShortDescription)
+                                            </p>
+
+                                            <button class="btn-action @(currentStatus == AttemptStatus.Completed ? "success" : "")" @onclick="@(() => NavigationManager.NavigateTo($"/test/{item.Id}/workspace"))">
+                                                @if (currentStatus == AttemptStatus.InProgress)
+                                                {
+                                                    <RadzenIcon Icon="play_arrow" /> <span>Продолжить тестирование</span>
+                                                }
+                                                else if (currentStatus == AttemptStatus.Completed || currentStatus == AttemptStatus.Failed)
+                                                {
+                                                    <RadzenIcon Icon="visibility" /> <span>Анализ результатов</span>
+                                                }
+                                                else
+                                                {
+                                                    <RadzenIcon Icon="play_arrow" /> <span>Начать тестирование</span>
+                                                }
+                                            </button>
+                                        </div>
+
+                                        <AuthorizeView Roles="Admin">
+                                            <div class="admin-card-footer">
+                                                <div class="action-buttons">
+                                                    <button class="btn-icon edit" @onclick="@(() => NavigationManager.NavigateTo($"/admin/test/edit/{item.Id}"))" title="Редактировать">
+                                                        <RadzenIcon Icon="edit" />
+                                                    </button>
+                                                    <button class="btn-icon delete" @onclick="@(() => DeleteItem(item.Id))" title="Удалить">
+                                                        <RadzenIcon Icon="delete_forever" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </AuthorizeView>
+                                    </div>
+                                }
                             </div>
                         </div>
                     }
-                </div>
+                }
             </div>
-        }
-    }
+        </div>
+    </div>
 </div>
 
+@* КАСТОМНОЕ ОКНО ПОДТВЕРЖДЕНИЯ УДАЛЕНИЯ *@
 @if (isDeleteVisualDialogVisible)
 {
-    <div class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 1050; position: fixed; top: 0; left: 0; right: 0; bottom: 0;">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content" style="background: var(--bg-card); border: 1px solid var(--border-color);">
-                <div class="modal-header" style="border-bottom: 1px solid var(--border-color);"><h5 class="modal-title" style="color: var(--text-light);">Подтверждение удаления</h5><button type="button" class="btn-close btn-close-white" @onclick="CloseDeleteDialog"></button></div>
-                <div class="modal-body"><p style="color: var(--text-muted);">Вы действительно хотите удалить этот тест?</p></div>
-                <div class="modal-footer" style="border-top: 1px solid var(--border-color);"><button type="button" class="btn btn-secondary" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-light);" @onclick="CloseDeleteDialog">Отмена</button><button type="button" class="btn btn-danger" style="background: var(--danger-color); border: none;" @onclick="ConfirmDelete">Удалить</button></div>
+    <div class="cyber-modal-overlay" @onclick="CloseDeleteDialog">
+        <div class="cyber-modal-content" @onclick:stopPropagation>
+            <div class="modal-header">
+                <RadzenIcon Icon="warning" Style="font-size: 2.8rem; color: var(--danger-color);" />
+                <div class="modal-title-group">
+                    <h3 class="modal-title">Внимание</h3>
+                    <div style="color: var(--text-muted); font-size: 0.8rem; font-family: monospace; letter-spacing: 1px; margin-top: 5px;">SYS.REQ // DELETE_TEST</div>
+                </div>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 1.1rem; margin-bottom: 25px; color: var(--text-light);">Вы действительно хотите навсегда удалить этот тест?</p>
+                <div class="d-flex justify-content-center gap-3">
+                    <button class="btn-main" style="background: linear-gradient(90deg, var(--danger-color), #b74b54);" @onclick="ConfirmDelete">
+                        <RadzenIcon Icon="delete_forever" /> Подтвердить удаление
+                    </button>
+                    <button class="btn-outline-light" @onclick="CloseDeleteDialog">
+                        Отмена
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 }
-

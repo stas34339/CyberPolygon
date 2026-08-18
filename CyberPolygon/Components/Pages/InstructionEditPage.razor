@@ -14,50 +14,157 @@
 <PageTitle>@(Id.HasValue ? "Редактирование инструкции" : "Новая инструкция") | Киберполигон</PageTitle>
 
 <style>
+    /* Строгая киберпанк-тема */
     :root {
-        --bg-main: #1e1e1e;
-        --bg-card: #1a2332;
-        --bg-input: #131924;
-        --border-color: #2a3a4a;
+        --bg-main: #0b0f17;
+        --bg-card: #131924;
+        --bg-card-hover: #1a2435;
         --text-muted: #8fa0b5;
         --text-light: #cbe0f5;
         --accent-cyan: #4ec3d1;
         --accent-blue: #5ba3e3;
         --accent-light-blue: #7ec8f8;
+        --border-color: #2a3a4a;
         --success-color: #98c379;
         --danger-color: #e06c75;
         --warning-color: #e5c07b;
     }
 
-    .page-container {
-        background-color: var(--bg-main);
+    /* Обертка на всю ширину для однородного фона */
+    .full-page-wrapper {
+        background-color: var(--bg-main) !important;
         min-height: calc(100vh - 60px);
+        width: 100%;
+        padding: 30px 20px;
+        box-sizing: border-box;
+    }
+
+    /* Внутренний контейнер с ограничением ширины по центру */
+    .page-container {
         color: var(--text-light);
         max-width: 1300px;
         margin: 0 auto;
-        padding: 30px 20px;
+        font-family: 'Segoe UI', system-ui, sans-serif;
     }
 
     .page-header {
         display: flex;
-        align-items: center;
         justify-content: space-between;
-        margin-bottom: 30px;
+        align-items: flex-start;
+        margin-bottom: 35px;
         padding-bottom: 20px;
         border-bottom: 2px solid var(--border-color);
-        position: sticky;
-        top: 0;
-        background-color: var(--bg-main);
-        z-index: 50;
+        position: relative;
+        gap: 20px;
     }
 
-    .cyber-card {
-        background: linear-gradient(135deg, #1a2332 0%, #1e2d3d 100%);
+        .page-header::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 60px;
+            height: 2px;
+            background: var(--accent-cyan);
+            box-shadow: 0 0 10px rgba(78, 195, 209, 0.5);
+        }
+
+    .header-text h1 {
+        color: var(--accent-cyan);
+        font-weight: 800;
+        text-transform: uppercase;
+        margin: 0 0 8px 0;
+        font-size: 1.8rem;
+        letter-spacing: 2px;
+        text-shadow: 0 0 15px rgba(78, 195, 209, 0.3);
+    }
+
+    .header-text p {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        margin: 0;
+        line-height: 1.5;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* === ОБОЛОЧКА (CYBER-SHELL) === */
+    .cyber-shell {
+        background-color: rgba(19, 25, 36, 0.6);
+        border: 1px solid rgba(78, 195, 209, 0.3);
+        border-radius: 12px;
+        box-shadow: 0 0 40px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(78, 195, 209, 0.05);
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 30px;
+    }
+
+    .cyber-shell-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 25px;
+        background: linear-gradient(90deg, rgba(78,195,209,0.1) 0%, transparent 100%);
+        border-bottom: 1px solid rgba(78, 195, 209, 0.3);
+        font-family: 'Courier New', Courier, monospace;
+    }
+
+    .shell-title {
+        color: var(--accent-cyan);
+        font-size: 0.95rem;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+
+    .shell-status {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        letter-spacing: 1px;
+    }
+
+    .status-dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        background-color: var(--accent-light-blue);
+        border-radius: 50%;
+        box-shadow: 0 0 10px var(--accent-light-blue);
+        animation: pulse 2s infinite;
+    }
+
+    @@keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(126, 200, 248, 0.7);
+        }
+
+        70% {
+            box-shadow: 0 0 0 10px rgba(126, 200, 248, 0);
+        }
+
+        100% {
+            box-shadow: 0 0 0 0 rgba(126, 200, 248, 0);
+        }
+    }
+
+    .cyber-shell-body {
+        padding: 30px;
+    }
+
+    /* Внутренние карточки-секции */
+    .cyber-section {
+        background-color: rgba(0, 0, 0, 0.2);
         border: 1px solid var(--border-color);
-        border-radius: 10px;
+        border-radius: 8px;
         padding: 25px;
         margin-bottom: 25px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        /* УБРАНО height: 100%; ТЕПЕРЬ БЛОКИ ВЫСТРАИВАЮТСЯ КОРРЕКТНО */
     }
 
     .cyber-label {
@@ -65,47 +172,40 @@
         font-size: 0.85rem;
         text-transform: uppercase;
         letter-spacing: 1px;
-        margin-bottom: 6px;
+        margin-bottom: 8px;
         display: block;
-        font-weight: 600;
+        font-weight: 700;
     }
 
-    .dark-input, .rz-textbox, .rz-textarea, .rz-dropdown {
-        background-color: var(--bg-input) !important;
+    /* Инпуты Radzen */
+    .rz-textbox, .rz-textarea, .rz-dropdown {
+        background-color: var(--bg-card) !important;
         border: 1px solid var(--border-color) !important;
         color: var(--text-light) !important;
         border-radius: 6px !important;
+        transition: all 0.3s ease;
     }
 
-        /* СВЕТЛЫЕ ПЛЕЙСХОЛДЕРЫ ДЛЯ ВСЕХ ПОЛЕЙ */
-        .dark-input::placeholder, .rz-textbox::placeholder, .rz-textarea::placeholder {
-            color: #8fa0b5 !important;
-            opacity: 0.9 !important;
-            font-style: italic;
+        .rz-textbox:focus, .rz-textarea:focus, .rz-dropdown:focus {
+            border-color: var(--accent-cyan) !important;
+            box-shadow: 0 0 10px rgba(78, 195, 209, 0.2) !important;
         }
 
-    ::-webkit-input-placeholder {
-        color: #8fa0b5 !important;
-        opacity: 0.9 !important;
-        font-style: italic;
-    }
+        .rz-textbox::placeholder, .rz-textarea::placeholder {
+            color: #5b6b7a !important;
+            font-style: normal;
+        }
 
-    ::-moz-placeholder {
-        color: #8fa0b5 !important;
-        opacity: 0.9 !important;
-        font-style: italic;
-    }
-
-    /* Исправление выпадающих списков Radzen */
     .rz-dropdown-panel, .rz-popup {
         background-color: var(--bg-card) !important;
-        border: 1px solid var(--border-color) !important;
+        border: 1px solid var(--accent-cyan) !important;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.8) !important;
     }
 
     .rz-dropdown-item {
         color: var(--text-light) !important;
         background-color: transparent !important;
-        padding: 8px 12px !important;
+        padding: 10px 15px !important;
     }
 
         .rz-dropdown-item:hover {
@@ -113,33 +213,47 @@
             color: var(--accent-cyan) !important;
         }
 
-    .btn-primary-gradient {
-        background: linear-gradient(135deg, #4ec3d1 0%, #5ba3e3 100%);
-        color: #1a1d21;
-        font-weight: bold;
+    /* Кнопки */
+    .btn-main {
+        background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue));
+        color: var(--bg-main);
+        font-weight: 800;
         border: none;
-        padding: 10px 24px;
+        padding: 12px 30px;
         border-radius: 8px;
         cursor: pointer;
-        transition: all 0.3s;
+        font-size: 0.9rem;
         display: inline-flex;
         align-items: center;
         gap: 8px;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
 
-        .btn-primary-gradient:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 25px rgba(78, 195, 209, 0.4);
+        .btn-main:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(78, 195, 209, 0.4);
         }
 
     .btn-outline-light {
         background: transparent;
-        color: var(--text-light);
+        color: var(--text-muted);
         border: 1px solid var(--border-color);
-        padding: 10px 24px;
+        padding: 12px 30px;
         border-radius: 8px;
         cursor: pointer;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
     }
+
+        .btn-outline-light:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-light);
+            border-color: var(--text-muted);
+        }
 
     .btn-delete-icon {
         background: transparent;
@@ -148,184 +262,211 @@
         border-radius: 6px;
         padding: 5px 10px;
         cursor: pointer;
+        transition: all 0.2s;
     }
 
-    /* ОБНОВЛЕННАЯ ЗОНА ЗАГРУЗКИ */
+        .btn-delete-icon:hover {
+            background: rgba(224, 108, 117, 0.1);
+            border-color: var(--danger-color);
+        }
+
+    /* Зона загрузки файлов */
     .upload-zone {
         position: relative;
-        border: 2px dashed var(--accent-cyan);
-        border-radius: 10px;
+        border: 1px dashed var(--accent-cyan);
+        border-radius: 8px;
         padding: 30px 20px;
         text-align: center;
-        background: rgba(78, 195, 209, 0.05);
+        background: rgba(78, 195, 209, 0.03);
         transition: all 0.3s ease;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 8px;
+        gap: 10px;
         cursor: pointer;
         overflow: hidden;
     }
 
         .upload-zone:hover {
-            background: rgba(78, 195, 209, 0.15);
-            border-color: var(--accent-light-blue);
-            box-shadow: 0 4px 15px rgba(78, 195, 209, 0.2);
+            background: rgba(78, 195, 209, 0.1);
+            box-shadow: inset 0 0 20px rgba(78, 195, 209, 0.1);
         }
 
-        .upload-zone input[type=file] {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            opacity: 0;
-            cursor: pointer;
-            z-index: 2;
-        }
+    .upload-input {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+        z-index: 10;
+    }
 
     .upload-icon {
-        font-size: 2.5rem;
+        font-size: 3rem;
         color: var(--accent-cyan);
-        transition: transform 0.3s ease, color 0.3s ease;
+        transition: transform 0.3s ease, filter 0.3s ease;
     }
 
     .upload-zone:hover .upload-icon {
         transform: translateY(-4px);
+        filter: drop-shadow(0 0 10px rgba(78, 195, 209, 0.6));
+    }
+
+    .upload-title {
         color: var(--accent-light-blue);
+        font-weight: 700;
+        display: block;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .upload-subtitle {
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        display: block;
+        margin-top: 2px;
     }
 
     .added-item-row {
-        background: rgba(0, 0, 0, 0.2);
+        background: rgba(0, 0, 0, 0.3);
         border: 1px solid var(--border-color);
         padding: 10px 15px;
-        border-radius: 8px;
+        border-radius: 6px;
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-top: 10px;
+        transition: border-color 0.2s;
     }
 
-    .upload-zone small, .upload-zone span {
-        color: var(--text-light) !important;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-    }
-
-        /* Оставляем саму техническую подсказку чуть мягче основного текста, но контрастной */
-        .upload-zone span:last-child {
-            color: var(--text-muted) !important;
+        .added-item-row:hover {
+            border-color: rgba(78, 195, 209, 0.4);
         }
 </style>
 
-<div class="page-container">
-    <div class="page-header">
-        <h2 style="color: var(--accent-light-blue); margin: 0; font-weight: 700; text-transform: uppercase;">
-            @(Id.HasValue ? "Редактирование инструкции" : "Создание инструкции")
-        </h2>
-        <div class="d-flex align-items-center gap-3">
-            <button type="button" class="btn-primary-gradient" style="background: linear-gradient(135deg, #98c379 0%, #5ba3e3 100%);" @onclick="OnSave">
-                <RadzenIcon Icon="save" Style="font-size: 1.2rem;" /> Сохранить в БД
-            </button>
-            <button class="btn-outline-light" @onclick="Cancel">Отмена</button>
-        </div>
-    </div>
-
-    <RadzenTemplateForm TItem="InstructionModel" Data="@Item" Submit="@OnSave">
-        <div class="row">
-            <div class="col-md-8">
-                <div class="cyber-card">
-                    <div class="mb-4">
-                        <label class="cyber-label">Название руководства</label>
-                        <RadzenTextBox @bind-Value="@Item.Title" class="w-100 rz-textbox" Placeholder="Например: Памятка по настройке VPN подключения..." />
-                    </div>
-                    <div class="mb-2">
-                        <label class="cyber-label">Текст инструкции</label>
-                        <RadzenTextArea @bind-Value="@Item.Description" class="w-100 rz-textarea" Rows="14" Placeholder="Подробное описание шагов, команд или регламентов..." />
-                    </div>
-                </div>
+<div class="full-page-wrapper">
+    <div class="page-container">
+        <div class="page-header">
+            <div class="header-text">
+                <h1>@(Id.HasValue ? "Редактирование инструкции" : "Создание инструкции")</h1>
+                <p>Информационно-аналитический департамент // Конфигурация записи</p>
             </div>
 
-            <div class="col-md-4">
-                <div class="cyber-card mb-4">
-                    <label class="cyber-label">Системная иконка</label>
+            <div class="d-flex align-items-center gap-3">
+                <button type="button" class="btn-main" @onclick="OnSave">
+                    <RadzenIcon Icon="save" Style="font-size: 1.2rem;" /> Сохранить в БД
+                </button>
+                <button class="btn-outline-light" @onclick="Cancel">Отмена</button>
+            </div>
+        </div>
 
-                    <RadzenDropDown @bind-Value="@Item.IconName" Data="@availableIcons" class="w-100 rz-dropdown">
-                        <Template Context="icon">
-                            <div class="d-flex align-items-center gap-2">
-                                <RadzenIcon Icon="@icon" Style="font-size: 1.2rem; color: var(--accent-cyan);" />
-                                <span style="color: var(--text-light);">@GetIconDescription(icon)</span>
-                            </div>
-                        </Template>
-                        <ValueTemplate Context="icon">
-                            <div class="d-flex align-items-center gap-2">
-                                <RadzenIcon Icon="@icon" Style="font-size: 1.2rem; color: var(--accent-cyan);" />
-                                <span style="color: var(--text-light);">@GetIconDescription(icon)</span>
-                            </div>
-                        </ValueTemplate>
-                    </RadzenDropDown>
-
-                    <div class="mt-4 text-center">
-                        <RadzenIcon Icon="@Item.IconName" Style="font-size: 4.5rem; color: var(--accent-cyan); text-shadow: 0 0 15px rgba(78, 195, 209, 0.4);" />
+        <RadzenTemplateForm TItem="InstructionModel" Data="@Item" Submit="@OnSave">
+            <div class="cyber-shell">
+                <div class="cyber-shell-header">
+                    <div class="shell-title">
+                        <RadzenIcon Icon="edit_document" Style="font-size: 1.2rem;" />
+                        SYS.ADMIN_TERMINAL // DOC_EDITOR
+                    </div>
+                    <div class="shell-status">
+                        <span class="status-dot"></span>
+                        ONLINE
                     </div>
                 </div>
 
-                <div class="cyber-card">
-                    <label class="cyber-label">Вложения (Связанные файлы)</label>
-
-                    @* Зона загрузки только для новых файлов *@
-                    @if (!Id.HasValue)
-                    {
-                        <div class="upload-zone">
-                            <InputFile OnChange="LoadFiles" multiple />
-                            <RadzenIcon Icon="cloud_upload" class="upload-icon" />
-                            <span style="color: var(--text-light); font-weight: 500; display: block;">Нажмите сюда или перетащите файлы</span>
-                            <span style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-top: 2px;">Поддерживаются форматы PDF, DOCX, ZIP (Макс. 10 файлов)</span>
+                <div class="cyber-shell-body">
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <div class="cyber-section" style="height: 100%;">
+                                <div class="mb-4">
+                                    <label class="cyber-label">Название блока</label>
+                                    <RadzenTextBox @bind-Value="@Item.Title" class="w-100 rz-textbox" Placeholder="Например: Памятка по настройке VPN подключения..." />
+                                </div>
+                                <div class="mb-2">
+                                    <label class="cyber-label">Содержание инструкции</label>
+                                    <RadzenTextArea @bind-Value="@Item.Description" class="w-100 rz-textarea" Rows="14" Placeholder="Подробное описание шагов, команд или регламентов..." />
+                                </div>
+                            </div>
                         </div>
 
-                        @if (uploadedFiles.Any())
-                        {
-                            <div class="mt-3">
-                                <label class="cyber-label" style="font-size: 0.75rem; opacity: 0.8;">Подготовлено к загрузке:</label>
-                                @foreach (var file in uploadedFiles)
+                        <div class="col-lg-4 d-flex flex-column">
+                            <div class="cyber-section mb-4">
+                                <label class="cyber-label">Системная иконка</label>
+
+                                <RadzenDropDown @bind-Value="@Item.IconName" Data="@availableIcons" class="w-100 rz-dropdown">
+                                    <Template Context="icon">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <RadzenIcon Icon="@icon" Style="font-size: 1.2rem; color: var(--accent-cyan);" />
+                                            <span style="color: var(--text-light);">@GetIconDescription(icon)</span>
+                                        </div>
+                                    </Template>
+                                    <ValueTemplate Context="icon">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <RadzenIcon Icon="@icon" Style="font-size: 1.2rem; color: var(--accent-cyan);" />
+                                            <span style="color: var(--text-light);">@GetIconDescription(icon)</span>
+                                        </div>
+                                    </ValueTemplate>
+                                </RadzenDropDown>
+
+                                <div class="mt-4 text-center">
+                                    <RadzenIcon Icon="@Item.IconName" Style="font-size: 5rem; color: var(--accent-cyan); filter: drop-shadow(0 0 15px rgba(78, 195, 209, 0.4));" />
+                                </div>
+                            </div>
+
+                            <div class="cyber-section flex-grow-1 mb-0">
+                                <label class="cyber-label">Вложения (Связанные файлы)</label>
+
+                                <!-- Зона загрузки файлов -->
+                                <div class="upload-zone">
+                                    <InputFile OnChange="LoadFiles" multiple class="upload-input" />
+                                    <RadzenIcon Icon="cloud_upload" class="upload-icon" />
+                                    <span class="upload-title">Выбрать файлы</span>
+                                    <span class="upload-subtitle">Нажмите или перетащите сюда (PDF, DOCX, ZIP)</span>
+                                </div>
+
+                                <!-- Файлы, выбранные для добавления -->
+                                @if (uploadedFiles.Any())
                                 {
-                                    <div class="added-item-row">
-                                        <span style="color: var(--text-light); font-size: 0.85rem;">
-                                            <RadzenIcon Icon="attach_file" Style="vertical-align: middle; margin-right: 5px; color: var(--accent-blue);" />
-                                            @file.Name
-                                        </span>
-                                        <button type="button" class="btn-delete-icon" style="padding: 2px 5px;" @onclick="() => RemoveFile(file)">
-                                            <RadzenIcon Icon="close" Style="font-size: 0.9rem;" />
-                                        </button>
+                                    <div class="mt-4">
+                                        <label class="cyber-label" style="font-size: 0.75rem;">Ожидают загрузки:</label>
+                                        @foreach (var file in uploadedFiles)
+                                        {
+                                            <div class="added-item-row">
+                                                <span style="color: var(--text-light); font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 10px;">
+                                                    <RadzenIcon Icon="attach_file" Style="vertical-align: middle; margin-right: 5px; color: var(--accent-blue);" />
+                                                    @file.Name
+                                                </span>
+                                                <button type="button" class="btn-delete-icon" style="padding: 2px 5px; flex-shrink: 0;" @onclick="() => RemoveFile(file)">
+                                                    <RadzenIcon Icon="close" Style="font-size: 0.9rem;" />
+                                                </button>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+
+                                <!-- Существующие файлы (только если мы редактируем) -->
+                                @if (Id.HasValue && Item.Attachments != null && Item.Attachments.Any())
+                                {
+                                    <div class="mt-4 pt-3" style="border-top: 1px dashed var(--border-color);">
+                                        <label class="cyber-label" style="font-size: 0.75rem;">Уже загружены в систему:</label>
+                                        @foreach (var file in Item.Attachments)
+                                        {
+                                            <div class="added-item-row">
+                                                <span style="color: var(--text-light); font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                    <RadzenIcon Icon="description" Style="vertical-align: middle; margin-right: 5px; color: var(--success-color);" />
+                                                    @file.FileName
+                                                </span>
+                                            </div>
+                                        }
                                     </div>
                                 }
                             </div>
-                        }
-                    }
-                    else
-                    {
-                        @* Отображение уже прикрепленных файлов *@
-                        @if (Item.Attachments != null && Item.Attachments.Any())
-                        {
-                            <div class="mt-2">
-                                @foreach (var file in Item.Attachments)
-                                {
-                                    <div class="added-item-row">
-                                        <span style="color: var(--text-light); font-size: 0.85rem;">
-                                            <RadzenIcon Icon="description" Style="vertical-align: middle; margin-right: 5px; color: var(--success-color);" />
-                                            @file.FileName
-                                        </span>
-                                    </div>
-                                }
-                            </div>
-                        }
-                        else
-                        {
-                            <p class="text-center mt-3" style="color: var(--text-light); font-weight: 500;">Файлы отсутствуют.</p>
-                        }
-                    }
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    </RadzenTemplateForm>
+        </RadzenTemplateForm>
+    </div>
 </div>

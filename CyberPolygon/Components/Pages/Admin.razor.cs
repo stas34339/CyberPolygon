@@ -27,9 +27,11 @@ namespace CyberPolygon.Components.Pages
         private bool showTeamDistributionModal = false;
         private UserTeam? activeTeamContext;
 
-        // Переменные для модалки редактирования пользователя
+        // Переменные для модалок управления пользователями
         private bool showEditUserModal = false;
         private UserEditModel? editUserModel;
+
+        private bool showCreateUserModal = false; // <-- НОВАЯ ПЕРЕМЕННАЯ
 
         private string newGroupName = "";
         private string newTeamName = "";
@@ -188,7 +190,19 @@ namespace CyberPolygon.Components.Pages
             }
         }
 
-        // --- МОДАЛКА РЕДАКТИРОВАНИЯ ПРОФИЛЯ ---
+        // --- МОДАЛКИ: СОЗДАНИЕ И РЕДАКТИРОВАНИЕ ПРОФИЛЯ ---
+
+        private void OpenCreateUserModal()
+        {
+            newUserModel = new UserCreationModel();
+            showCreateUserModal = true;
+        }
+
+        private void CloseCreateUserModal()
+        {
+            showCreateUserModal = false;
+        }
+
         private void OpenEditUserModal(ApplicationUser u)
         {
             editUserModel = new UserEditModel
@@ -276,7 +290,10 @@ namespace CyberPolygon.Components.Pages
             if (success)
             {
                 NotificationService.Notify(NotificationSeverity.Success, "Успех", $"Пользователь {newUserModel.Login} создан");
-                newUserModel = new UserCreationModel();
+
+                // Закрываем окно после успешного создания
+                CloseCreateUserModal();
+
                 await LoadAdminData();
             }
             else { NotificationService.Notify(NotificationSeverity.Error, "Ошибка создания", error); }

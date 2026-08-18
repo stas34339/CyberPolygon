@@ -3,6 +3,10 @@ using CyberPolygon.Data.Models;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Radzen;
+using System.Threading.Tasks;
+using System.Linq;
+using System.Collections.Generic;
+using System;
 
 namespace CyberPolygon.Components.Pages
 {
@@ -14,13 +18,16 @@ namespace CyberPolygon.Components.Pages
         private List<IBrowserFile> uploadedFiles = new();
         private int maxAllowedFiles = 10;
 
-        private readonly List<string> availableIcons = new()
-    {
-        "assignment", "terminal", "security", "shield", "bug_report",
-        "lock", "visibility", "help_center", "description", "code", "lan"
-    };
+        // Лимит в 50 МБ для предотвращения тихих сбоев Blazor при выборе файла
+        private long maxFileSize = 1024 * 1024 * 50;
 
-        // Вспомогательный метод для красивого русского перевода названий иконок
+        private readonly List<string> availableIcons = new()
+        {
+            "assignment", "terminal", "security", "shield", "bug_report",
+            "lock", "visibility", "help_center", "description", "code", "lan",
+            "dns", "hub", "gavel", "verified_user", "assessment", "radar", "query_stats"
+        };
+
         private string GetIconDescription(string iconName) => iconName switch
         {
             "assignment" => "Документ / Задание",
@@ -34,6 +41,13 @@ namespace CyberPolygon.Components.Pages
             "description" => "Описание / Файл",
             "code" => "Исходный код",
             "lan" => "Локальная сеть",
+            "dns" => "Сервер / Инфраструктура",
+            "hub" => "Координация / Узел",
+            "gavel" => "Регламент / Закон",
+            "verified_user" => "Аутентификация / Допуск",
+            "assessment" => "Аналитика / График",
+            "radar" => "Радар / Сканирование",
+            "query_stats" => "Статистика / Поиск",
             _ => iconName
         };
 
@@ -41,7 +55,6 @@ namespace CyberPolygon.Components.Pages
         {
             if (Id.HasValue)
             {
-                // Получаем список и находим нужную инструкцию
                 var all = await InstructionService.GetAllAsync();
                 Item = all.FirstOrDefault(i => i.Id == Id.Value) ?? new InstructionModel { IconName = "assignment" };
             }
@@ -51,27 +64,45 @@ namespace CyberPolygon.Components.Pages
             }
         }
 
-        private void LoadFiles(InputFileChangeEventArgs e)
+        private async Task LoadFiles(InputFileChangeEventArgs e)
         {
-            foreach (var file in e.GetMultipleFiles(maxAllowedFiles))
+            try
             {
-                if (!uploadedFiles.Any(f => f.Name == file.Name))
+                foreach (var file in e.GetMultipleFiles(maxAllowedFiles))
                 {
-                    uploadedFiles.Add(file);
+                    // Проверка размера файла перед добавлением
+                    if (file.Size > maxFileSize)
+                    {
+                        NotificationService.Notify(NotificationSeverity.Warning, "Превышен размер", $"Файл {file.Name} больше 50 МБ и не будет загружен.");
+                        continue;
+                    }
+
+                    if (!uploadedFiles.Any(f => f.Name == file.Name))
+                    {
+                        uploadedFiles.Add(file);
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Ошибка добавления", "Файл слишком большой или произошла ошибка чтения.");
+            }
+
+            // Принудительно заставляем интерфейс перерисоваться, чтобы показать добавленные файлы
+            StateHasChanged();
         }
 
         private void RemoveFile(IBrowserFile file)
         {
             uploadedFiles.Remove(file);
+            StateHasChanged();
         }
 
         private async Task OnSave()
         {
             if (string.IsNullOrWhiteSpace(Item.Title) || string.IsNullOrWhiteSpace(Item.Description))
             {
-                NotificationService.Notify(NotificationSeverity.Warning, "Ошибка", "Заполните название и содержание инструкции.");
+                NotificationService.Notify(NotificationSeverity.Warning, "Система", "Заполните название и содержание блока.");
                 return;
             }
 
@@ -79,17 +110,19 @@ namespace CyberPolygon.Components.Pages
             {
                 if (Item.Id == 0)
                 {
-                    // Высчитываем порядок для новой инструкции
                     var all = await InstructionService.GetAllAsync();
                     Item.Order = all.Any() ? all.Max(i => i.Order) + 1 : 1;
 
                     await InstructionService.AddAsync(Item, uploadedFiles);
-                    NotificationService.Notify(NotificationSeverity.Success, "Успех", "Новая инструкция добавлена.");
+                    NotificationService.Notify(NotificationSeverity.Success, "Успех", "Новая инструкция добавлена в реестр.");
                 }
                 else
                 {
+                    /* Если ваш метод обновления в сервисе поддерживает файлы, 
+                       замените следующую строку на: await InstructionService.UpdateAsync(Item, uploadedFiles); */
                     await InstructionService.UpdateAsync(Item);
-                    NotificationService.Notify(NotificationSeverity.Success, "Успех", "Инструкция обновлена.");
+
+                    NotificationService.Notify(NotificationSeverity.Success, "Успех", "Запись обновлена.");
                 }
 
                 NavigationManager.NavigateTo("instruction");

@@ -12,19 +12,24 @@
 <PageTitle>Руководство оператора | Киберполигон</PageTitle>
 
 <style>
+    /* Строгая киберпанк-тема */
     :root {
-        --bg-main: #1e1e1e;
-        --bg-card: #1a2332;
-        --bg-input: #1a2332;
-        --border-color: #2a3a4a;
+        --bg-main: #0b0f17;
+        --bg-card: #131924;
+        --bg-card-hover: #1a2435;
         --text-muted: #8fa0b5;
         --text-light: #cbe0f5;
         --accent-cyan: #4ec3d1;
         --accent-blue: #5ba3e3;
         --accent-light-blue: #7ec8f8;
+        --border-color: #2a3a4a;
         --success-color: #98c379;
         --danger-color: #e06c75;
         --warning-color: #e5c07b;
+    }
+
+    html, body {
+        background-color: var(--bg-main) !important;
     }
 
     .instruction-container {
@@ -61,12 +66,13 @@
     }
 
         .header-text h1 {
-            color: var(--accent-light-blue);
-            font-weight: 700;
+            color: var(--accent-cyan);
+            font-weight: 800;
             text-transform: uppercase;
             margin: 0 0 8px 0;
             font-size: 1.8rem;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
+            text-shadow: 0 0 15px rgba(78, 195, 209, 0.3);
         }
 
         .header-text p {
@@ -74,42 +80,284 @@
             font-size: 0.85rem;
             margin: 0;
             line-height: 1.5;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
     .btn-primary-gradient {
-        background: linear-gradient(135deg, #4ec3d1 0%, #5ba3e3 100%);
-        color: #1a1d21;
-        font-weight: bold;
+        background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue));
+        color: var(--bg-main);
+        font-weight: 800;
         border: none;
-        padding: 10px 24px;
+        padding: 12px 24px;
         border-radius: 8px;
         cursor: pointer;
-        transition: all 0.3s;
+        transition: all 0.3s ease;
         font-size: 0.9rem;
-        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
         display: inline-flex;
         align-items: center;
         gap: 8px;
     }
 
         .btn-primary-gradient:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 25px rgba(78, 195, 209, 0.4);
-            background: linear-gradient(135deg, #5fd4e0 0%, #6fb3f0 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(78, 195, 209, 0.4);
         }
+
+    .btn-outline-light {
+        background: transparent;
+        color: var(--text-light);
+        border: 1px solid var(--border-color);
+        padding: 12px 24px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+        .btn-outline-light:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--text-muted);
+        }
+
+    /* Расположение с боковой панелью */
+    .content-layout {
+        display: grid;
+        grid-template-columns: 1fr 350px;
+        gap: 30px;
+        align-items: start;
+    }
+
+    /* === СТИЛИ КАРТОЧЕК ИНСТРУКЦИЙ (БЛОКИ) === */
+    .modules-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 30px;
+    }
+
+    .module-card {
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        overflow: hidden;
+        transition: all 0.3s ease-in-out;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+
+        .module-card::before, .module-card::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            transition: all 0.4s ease-in-out;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .module-card::before {
+            top: 0;
+            left: 0;
+            border-top-color: var(--border-color);
+            border-left-color: var(--border-color);
+            border-top-left-radius: 10px;
+        }
+
+        .module-card::after {
+            bottom: 0;
+            right: 0;
+            border-bottom-color: var(--border-color);
+            border-right-color: var(--border-color);
+            border-bottom-right-radius: 10px;
+        }
+
+        .module-card:hover {
+            background-color: var(--bg-card-hover);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(78, 195, 209, 0.2);
+            border-color: var(--accent-cyan);
+        }
+
+            .module-card:hover::before, .module-card:hover::after {
+                width: 100%;
+                height: 100%;
+                border-color: rgba(78, 195, 209, 0.3);
+                border-radius: 10px;
+            }
+
+    .module-visual {
+        height: 140px;
+        background: linear-gradient(180deg, rgba(11, 15, 23, 0) 0%, var(--bg-card) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-bottom: 1px solid var(--border-color);
+        position: relative;
+        overflow: hidden;
+    }
+
+        .module-visual::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: linear-gradient(rgba(78, 195, 209, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(78, 195, 209, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+            opacity: 0.8;
+        }
+
+    .scanline {
+        position: absolute;
+        top: -10px;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: var(--accent-cyan);
+        box-shadow: 0 0 10px var(--accent-cyan), 0 0 20px var(--accent-cyan);
+        opacity: 0;
+        transition: opacity 0.3s;
+        z-index: 2;
+    }
+
+    .module-card:hover .scanline {
+        opacity: 0.6;
+        animation: scan 2s linear infinite;
+    }
+
+    @@keyframes scan {
+        0% {
+            top: -10px;
+        }
+
+        100% {
+            top: 100%;
+        }
+    }
+
+    .cyber-badge {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: rgba(11, 15, 23, 0.9);
+        border: 1px solid var(--border-color);
+        color: var(--accent-blue);
+        font-size: 0.7rem;
+        font-weight: 800;
+        padding: 4px 8px;
+        border-radius: 4px;
+        letter-spacing: 1px;
+        z-index: 3;
+        transition: all 0.3s ease;
+    }
+
+    .module-card:hover .cyber-badge {
+        border-color: var(--accent-cyan);
+        color: var(--accent-cyan);
+        box-shadow: 0 0 10px rgba(78, 195, 209, 0.2);
+    }
+
+    .module-icon {
+        font-size: 4rem !important;
+        color: var(--text-muted);
+        transition: color 0.3s ease, filter 0.3s ease, transform 0.3s ease;
+        z-index: 1;
+    }
+
+    .module-card:hover .module-icon {
+        color: var(--accent-cyan);
+        filter: drop-shadow(0 0 20px rgba(78, 195, 209, 0.8));
+        transform: scale(1.15);
+    }
+
+    .module-content {
+        padding: 20px;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        z-index: 2;
+    }
+
+    .module-title {
+        color: var(--accent-light-blue);
+        font-size: 1.15rem;
+        font-weight: 700;
+        margin-bottom: 12px;
+        transition: color 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .module-card:hover .module-title {
+        color: var(--text-light);
+        text-shadow: 0 0 8px rgba(203, 224, 245, 0.3);
+    }
+
+    /* Усеченный текст для превью в карточке */
+    .instruction-text-preview {
+        display: -webkit-box;
+        -webkit-line-clamp: 4;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: pre-wrap;
+        line-height: 1.6;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+    }
+
+    .btn-read-more {
+        background: transparent;
+        border: 1px dashed var(--accent-cyan);
+        color: var(--accent-cyan);
+        width: 100%;
+        padding: 10px;
+        border-radius: 6px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-top: auto;
+    }
+
+        .btn-read-more:hover {
+            background: rgba(78, 195, 209, 0.1);
+            box-shadow: 0 0 15px rgba(78, 195, 209, 0.2);
+        }
+
+    /* === ПАНЕЛЬ АДМИНИСТРАТОРА (ВНУТРИ КАРТОЧКИ) === */
+    .admin-card-footer {
+        background: rgba(0, 0, 0, 0.3);
+        border-top: 1px solid var(--border-color);
+        padding: 12px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 10;
+    }
 
     .btn-icon {
         background: transparent;
         border: 1px solid var(--border-color);
         border-radius: 6px;
-        padding: 5px 8px;
+        padding: 5px;
         cursor: pointer;
         transition: all 0.2s;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        width: 32px;
-        height: 32px;
+        width: 30px;
+        height: 30px;
     }
 
         .btn-icon.edit {
@@ -142,139 +390,66 @@
                 border-color: var(--accent-cyan);
             }
 
-    .content-layout {
-        display: grid;
-        grid-template-columns: 1fr 350px;
-        gap: 25px;
-        align-items: start;
-    }
+            .btn-icon.move:disabled {
+                opacity: 0.3;
+                cursor: not-allowed;
+                border-color: var(--border-color);
+                color: var(--text-muted);
+                background: transparent;
+            }
 
-    .cyber-accordion {
-        background-color: transparent !important;
-        border: none !important;
-    }
-
-    ::deep .rz-accordion-header {
-        background: linear-gradient(135deg, #1a2332 0%, #1e2d3d 100%) !important;
-        border: 1px solid var(--border-color) !important;
-        color: var(--text-light) !important;
-        margin-bottom: 6px;
-        border-radius: 8px !important;
-        padding: 16px 20px !important;
-        transition: all 0.2s;
-    }
-
-        ::deep .rz-accordion-header:hover {
-            border-color: rgba(78, 195, 209, 0.3) !important;
-        }
-
-        ::deep .rz-accordion-header .rz-accordion-header-text {
-            color: var(--accent-light-blue) !important;
-            font-weight: 600 !important;
-            letter-spacing: 0.5px;
-        }
-
-        ::deep .rz-accordion-header .rz-accordion-toggle {
-            color: var(--accent-cyan) !important;
-        }
-
-    ::deep .rz-accordion-content {
-        background: linear-gradient(135deg, #1a2332 0%, #1e2d3d 100%) !important;
-        border: 1px solid var(--border-color) !important;
-        border-top: none !important;
-        color: var(--text-light) !important;
-        padding: 20px !important;
-        margin-top: -7px;
-        margin-bottom: 12px;
-        border-bottom-left-radius: 8px;
-        border-bottom-right-radius: 8px;
-    }
-
-    .instruction-item {
-        position: relative;
-    }
-
-    .instruction-actions {
+    .action-buttons, .move-buttons {
         display: flex;
-        gap: 6px;
-        position: absolute;
-        top: 0;
-        right: 0;
-        z-index: 5;
+        gap: 8px;
     }
 
-    .instruction-text {
-        white-space: pre-wrap;
-        word-break: break-word;
-        line-height: 1.7;
-        color: var(--text-light);
-        font-size: 0.95rem;
-    }
-
-    .attachments-section {
-        margin-top: 15px;
-        padding-top: 15px;
-        border-top: 1px dashed var(--border-color);
-    }
-
-    .attachments-label {
-        color: var(--text-muted);
-        font-size: 0.8rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 10px;
-        font-weight: 600;
-    }
-
-    .attachment-link {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        background: rgba(78, 195, 209, 0.1);
-        color: var(--accent-cyan);
-        border: 1px solid rgba(78, 195, 209, 0.3);
-        padding: 6px 14px;
-        border-radius: 6px;
-        text-decoration: none;
-        font-size: 0.85rem;
-        margin-right: 8px;
-        margin-bottom: 8px;
-        transition: all 0.2s;
-        font-weight: 500;
-    }
-
-        .attachment-link:hover {
-            background: rgba(78, 195, 209, 0.2);
-            border-color: var(--accent-cyan);
-        }
-
+    /* === БОКОВАЯ ПАНЕЛЬ === */
     .side-panel {
-        background: linear-gradient(135deg, #1a2332 0%, #1e2d3d 100%);
+        background-color: rgba(19, 25, 36, 0.6);
         border: 1px solid var(--border-color);
-        border-radius: 10px;
+        border-radius: 12px;
         padding: 25px;
         position: sticky;
         top: 20px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 0 40px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(78, 195, 209, 0.05);
+        backdrop-filter: blur(10px);
     }
 
     .side-panel-title {
         color: var(--accent-cyan);
-        font-weight: 600;
-        margin-bottom: 18px;
-        font-size: 1rem;
-        letter-spacing: 0.5px;
+        font-weight: 800;
+        margin-bottom: 20px;
+        font-size: 1.1rem;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
 
     .side-panel-text {
         color: var(--text-muted);
-        font-size: 0.85rem;
+        font-size: 0.9rem;
         line-height: 1.7;
     }
 
+        .side-panel-text p {
+            margin-bottom: 12px;
+            padding-left: 15px;
+            position: relative;
+        }
+
+            .side-panel-text p::before {
+                content: '>';
+                position: absolute;
+                left: 0;
+                color: var(--accent-cyan);
+                font-weight: bold;
+            }
+
     .side-panel-divider {
         border-color: var(--border-color);
-        margin: 15px 0;
+        margin: 20px 0;
     }
 
     .status-badge {
@@ -284,42 +459,197 @@
         background: rgba(152, 195, 121, 0.1);
         color: var(--success-color);
         border: 1px solid rgba(152, 195, 121, 0.3);
-        padding: 8px 16px;
+        padding: 10px 16px;
         border-radius: 6px;
         font-size: 0.85rem;
-        font-weight: 600;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        width: 100%;
+        justify-content: center;
     }
 
     .empty-state {
         text-align: center;
-        padding: 50px 20px;
-        border: 2px dashed var(--border-color);
-        border-radius: 10px;
-        background: rgba(26, 35, 50, 0.5);
+        padding: 60px 20px;
+        border: 1px dashed var(--accent-cyan);
+        border-radius: 12px;
+        background: rgba(78, 195, 209, 0.05);
     }
 
     .loading-container {
         text-align: center;
-        padding: 60px 20px;
+        padding: 80px 20px;
     }
 
-    .move-buttons {
+    /* === МОДАЛЬНЫЕ ОКНА === */
+    .cyber-modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(11, 15, 23, 0.85);
+        backdrop-filter: blur(8px);
+        z-index: 2147483647;
         display: flex;
-        gap: 4px;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        animation: fadeIn 0.3s forwards;
+    }
+
+    @@keyframes fadeIn {
+        to {
+            opacity: 1;
+        }
+    }
+
+    .cyber-modal-content {
+        width: 90%;
+        max-width: 1000px;
+        max-height: 90vh;
+        background: var(--bg-card);
+        border: 1px solid var(--accent-cyan);
+        border-radius: 12px;
+        box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(78, 195, 209, 0.1);
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        transform: translateY(20px);
+        animation: slideUp 0.3s forwards ease-out;
+    }
+
+    /* Модификатор ширины для окна подтверждения удаления */
+    .confirm-modal {
+        max-width: 500px !important;
+    }
+
+    @@keyframes slideUp {
+        to {
+            transform: translateY(0);
+        }
+    }
+
+    .modal-header {
+        padding: 25px 30px;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 12px 12px 0 0;
+    }
+
+    .modal-title-group {
+        flex-grow: 1;
+    }
+
+    .modal-title {
+        color: var(--accent-cyan);
+        font-size: 1.6rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        margin: 0;
+    }
+
+    .modal-close-btn {
+        background: transparent;
+        border: 1px solid var(--border-color);
+        color: var(--text-muted);
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+        .modal-close-btn:hover {
+            color: var(--danger-color);
+            border-color: var(--danger-color);
+            background: rgba(224, 108, 117, 0.1);
+        }
+
+    .modal-body {
+        padding: 30px;
+        overflow-y: auto;
+        flex-grow: 1;
+    }
+
+    .modal-text {
+        color: var(--text-light);
+        font-size: 1rem;
+        line-height: 1.8;
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    .attachments-section {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px dashed var(--border-color);
+    }
+
+    .attachments-label {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 15px;
+        font-weight: 700;
+    }
+
+    .attachment-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(78, 195, 209, 0.1);
+        color: var(--accent-cyan);
+        border: 1px solid rgba(78, 195, 209, 0.3);
+        padding: 8px 16px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 0.9rem;
+        margin-right: 10px;
+        margin-bottom: 10px;
+        transition: all 0.2s;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+        .attachment-link:hover {
+            background: rgba(78, 195, 209, 0.2);
+            border-color: var(--accent-cyan);
+            color: var(--text-light);
+            box-shadow: 0 0 10px rgba(78, 195, 209, 0.3);
+        }
+
+    @@media (max-width: 1024px) {
+        .content-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .side-panel {
+            position: relative;
+            top: 0;
+        }
     }
 </style>
 
 <div class="instruction-container p-4">
     <div class="page-header">
         <div class="header-text">
-            <h1>Руководство оператора киберполигона</h1>
-            <p>Информационно-аналитический департамент // Инструкции по работе с системой</p>
+            <h1>Руководство пользователей Киберполигона</h1>
+            <p>Информационно-аналитический отдел Департамента охраны // Инструкции по работе с ситемой</p>
         </div>
 
         <AuthorizeView Roles="Admin">
-            @* Переход на новую отдельную страницу *@
             <button type="button" class="btn-primary-gradient" @onclick="@(() => NavigationManager.NavigateTo("/instruction/edit"))">
-                <RadzenIcon Icon="add" Style="font-size: 1.2rem; margin-top: -2px;" /> Новая инструкция
+                <RadzenIcon Icon="add_circle" Style="font-size: 1.2rem;" /> Создать блок
             </button>
         </AuthorizeView>
     </div>
@@ -329,85 +659,154 @@
             @if (isLoading)
             {
                 <div class="loading-container">
-                    <RadzenProgressBar Mode="ProgressBarMode.Indeterminate" Style="background-color: var(--border-color);" />
-                    <p style="color: var(--text-muted); margin-top: 15px; font-size: 0.9rem;">ЧТЕНИЕ ДАННЫХ ИЗ РЕПОЗИТОРИЯ...</p>
+                    <RadzenProgressBar Mode="ProgressBarMode.Indeterminate" Style="background-color: var(--border-color); height: 6px;" />
+                    <p style="color: var(--accent-cyan); margin-top: 15px; font-size: 0.9rem; font-weight: bold; letter-spacing: 2px;">ЗАГРУЗКА РЕЕСТРА...</p>
                 </div>
             }
             else if (!instructions.Any())
             {
                 <div class="empty-state">
-                    <RadzenIcon Icon="folder_open" Style="font-size: 3rem; color: var(--border-color); margin-bottom: 15px;" />
-                    <p style="color: var(--text-muted); font-size: 0.95rem;">База знаний пуста. Добавьте первую инструкцию через терминал управления.</p>
+                    <RadzenIcon Icon="data_object" Style="font-size: 4rem; color: var(--accent-cyan); margin-bottom: 15px; filter: drop-shadow(0 0 10px rgba(78,195,209,0.5));" />
+                    <p style="color: var(--text-light); font-size: 1.1rem; font-weight: 600; text-transform: uppercase;">База знаний пуста</p>
+                    <p style="color: var(--text-muted); font-size: 0.9rem;">Добавьте первую инструкцию через терминал управления.</p>
                 </div>
             }
             else
             {
-                <RadzenAccordion Multiple="true" class="cyber-accordion">
-                    <Items>
-                        @for (int i = 0; i < instructions.Count; i++)
-                        {
-                            var item = instructions[i];
-                            var index = i;
+                <div class="modules-grid">
+                    @for (int i = 0; i < instructions.Count; i++)
+                    {
+                        var item = instructions[i];
+                        var index = i;
 
-                            <RadzenAccordionItem Text="@item.Title" Icon="@item.IconName">
-                                <div class="instruction-item">
-                                    <AuthorizeView Roles="Admin">
-                                        <div class="instruction-actions">
-                                            <div class="move-buttons">
-                                                <button class="btn-icon move" title="Вверх" disabled="@(index == 0)" @onclick="@(() => MoveInstruction(index, -1))">
-                                                    <RadzenIcon Icon="arrow_upward" />
-                                                </button>
-                                                <button class="btn-icon move" title="Вниз" disabled="@(index == instructions.Count - 1)" @onclick="@(() => MoveInstruction(index, 1))">
-                                                    <RadzenIcon Icon="arrow_downward" />
-                                                </button>
-                                            </div>
-                                            @* Переход на редактирование по Id *@
-                                            <button class="btn-icon edit" title="Редактировать" @onclick="@(() => NavigationManager.NavigateTo($"/instruction/edit/{item.Id}"))">
-                                                <RadzenIcon Icon="edit" />
-                                            </button>
-                                            <button class="btn-icon delete" title="Удалить" @onclick="@(() => DeleteInstruction(item.Id))">
-                                                <RadzenIcon Icon="delete" />
-                                            </button>
-                                        </div>
-                                    </AuthorizeView>
+                        <div class="module-card">
+                            <div class="module-visual">
+                                <div class="scanline"></div>
+                                <span class="cyber-badge">БЛОК #@(index + 1)</span>
+                                <RadzenIcon Icon="@item.IconName" class="module-icon" />
+                            </div>
 
-                                    <div class="pe-5">
-                                        <p class="instruction-text">@item.Description</p>
+                            <div class="module-content">
+                                <div class="module-title">@item.Title</div>
 
-                                        @if (item.Attachments != null && item.Attachments.Any())
-                                        {
-                                            <div class="attachments-section">
-                                                <div class="attachments-label">СВЯЗАННЫЕ ФАЙЛЫ:</div>
-                                                <div>
-                                                    @foreach (var file in item.Attachments)
-                                                    {
-                                                        <a href="@file.FilePath" download="@file.FileName" class="attachment-link">
-                                                            <RadzenIcon Icon="file_download" style="font-size: 0.9rem;" /> @file.FileName
-                                                        </a>
-                                                    }
-                                                </div>
-                                            </div>
-                                        }
+                                <div class="instruction-text-preview">@item.Description</div>
+
+                                @if (item.Attachments != null && item.Attachments.Any())
+                                {
+                                    <div class="mb-3" style="color: var(--accent-blue); font-size: 0.8rem; font-weight: 600; text-transform: uppercase;">
+                                        <RadzenIcon Icon="attach_file" style="font-size: 0.9rem;" /> Вложений: @item.Attachments.Count
+                                    </div>
+                                }
+
+                                <button class="btn-read-more" @onclick="() => OpenInstruction(item)">Подробнее</button>
+                            </div>
+
+                            <AuthorizeView Roles="Admin">
+                                <div class="admin-card-footer">
+                                    <div class="move-buttons">
+                                        <button class="btn-icon move" title="Переместить вверх" disabled="@(index == 0)" @onclick="@(() => MoveInstruction(index, -1))">
+                                            <RadzenIcon Icon="keyboard_arrow_up" />
+                                        </button>
+                                        <button class="btn-icon move" title="Переместить вниз" disabled="@(index == instructions.Count - 1)" @onclick="@(() => MoveInstruction(index, 1))">
+                                            <RadzenIcon Icon="keyboard_arrow_down" />
+                                        </button>
+                                    </div>
+                                    <div class="action-buttons">
+                                        <button class="btn-icon edit" title="Редактировать" @onclick="@(() => NavigationManager.NavigateTo($"/instruction/edit/{item.Id}"))">
+                                            <RadzenIcon Icon="edit" />
+                                        </button>
+                                        <button class="btn-icon delete" title="Удалить" @onclick="@(() => ShowDeleteConfirmation(item.Id))">
+                                            <RadzenIcon Icon="delete_forever" />
+                                        </button>
                                     </div>
                                 </div>
-                            </RadzenAccordionItem>
-                        }
-                    </Items>
-                </RadzenAccordion>
+                            </AuthorizeView>
+                        </div>
+                    }
+                </div>
             }
         </div>
 
         <div class="side-panel">
-            <h5 class="side-panel-title">// ОБЩИЙ РЕГЛАМЕНТ ТЕСТИРОВАНИЯ</h5>
+            <h5 class="side-panel-title">
+                <RadzenIcon Icon="gavel" Style="font-size: 1.4rem;" />
+                ОБЩИЙ РЕГЛАМЕНТ
+            </h5>
             <div class="side-panel-text">
-                <p>1. Перед началом выполнения сценария убедитесь, что выделенный VPN-туннель стабилен и логи пишутся в SIEM.</p>
-                <p>2. Любые действия, выходящие за рамки ТЗ сценария (сканирование подсетей департамента, брутфорс смежных узлов), классифицируются как нарушение регламента.</p>
-                <p>3. Время прохождения попытки фиксируется автоматически. Кнопка «Завершить» отправляет слепок вашей сессии на проверку.</p>
+                <p>Перед началом ознакомтесь с соответствующими инструкциями и изучите легенду сценария.</p>
+                <p>Любые действия, выходящие за рамки ТЗ сценария (сканирование подсетей департамента, брутфорс смежных узлов), предоствления ответов другим сотрудникам проходящих сценарии/тесты будут классифицироваться как нарушение регламента.</p>
+                <p>Время прохождения, попытки фиксируются автоматически. Кнопка «Завершить» отправляет данные вашей сессии на проверку.</p>
+                <p>По всем вопросам, на которые вы не нашли ответ, обращаться к сотрудникам ГОИБ ИАО Департамента охраны.</p>
                 <hr class="side-panel-divider" />
                 <div class="status-badge">
-                    <RadzenIcon Icon="verified" style="font-size: 1rem;" /> СТАТУС ИАО.БЕЗ АКТИВЕН
+                    <RadzenIcon Icon="verified_user" style="font-size: 1.1rem;" /> Хороших результатов
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+@* ПОЛНОЭКРАННОЕ ОКНО ЧТЕНИЯ ИНСТРУКЦИИ *@
+@if (selectedInstruction != null)
+{
+    <div class="cyber-modal-overlay" @onclick="CloseInstruction">
+        <div class="cyber-modal-content" @onclick:stopPropagation>
+            <div class="modal-header">
+                <RadzenIcon Icon="@selectedInstruction.IconName" Style="font-size: 2.8rem; color: var(--accent-cyan);" />
+                <div class="modal-title-group">
+                    <h3 class="modal-title">@selectedInstruction.Title</h3>
+                    <div style="color: var(--text-muted); font-size: 0.8rem; font-family: monospace; letter-spacing: 1px; margin-top: 5px;">SYS.DOC_ID: @selectedInstruction.Id // РЕЖИМ ЧТЕНИЯ</div>
+                </div>
+                <button class="modal-close-btn" @onclick="CloseInstruction" title="Закрыть">
+                    <RadzenIcon Icon="close" />
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div class="modal-text">@selectedInstruction.Description</div>
+
+                @if (selectedInstruction.Attachments != null && selectedInstruction.Attachments.Any())
+                {
+                    <div class="attachments-section">
+                        <div class="attachments-label">СВЯЗАННЫЕ ФАЙЛЫ ДОКУМЕНТА:</div>
+                        <div>
+                            @foreach (var file in selectedInstruction.Attachments)
+                            {
+                                <a href="@file.FilePath" download="@file.FileName" class="attachment-link" target="_blank">
+                                    <RadzenIcon Icon="file_download" style="font-size: 1rem;" /> @file.FileName
+                                </a>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@* КАСТОМНОЕ ОКНО ПОДТВЕРЖДЕНИЯ УДАЛЕНИЯ *@
+@if (itemToDeleteId.HasValue)
+{
+    <div class="cyber-modal-overlay" @onclick="HideDeleteConfirmation">
+        <div class="cyber-modal-content confirm-modal" @onclick:stopPropagation style="border-color: var(--danger-color);">
+            <div class="modal-header" style="border-bottom-color: var(--danger-color); background: rgba(224, 108, 117, 0.1);">
+                <RadzenIcon Icon="warning" Style="font-size: 2.8rem; color: var(--danger-color);" />
+                <div class="modal-title-group">
+                    <h3 class="modal-title" style="color: var(--danger-color);">Внимание</h3>
+                    <div style="color: var(--text-muted); font-size: 0.8rem; font-family: monospace; letter-spacing: 1px; margin-top: 5px;">SYS.REQ // DELETE_RECORD</div>
+                </div>
+            </div>
+            <div class="modal-body text-center">
+                <p style="font-size: 1.1rem; margin-bottom: 25px; color: var(--text-light);">Вы уверены, что хотите безвозвратно удалить этот блок инструкций?</p>
+                <div class="d-flex justify-content-center gap-3">
+                    <button class="btn-primary-gradient" style="background: linear-gradient(90deg, var(--danger-color), #b74b54);" @onclick="ExecuteDelete">
+                        <RadzenIcon Icon="delete_forever" /> Подтвердить удаление
+                    </button>
+                    <button class="btn-outline-light" @onclick="HideDeleteConfirmation">
+                        Отмена
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}

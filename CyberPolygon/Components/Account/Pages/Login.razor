@@ -12,13 +12,15 @@
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 
-<PageTitle>Авторизация | КиберПолигон</PageTitle>
+<PageTitle>Авторизация | Киберполигон</PageTitle>
 
 <style>
+    /* Строгая киберпанк-тема */
     :root {
-        --bg-main: #1e1e1e;
-        --bg-card: #1a2332;
-        --bg-input: #131924;
+        --bg-main: #0b0f17;
+        --bg-card: #131924;
+        --bg-card-hover: #1a2435;
+        --bg-input: #0d1117;
         --text-muted: #8fa0b5;
         --text-light: #cbe0f5;
         --accent-blue: #5ba3e3;
@@ -30,9 +32,20 @@
         --danger-color: #e06c75;
     }
 
-    /* Обертка на весь экран */
+    html, body {
+        background-color: var(--bg-main) !important;
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden; /* Убираем скролл на странице входа */
+    }
+
+    /* Обертка на весь экран с фоновой сеткой */
     .cyber-login-wrapper {
         background-color: var(--bg-main);
+        background-image: radial-gradient(rgba(78, 195, 209, 0.05) 1px, transparent 1px), radial-gradient(rgba(78, 195, 209, 0.05) 1px, transparent 1px);
+        background-position: 0 0, 25px 25px;
+        background-size: 50px 50px;
         min-height: 100vh;
         display: flex;
         align-items: center;
@@ -41,88 +54,286 @@
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
-    /* Основной контейнер авторизации */
+    /* Основной контейнер */
     .cyber-login-container {
-        background-color: var(--bg-card);
-        border: 1px solid var(--border-color);
-        border-radius: 12px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
-        overflow: hidden;
         width: 100%;
-        max-width: 1000px;
-        min-height: 550px;
+        max-width: 1100px;
+        display: flex;
+        border-radius: 12px;
+        box-shadow: 0 0 50px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(78, 195, 209, 0.1);
+        border: 1px solid var(--border-color);
+        overflow: hidden;
+        background: rgba(19, 25, 36, 0.85);
+        backdrop-filter: blur(10px);
     }
 
-    /* Левая панель с логотипом */
+    /* ====================================================
+           ЛЕВАЯ ПАНЕЛЬ: АНИМИРОВАННАЯ ПЛАНЕТА И ОПИСАНИЕ
+           ==================================================== */
     .cyber-left-panel {
-        background: linear-gradient(135deg, #1a2332 0%, #131924 100%);
+        flex: 1;
+        background: linear-gradient(135deg, rgba(19, 25, 36, 0.5) 0%, rgba(11, 15, 23, 0.8) 100%);
         border-right: 1px solid var(--border-color);
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        padding: 40px;
+        padding: 50px 40px;
         position: relative;
         text-align: center;
     }
 
-    .cyber-title {
-        color: var(--text-light);
-        font-weight: bold;
-        letter-spacing: 1px;
+    /* CSS Анимация 3D Планеты (Кибер-глобус) */
+    .cyber-globe-container {
+        position: relative;
+        width: 240px;
+        height: 240px;
+        perspective: 1000px;
+        margin-bottom: 40px;
     }
 
-    /* Правая панель с формой */
-    .cyber-right-panel {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        padding: 40px 10%;
-        background-color: var(--bg-card);
+    .cyber-globe {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        transform-style: preserve-3d;
+        animation: rotateGlobe 15s linear infinite;
     }
 
-    .form-header {
-        color: var(--accent-light-blue);
-        margin-bottom: 20px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        font-weight: bold;
-        text-transform: uppercase;
+    .globe-ring {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        border: 1px solid rgba(78, 195, 209, 0.4);
+        box-sizing: border-box;
     }
 
-    /* Стилизация полей ввода */
-    .form-floating > .form-control.cyber-input {
-        background-color: var(--bg-input);
-        border: 1px solid var(--border-color);
-        color: var(--text-light);
-        border-radius: 8px;
-        transition: all 0.3s ease;
-    }
-
-        .form-floating > .form-control.cyber-input:focus {
-            border-color: var(--accent-cyan);
-            box-shadow: 0 0 10px rgba(78, 195, 209, 0.2);
+        .globe-ring:nth-child(1) {
+            transform: rotateY(0deg);
         }
 
-    .form-floating > label {
-        color: var(--text-muted);
+        .globe-ring:nth-child(2) {
+            transform: rotateY(45deg);
+        }
+
+        .globe-ring:nth-child(3) {
+            transform: rotateY(90deg);
+        }
+
+        .globe-ring:nth-child(4) {
+            transform: rotateY(135deg);
+        }
+
+    /* Горизонтальное кольцо (экватор) */
+    .globe-ring-horizontal {
+        position: absolute;
+        top: 50%;
+        left: -10%;
+        width: 120%;
+        height: 120%;
+        border-radius: 50%;
+        border: 2px solid rgba(91, 163, 227, 0.6);
+        box-shadow: 0 0 15px rgba(91, 163, 227, 0.4), inset 0 0 15px rgba(91, 163, 227, 0.4);
+        transform: translateY(-50%) rotateX(75deg);
+        box-sizing: border-box;
     }
 
-    .form-floating > .form-control.cyber-input:focus ~ label,
-    .form-floating > .form-control.cyber-input:not(:placeholder-shown) ~ label {
+    .globe-core {
+        position: absolute;
+        top: 25%;
+        left: 25%;
+        width: 50%;
+        height: 50%;
+        background: radial-gradient(circle, rgba(78,195,209,0.3) 0%, transparent 70%);
+        border-radius: 50%;
+        box-shadow: 0 0 30px rgba(78, 195, 209, 0.5);
+        animation: pulseCore 3s ease-in-out infinite;
+    }
+
+    @@keyframes rotateGlobe {
+        0% {
+            transform: rotateX(15deg) rotateY(0deg);
+        }
+
+        100% {
+            transform: rotateX(15deg) rotateY(360deg);
+        }
+    }
+
+    @@keyframes pulseCore {
+        0%, 100% {
+            transform: scale(1);
+            opacity: 0.8;
+        }
+
+        50% {
+            transform: scale(1.2);
+            opacity: 1;
+        }
+    }
+
+    /* Текст описания */
+    .platform-info h1 {
         color: var(--accent-cyan);
+        font-weight: 900;
+        font-size: 2.2rem;
+        letter-spacing: 4px;
+        margin: 0 0 10px 0;
+        text-transform: uppercase;
+        text-shadow: 0 0 20px rgba(78, 195, 209, 0.4);
+    }
+
+    .platform-desc {
+        color: var(--text-light);
+        font-size: 0.95rem;
+        line-height: 1.6;
+        margin: 0 0 25px 0;
+        text-transform: uppercase;
+        letter-spacing: 1px;
         opacity: 0.9;
     }
 
-    /* Автозаполнение браузера */
-    .form-floating > .form-control.cyber-input:-webkit-autofill {
-        -webkit-box-shadow: 0 0 0 1000px var(--bg-input) inset !important;
-        -webkit-text-fill-color: var(--text-light) !important;
-        transition: background-color 5000s ease-in-out 0s;
+    .dev-badge {
+        display: inline-block;
+        background: rgba(91, 163, 227, 0.1);
+        border: 1px solid var(--accent-blue);
+        color: var(--accent-blue);
+        padding: 8px 16px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 800;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        box-shadow: 0 0 10px rgba(91, 163, 227, 0.2);
     }
 
+    /* ====================================================
+           ПРАВАЯ ПАНЕЛЬ: ФОРМА АВТОРИЗАЦИИ (CYBER-SHELL)
+           ==================================================== */
+    .cyber-right-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 40px;
+        justify-content: center;
+    }
+
+    .cyber-shell {
+        background-color: var(--bg-card);
+        border: 1px solid rgba(78, 195, 209, 0.3);
+        border-radius: 8px;
+        box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+        overflow: hidden;
+    }
+
+    .cyber-shell-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 20px;
+        background: linear-gradient(90deg, rgba(78,195,209,0.15) 0%, transparent 100%);
+        border-bottom: 1px solid rgba(78, 195, 209, 0.3);
+        font-family: 'Courier New', Courier, monospace;
+    }
+
+    .shell-title {
+        color: var(--accent-cyan);
+        font-size: 0.9rem;
+        font-weight: bold;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+
+    .shell-status {
+        color: var(--warning-color);
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        letter-spacing: 1px;
+        font-weight: bold;
+    }
+
+    .status-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background-color: var(--warning-color);
+        border-radius: 50%;
+        box-shadow: 0 0 8px var(--warning-color);
+        animation: pulseAuth 2s infinite;
+    }
+
+    @@keyframes pulseAuth {
+        0%, 100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.4;
+        }
+    }
+
+    .cyber-shell-body {
+        padding: 30px 40px;
+    }
+
+    .cyber-label {
+        color: var(--accent-light-blue);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
+        display: block;
+        font-weight: 700;
+    }
+
+    /* Инпуты */
+    .dark-input {
+        background-color: var(--bg-input) !important;
+        border: 1px solid var(--border-color) !important;
+        color: var(--text-light) !important;
+        border-radius: 6px !important;
+        padding: 12px 15px;
+        width: 100%;
+        transition: all 0.3s ease;
+        font-family: monospace;
+        font-size: 1.05rem;
+    }
+
+        .dark-input:focus {
+            border-color: var(--accent-cyan) !important;
+            box-shadow: 0 0 15px rgba(78, 195, 209, 0.2) !important;
+            outline: none;
+        }
+
+        .dark-input::placeholder {
+            color: #4a5a6a !important;
+            font-style: italic;
+        }
+
+        /* Автозаполнение браузера (фикс белого фона) */
+        .dark-input:-webkit-autofill,
+        .dark-input:-webkit-autofill:hover,
+        .dark-input:-webkit-autofill:focus,
+        .dark-input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px var(--bg-input) inset !important;
+            -webkit-text-fill-color: var(--text-light) !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+
     /* Чекбокс */
+    .cyber-checkbox-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 25px;
+    }
+
     .cyber-checkbox {
         background-color: var(--bg-input);
         border: 1px solid var(--border-color);
@@ -130,129 +341,180 @@
         width: 18px;
         height: 18px;
         border-radius: 4px;
+        accent-color: var(--accent-cyan);
     }
-
-        .cyber-checkbox:checked {
-            background-color: var(--accent-cyan);
-            border-color: var(--accent-cyan);
-        }
 
     .checkbox-label {
         color: var(--text-muted);
         cursor: pointer;
         user-select: none;
-        font-size: 0.95rem;
-    }
-
-    /* Кнопка входа */
-    .btn-primary-gradient {
-        background: linear-gradient(135deg, #4ec3d1 0%, #5ba3e3 100%);
-        color: #1a1d21;
-        font-weight: bold;
-        border: none;
-        padding: 14px 24px;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.3s;
+        font-size: 0.85rem;
         text-transform: uppercase;
         letter-spacing: 1px;
-        width: 100%;
-        margin-top: 10px;
+        font-weight: 600;
     }
 
-        .btn-primary-gradient:hover {
+    /* Кнопка */
+    .btn-main {
+        background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue));
+        color: var(--bg-main);
+        font-weight: 900;
+        border: none;
+        padding: 14px 24px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+        .btn-main:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(78, 195, 209, 0.4);
+            box-shadow: 0 6px 25px rgba(78, 195, 209, 0.4);
         }
 
-    .cyber-hr {
-        border-top: 1px solid var(--border-color);
-        margin: 20px 0;
-    }
-
-    /* Блок вывода ошибки */
+    /* Ошибки */
     .error-alert {
         background-color: rgba(224, 108, 117, 0.1);
         border: 1px solid var(--danger-color);
         color: var(--danger-color);
         padding: 12px 15px;
-        border-radius: 8px;
+        border-radius: 6px;
         margin-bottom: 20px;
         display: flex;
         align-items: center;
         gap: 10px;
-        font-size: 0.9rem;
-        font-weight: 500;
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .validation-message {
+        color: var(--danger-color);
+        font-size: 0.75rem;
+        margin-top: 6px;
+        display: block;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+
+    /* Адаптивность */
+    @@media (max-width: 900px) {
+        .cyber-login-container {
+            flex-direction: column;
+            max-width: 500px;
+            overflow-y: auto;
+            max-height: 95vh;
+        }
+
+        .cyber-left-panel {
+            padding: 40px 20px;
+            border-right: none;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .cyber-right-panel {
+            padding: 30px 20px;
+        }
+
+        .cyber-globe-container {
+            width: 150px;
+            height: 150px;
+            margin-bottom: 25px;
+        }
     }
 </style>
 
 <div class="cyber-login-wrapper">
-    <RadzenRow Gap="0" class="cyber-login-container">
+    <div class="cyber-login-container">
 
-        @* Левая часть (Брендирование) *@
-        <RadzenColumn Size="12" SizeMD="6" class="cyber-left-panel">
-            <div class="mb-4">
-                <img src="images/logo.png" alt="Logo" style="max-width: 280px; height: auto;" />
+        @* Левая часть (Голограмма и описание) *@
+        <div class="cyber-left-panel">
+            <!-- Анимированная Кибер-Планета -->
+            <div class="cyber-globe-container">
+                <div class="cyber-globe">
+                    <div class="globe-ring"></div>
+                    <div class="globe-ring"></div>
+                    <div class="globe-ring"></div>
+                    <div class="globe-ring"></div>
+                    <div class="globe-ring-horizontal"></div>
+                    <div class="globe-core"></div>
+                </div>
             </div>
 
-            <h2 class="cyber-title mb-2" style="font-size: 2.2rem; text-transform: uppercase;">Добро пожаловать</h2>
-            <h3 class="cyber-title mb-4" style="font-size: 1.5rem; color: var(--accent-light-blue);">В КиберПолигон</h3>
+            <div class="platform-info">
+                <h1>КИБЕРПОЛИГОН</h1>
+                <p class="platform-desc">
+                    Платформа для тестирования и<br />
+                    обучения сотрудников информационной безопасности
+                </p>
+                <div class="dev-badge">Разработано сотрудниками Информационно-аналитическим отделом Департамента охраны</div>
+            </div>
+        </div>
 
-            <p style="color: var(--text-muted); font-size: 0.95rem;">
-                СИСТЕМА АВТОРИЗАЦИИ // ИАО<br />
-                Введите свои учетные данные для доступа к инфраструктуре.
-            </p>
-        </RadzenColumn>
-
-        @* Правая часть (Форма авторизации) *@
-        <RadzenColumn Size="12" SizeMD="6" class="cyber-right-panel">
-            <EditForm EditContext="editContext" method="post" OnSubmit="LoginUser" FormName="login">
-                <DataAnnotationsValidator />
-
-                <h3 class="form-header">
-                    <RadzenIcon Icon="lock" Style="font-size: 1.8rem;" /> ТЕРМИНАЛ ДОСТУПА
-                </h3>
-
-                <hr class="cyber-hr" />
-
-                @* ВЫВОД ОШИБКИ АВТОРИЗАЦИИ *@
-                @if (!string.IsNullOrEmpty(errorMessage))
-                {
-                    <div class="error-alert">
-                        <RadzenIcon Icon="error_outline" Style="font-size: 1.2rem;" />
-                        <span>@errorMessage</span>
+        @* Правая часть (Терминал авторизации) *@
+        <div class="cyber-right-panel">
+            <div class="cyber-shell">
+                <div class="cyber-shell-header">
+                    <div class="shell-title">
+                        <RadzenIcon Icon="terminal" Style="font-size: 1.1rem; margin-top: -2px;" />
+                        SYS.AUTH_GATEWAY
                     </div>
-                }
-
-                <ValidationSummary class="mb-3" style="color: var(--danger-color); font-size: 0.85rem;" role="alert" />
-
-                <div class="form-floating mb-4">
-                    <InputText @bind-Value="Input.UserName" id="Input.UserName" class="form-control cyber-input" autocomplete="username webauthn" aria-required="true" placeholder="name@example.com" />
-                    <label for="Input.UserName">Логин (Идентификатор)</label>
-                    <ValidationMessage For="() => Input.UserName" style="color: var(--danger-color); font-size: 0.8rem; margin-top: 5px;" />
+                    <div class="shell-status">
+                        <span class="status-dot"></span> AUTH_REQUIRED
+                    </div>
                 </div>
 
-                <div class="form-floating mb-4">
-                    <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control cyber-input" autocomplete="current-password" aria-required="true" placeholder="пароль" />
-                    <label for="Input.Password">Ключ доступа (Пароль)</label>
-                    <ValidationMessage For="() => Input.Password" style="color: var(--danger-color); font-size: 0.8rem; margin-top: 5px;" />
+                <div class="cyber-shell-body">
+                    <EditForm EditContext="editContext" method="post" OnSubmit="LoginUser" FormName="login">
+                        <DataAnnotationsValidator />
+
+                        @if (!string.IsNullOrEmpty(errorMessage))
+                        {
+                            <div class="error-alert">
+                                <RadzenIcon Icon="error_outline" Style="font-size: 1.2rem;" />
+                                <span>@errorMessage</span>
+                            </div>
+                        }
+
+                        <ValidationSummary class="mb-3" style="color: var(--danger-color); font-size: 0.8rem; font-weight: bold; text-transform: uppercase;" role="alert" />
+
+                        <div class="mb-4">
+                            <label class="cyber-label" for="Input.UserName">Логин (Идентификатор)</label>
+                            <InputText @bind-Value="Input.UserName" id="Input.UserName" class="dark-input" autocomplete="username webauthn" aria-required="true" placeholder="name@example.com" />
+                            <ValidationMessage For="() => Input.UserName" class="validation-message" />
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="cyber-label" for="Input.Password">Ключ доступа (Пароль)</label>
+                            <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="dark-input" autocomplete="current-password" aria-required="true" placeholder="••••••••" />
+                            <ValidationMessage For="() => Input.Password" class="validation-message" />
+                        </div>
+
+                        <div class="cyber-checkbox-container">
+                            <InputCheckbox @bind-Value="Input.RememberMe" id="Input.RememberMe" class="cyber-checkbox" />
+                            <label class="checkbox-label" for="Input.RememberMe">
+                                Сохранить токен сессии
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn-main">
+                            <RadzenIcon Icon="login" Style="font-size: 1.2rem;" /> ИНИЦИАЛИЗАЦИЯ
+                        </button>
+
+                    </EditForm>
                 </div>
+            </div>
+        </div>
 
-                <div class="checkbox mb-4 d-flex align-items-center gap-2">
-                    <InputCheckbox @bind-Value="Input.RememberMe" id="Input.RememberMe" class="form-check-input cyber-checkbox m-0" />
-                    <label class="checkbox-label m-0" for="Input.RememberMe">
-                        Сохранить сессию
-                    </label>
-                </div>
-
-                <div class="mt-2">
-                    <button type="submit" class="btn-primary-gradient">Инициализировать соединение</button>
-                </div>
-
-            </EditForm>
-        </RadzenColumn>
-
-    </RadzenRow>
+    </div>
 </div>
 
 @code {

@@ -1,8 +1,10 @@
 ﻿@using CyberPolygon.Data
 @using CyberPolygon.Services
 @using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
 @using Radzen
 @using Radzen.Blazor
+@implements IDisposable
 @inject AuthenticationStateProvider AuthProvider
 @inject UserManager<ApplicationUser> UserManager
 @inject SignInManager<ApplicationUser> SignInManager
@@ -12,14 +14,15 @@
 @rendermode InteractiveServer
 
 <style>
+    /* Строгая киберпанк-тема */
     :root {
-        --bg-main: #1e1e1e;
-        --bg-card: #1a2332;
-        --bg-card-hover: #1e2d3d;
+        --bg-main: #0b0f17;
+        --bg-card: #131924;
+        --bg-card-hover: #1a2435;
         --text-muted: #8fa0b5;
         --text-light: #cbe0f5;
-        --accent-blue: #5ba3e3;
         --accent-cyan: #4ec3d1;
+        --accent-blue: #5ba3e3;
         --accent-light-blue: #7ec8f8;
         --border-color: #2a3a4a;
     }
@@ -28,89 +31,74 @@
         display: none;
     }
 
+    /* Главный контейнер навигации */
     .nav-bar {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        background: linear-gradient(135deg, #1a2332 0%, #1e2d3d 100%);
-        border-bottom: 2px solid var(--border-color);
-        padding: 0 1.5rem;
-        min-height: 64px;
+        background-color: rgba(19, 25, 36, 0.95);
+        border-bottom: 1px solid var(--accent-cyan);
+        box-shadow: 0 0 25px rgba(0, 0, 0, 0.8), inset 0 -2px 15px rgba(78, 195, 209, 0.1);
+        backdrop-filter: blur(10px);
+        padding: 0 25px;
+        min-height: 70px;
         flex-wrap: wrap;
-        z-index: 100;
         position: relative;
+        z-index: 2147483647 !important;
     }
 
-        .nav-bar::after {
-            content: '';
-            position: absolute;
-            bottom: -2px;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, var(--accent-cyan) 0%, rgba(78, 195, 209, 0) 80%);
-        }
-
+    /* Логотип */
     .cyber-logo-container {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 15px;
         padding: 10px 0;
     }
 
-    .shield-icon {
-        font-size: 28px;
-        filter: drop-shadow(0 0 10px rgba(78, 195, 209, 0.7));
-        animation: shieldPulse 3s ease-in-out infinite;
+    .nav-shield-icon {
+        font-size: 2.2rem !important;
+        color: var(--accent-cyan);
+        filter: drop-shadow(0 0 12px rgba(78, 195, 209, 0.6));
+    }
+
+    .logo-text-wrapper {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
 
     .logo-title {
-        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        font-size: 18px;
-        margin: 0;
-        line-height: 1;
-        letter-spacing: 1px;
-    }
-
-    .text-cyan {
-        color: var(--accent-cyan);
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        font-size: 1.3rem;
         font-weight: 800;
-    }
-
-    .text-gray {
-        color: var(--text-light);
-        font-weight: 300;
-        margin-left: 2px;
-    }
-
-    .accent-line {
-        height: 1px;
-        background: linear-gradient(90deg, var(--accent-cyan) 0%, rgba(78, 195, 209, 0) 100%);
-        margin: 4px 0;
+        letter-spacing: 5px;
+        color: var(--accent-cyan);
+        text-transform: uppercase;
+        margin: 0;
+        line-height: 1.1;
+        text-shadow: 0 0 15px rgba(78, 195, 209, 0.4);
     }
 
     .logo-subtitle {
         color: var(--text-muted);
-        font-size: 9px;
+        font-size: 0.65rem;
         text-transform: uppercase;
-        letter-spacing: 1.5px;
-        margin: 0;
-        white-space: nowrap;
-    }
-
-    @@keyframes shieldPulse {
-        0%, 100% {
-            transform: scale(1);
-            filter: drop-shadow(0 0 10px rgba(78, 195, 209, 0.7));
-        }
-
-        50% {
-            transform: scale(1.05);
-            filter: drop-shadow(0 0 14px rgba(78, 195, 209, 1));
-        }
+        letter-spacing: 2px;
+        margin: 4px 0 0 0;
+        font-family: 'Courier New', Courier, monospace;
     }
 
     /* === Кастомизация RadzenMenu === */
+    .rz-menu,
+    .rz-navigation,
+    .rz-navigation-menu,
+    .rz-navigation-item,
+    .rz-navigation-item-wrapper,
+    .rz-navigation-item-link {
+        overflow: visible !important;
+        contain: none !important;
+    }
+
     .rz-menu {
         background-color: transparent !important;
         border: none !important;
@@ -126,68 +114,315 @@
     }
 
     .rz-navigation-item {
-        color: var(--text-light) !important;
-        font-weight: 500;
-        transition: all 0.2s ease;
+        color: var(--text-muted) !important;
+        font-weight: 700 !important;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease !important;
         border-radius: 6px !important;
-        margin: 0 2px;
+        margin: 0 4px;
+        background-color: transparent !important;
     }
 
-        .rz-navigation-item:hover {
-            background-color: rgba(78, 195, 209, 0.1) !important;
+    .rz-navigation-item-icon {
+        color: var(--text-muted) !important;
+        transition: color 0.3s ease;
+    }
+
+    .rz-navigation-item:hover {
+        background-color: rgba(78, 195, 209, 0.05) !important;
+        color: var(--accent-cyan) !important;
+    }
+
+        .rz-navigation-item:hover .rz-navigation-item-icon {
             color: var(--accent-cyan) !important;
         }
 
     .rz-navigation-item-active {
-        background-color: rgba(78, 195, 209, 0.12) !important;
-        color: var(--accent-cyan) !important;
-        border-bottom: 2px solid var(--accent-cyan) !important;
-        border-radius: 6px 6px 0 0 !important;
-    }
-
-    .rz-navigation-item-icon {
-        color: var(--accent-light-blue) !important;
-    }
-
-    .rz-navigation-item-active .rz-navigation-item-icon {
-        color: var(--accent-cyan) !important;
-    }
-
-    /* Выпадающие подпункты */
-    .rz-navigation-item-wrapper .rz-navigation-item {
-        background-color: var(--bg-card) !important;
-        color: var(--text-muted) !important;
-        border: 1px solid var(--border-color) !important;
-    }
-
-        .rz-navigation-item-wrapper .rz-navigation-item:hover {
-            background-color: var(--bg-card-hover) !important;
-            color: var(--accent-cyan) !important;
-            border-color: rgba(78, 195, 209, 0.3) !important;
-        }
-
-    /* Мобильная кнопка (гамбургер) */
-    .rz-navigation-menu-toggle {
-        color: var(--accent-cyan) !important;
-        border: 1px solid var(--border-color) !important;
+        background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue)) !important;
+        color: var(--bg-main) !important;
+        box-shadow: 0 4px 15px rgba(78, 195, 209, 0.3) !important;
         border-radius: 6px !important;
     }
 
-        .rz-navigation-menu-toggle:hover {
-            background-color: rgba(78, 195, 209, 0.1) !important;
-            border-color: var(--accent-cyan) !important;
+        .rz-navigation-item-active .rz-navigation-item-icon {
+            color: var(--bg-main) !important;
         }
 
-    /* Адаптивность */
+        .rz-navigation-item-active .rz-navigation-item-text {
+            font-weight: 800 !important;
+        }
+
+    /* === КАСТОМНЫЙ POPOVER ДЛЯ ПРОФИЛЯ === */
+    .profile-menu-item {
+        position: relative !important;
+    }
+
+    .profile-dropdown-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        height: 100%;
+        padding: 8px 12px;
+        cursor: pointer;
+    }
+
+    .profile-trigger {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: inherit;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+        .profile-trigger .rz-icon {
+            font-size: 1.2rem;
+            margin-bottom: 2px;
+        }
+
+    .cyber-profile-popover {
+        position: absolute;
+        top: calc(100% + 10px);
+        right: 0;
+        width: 340px;
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 25px 50px rgba(0,0,0,0.9), 0 0 25px rgba(78, 195, 209, 0.15);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(15px);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 2147483647 !important;
+        cursor: default;
+        color: var(--text-light);
+        text-transform: none;
+        letter-spacing: normal;
+    }
+
+        .cyber-profile-popover::before {
+            content: '';
+            position: absolute;
+            top: -15px;
+            left: 0;
+            width: 100%;
+            height: 15px;
+            background: transparent;
+        }
+
+    .profile-menu-item:hover .cyber-profile-popover,
+    .profile-dropdown-wrapper:hover .cyber-profile-popover {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+        border-color: var(--accent-cyan);
+    }
+
+    .popover-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px dashed rgba(78, 195, 209, 0.3);
+        /* Фикс для предотвращения выезда */
+        min-width: 0;
+    }
+
+    .popover-avatar {
+        font-size: 3.5rem !important;
+        color: var(--accent-cyan);
+        filter: drop-shadow(0 0 10px rgba(78, 195, 209, 0.5));
+        flex-shrink: 0;
+    }
+
+    .popover-header-info {
+        flex: 1;
+        min-width: 0; /* Обязательно для работы text-overflow: ellipsis */
+    }
+
+    .popover-name {
+        color: var(--text-light);
+        font-size: 1.15rem;
+        font-weight: 800;
+        line-height: 1.2;
+        letter-spacing: 0.5px;
+        /* Защита от длинного имени */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .popover-role {
+        color: var(--text-muted);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-top: 6px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .popover-body {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        margin-bottom: 25px;
+    }
+
+    .popover-stat {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.9rem;
+        gap: 15px; /* Зазор между лейблом и значением */
+    }
+
+    .stat-label {
+        color: var(--text-muted);
+        flex-shrink: 0; /* Запрещаем сжатие метки */
+    }
+
+    .stat-val {
+        color: var(--accent-light-blue);
+        font-weight: 600;
+        text-align: right;
+        /* Защита от длинных названий команд/отделов */
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex: 1;
+    }
+
+    .progress-wrapper {
+        margin-top: 5px;
+    }
+
+    .progress-header {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+    }
+
+    .cyber-progress-track {
+        width: 100%;
+        height: 6px;
+        background-color: rgba(0,0,0,0.4);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .cyber-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue));
+        box-shadow: 0 0 10px var(--accent-cyan);
+        transition: width 0.5s ease;
+    }
+
+    .active-scenario-box {
+        background-color: rgba(0,0,0,0.2);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-top: 5px;
+    }
+
+    .scenario-title {
+        color: var(--text-light);
+        font-size: 0.9rem;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .scenario-status {
+        color: var(--accent-cyan);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        letter-spacing: 1px;
+    }
+
+    .btn-popover {
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue));
+        border: none;
+        border-radius: 8px;
+        color: var(--bg-main) !important;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        box-sizing: border-box;
+    }
+
+        .btn-popover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(78, 195, 209, 0.4);
+        }
+
+    .rz-navigation-menu-toggle {
+        color: var(--accent-cyan) !important;
+        border: 1px solid var(--accent-cyan) !important;
+        border-radius: 6px !important;
+        background: rgba(11, 15, 23, 0.8) !important;
+    }
+
+    @@media (max-width: 900px) {
+        .cyber-profile-popover {
+            width: 300px;
+        }
+    }
+
     @@media (max-width: 768px) {
         .nav-bar {
-            padding: 0 1rem;
+            padding: 10px 15px;
             flex-direction: column;
             align-items: flex-start;
         }
 
         .rz-navigation {
             width: 100%;
+            margin-top: 10px;
+        }
+
+        .logo-title {
+            font-size: 1.1rem;
+            letter-spacing: 3px;
+        }
+
+        .cyber-profile-popover {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -40%);
+            width: 90%;
+            max-width: 340px;
+        }
+
+        .profile-menu-item:hover .cyber-profile-popover,
+        .profile-dropdown-wrapper:hover .cyber-profile-popover {
+            transform: translate(-50%, -50%);
         }
     }
 </style>
@@ -199,13 +434,10 @@
 
 <div class="nav-bar">
     <div class="cyber-logo-container">
-        <span class="shield-icon">🛡️</span>
-        <div>
-            <h1 class="logo-title">
-                <span class="text-cyan">КИБЕР</span><span class="text-gray">ПОЛИГОН</span>
-            </h1>
-            <div class="accent-line"></div>
-            <p class="logo-subtitle">Информационная безопасность</p>
+        <RadzenIcon Icon="shield_lock" class="nav-shield-icon" />
+        <div class="logo-text-wrapper">
+            <h1 class="logo-title">КИБЕРПОЛИГОН</h1>
+            <p class="logo-subtitle">SYS.ADMIN_TERMINAL // SECURE</p>
         </div>
     </div>
 
@@ -214,7 +446,71 @@
         <RadzenMenuItem Text="Сценарии" Path="scenario" Icon="crisis_alert" />
         <RadzenMenuItem Text="Тесты" Path="tests" Icon="quiz" />
         <RadzenMenuItem Text="Инструкция" Path="instruction" Icon="menu_book" />
-        <RadzenMenuItem Text="@Nm" Path="profile" Icon="account_box" />
+
+        <!-- Кастомный пункт профиля с классом-якорем и выпадающим окном -->
+        <RadzenMenuItem CssClass="profile-menu-item">
+            <Template>
+                <div class="profile-dropdown-wrapper">
+                    <div class="profile-trigger">
+                        <RadzenIcon Icon="account_box" />
+                        <span>@UserDisplayName</span>
+                    </div>
+
+                    <div class="cyber-profile-popover" @onclick:stopPropagation @onclick:preventDefault>
+                        <div class="popover-header">
+                            <RadzenIcon Icon="account_circle" class="popover-avatar" />
+                            <div class="popover-header-info">
+                                <div class="popover-name" title="@UserDisplayName">@UserDisplayName</div>
+                                <div class="popover-role" title="Допуск: Оперативник">Допуск: Оперативник</div>
+                            </div>
+                        </div>
+
+                        <div class="popover-body">
+                            <div class="popover-stat">
+                                <span class="stat-label">Подразделение:</span>
+                                <span class="stat-val" title="@DepartmentName">@DepartmentName</span>
+                            </div>
+                            <div class="popover-stat">
+                                <span class="stat-label">Команда:</span>
+                                <span class="stat-val" title="@TeamName">@TeamName</span>
+                            </div>
+
+                            <div class="progress-wrapper">
+                                <div class="progress-header">
+                                    <span class="stat-label">Уровень @UserLevel</span>
+                                    <span class="stat-val" style="text-align: right; flex:none;">@UserXpPct%</span>
+                                </div>
+                                <div class="cyber-progress-track">
+                                    <div class="cyber-progress-fill" style="width: @(UserXpPct)%"></div>
+                                </div>
+                            </div>
+
+                            <div class="active-scenario-box">
+                                <span class="stat-label" style="font-size: 0.8rem;">Текущая задача:</span>
+                                @if (HasActiveScenario)
+                                {
+                                    <div class="scenario-title" title="@ActiveScenarioTitle">@ActiveScenarioTitle</div>
+                                    <div class="scenario-status">
+                                        <span class="status-dot" style="background-color: var(--accent-cyan); box-shadow: 0 0 10px var(--accent-cyan);"></span>
+                                        В процессе
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="scenario-title" style="color: var(--text-muted);">Нет активных</div>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="btn-popover" @onclick="GoToProfile">
+                            <RadzenIcon Icon="manage_accounts" Style="font-size: 1.2rem;" />
+                            Перейти в профиль
+                        </div>
+                    </div>
+                </div>
+            </Template>
+        </RadzenMenuItem>
+
         <RadzenMenuItem Text="Панель администратора" Path="admin" Icon="lock" />
         <RadzenMenuItem Text="Выход" Icon="door_open" Click="HandleLogoutClick" />
     </RadzenMenu>
