@@ -288,29 +288,38 @@ namespace CyberPolygon.Components.Pages
 
         private async Task CompleteScenario()
         {
-            StopTimer();
-            if (currentUserProgress != null && currentUserProgress.Id != 0)
+            var result = await DialogService.Confirm(
+               "Вы действительно хотите досрочно завершить тестирование?",
+               "Завершение попытки",
+               new ConfirmOptions() { OkButtonText = "Да, завершить", CancelButtonText = "Продолжить тест" });
+
+            if (result == true)
             {
-                try
+                StopTimer();
+                if (currentUserProgress != null && currentUserProgress.Id != 0)
                 {
-                    using var context = await ContextFactory.CreateDbContextAsync();
-                    var p = await context.Set<UserScenarioProgress>().FindAsync(currentUserProgress.Id);
-                    if (p != null)
+                    try
                     {
-                        p.Status = AttemptStatus.Completed;
-                        p.CompletedAt = DateTime.UtcNow;
-                        context.Set<UserScenarioProgress>().Update(p);
-                        await context.SaveChangesAsync();
+                        using var context = await ContextFactory.CreateDbContextAsync();
+                        var p = await context.Set<UserScenarioProgress>().FindAsync(currentUserProgress.Id);
+                        if (p != null)
+                        {
+                            p.Status = AttemptStatus.Completed;
+                            p.CompletedAt = DateTime.UtcNow;
+                            context.Set<UserScenarioProgress>().Update(p);
+                            await context.SaveChangesAsync();
+                        }
+                        await LoadUserState();
+                        if (scenario!.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue) SessionManager.NotifyTeamUpdate(currentTeamId.Value);
+                        StateHasChanged();
                     }
-                    await LoadUserState();
-                    if (scenario!.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue) SessionManager.NotifyTeamUpdate(currentTeamId.Value);
-                    StateHasChanged();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.Message);
+                    }
                 }
             }
+            
         }
 
         private async void TimerTick(object? state)

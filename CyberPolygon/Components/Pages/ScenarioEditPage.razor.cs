@@ -30,6 +30,8 @@ namespace CyberPolygon.Components.Pages
         private ScenarioDevice? selectedDevice;
         private int selectedTabIndex = 0;
         private bool isIndividual = true;
+
+        // 1. Изменили значения на "Легко, Средне, Сложно"
         private readonly List<string> difficulties = new() { "Легкий", "Средний", "Сложный" };
 
         private bool IsStep1Valid => !string.IsNullOrWhiteSpace(Item.Title);
@@ -57,7 +59,17 @@ namespace CyberPolygon.Components.Pages
             }
             else
             {
-                Item = new CyberScenario { Questions = new List<ScenarioQuestion>(), Documents = new List<ScenarioDocument>(), Devices = new List<ScenarioDevice>(), Connections = new List<ScenarioConnection>(), IsVisible = false, GameMode = ScenarioGameMode.AllAtOnce };
+                // 2. Принудительно задаем Difficulty = "Легко", чтобы перебить дефолтное "Easy" из модели
+                Item = new CyberScenario
+                {
+                    Questions = new List<ScenarioQuestion>(),
+                    Documents = new List<ScenarioDocument>(),
+                    Devices = new List<ScenarioDevice>(),
+                    Connections = new List<ScenarioConnection>(),
+                    IsVisible = false,
+                    GameMode = ScenarioGameMode.AllAtOnce,
+                    Difficulty = "Легко"
+                };
             }
         }
 
