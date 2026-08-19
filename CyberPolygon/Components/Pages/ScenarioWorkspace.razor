@@ -393,16 +393,16 @@
 
     /* Маркеры сети (Hotspots) */
     .network-hotspot {
-        width: 32px;
-        height: 32px;
-        margin-left: -16px;
-        margin-top: -16px;
+        width: 48px;
+        height: 48px;
+        margin-left: -24px;
+        margin-top: -24px;
         z-index: 100;
     }
 
     .hotspot-trigger {
-        width: 32px;
-        height: 32px;
+        width: 48px;
+        height: 48px;
         border-radius: 50%;
         display: flex;
         align-items: center;
@@ -413,7 +413,7 @@
     }
 
         .hotspot-trigger i {
-            font-size: 1.1rem;
+            font-size: 1.6rem;
             color: #1a1d21;
         }
 
@@ -429,14 +429,14 @@
         }
 
         .hotspot-trigger:hover {
-            transform: scale(1.25);
+            transform: scale(1.15);
             z-index: 110;
         }
 
     /* Тултипы карты */
     .hotspot-tooltip {
         position: absolute;
-        top: 42px;
+        top: 58px;
         left: 50%;
         transform: translateX(-50%) translateY(-10px);
         width: 280px;
@@ -703,26 +703,26 @@
                                             <RadzenIcon Icon="restart_alt" /> ЗАПРОСИТЬ ПОВТОР
                                         </button>
                                     }
-                              
+
                                 }
                                 else if (currentUserProgress.Status == AttemptStatus.Failed)
                                 {
-                                <div class="p-4 text-center rounded" style="border: 1px solid var(--danger-color); background: rgba(224,108,117,0.1); box-shadow: inset 0 0 20px rgba(224,108,117,0.1); margin-bottom: 15px;">
-                                    <h4 style="color: var(--danger-color); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;">Миссия провалена</h4>
-                                    <p style="margin: 0; color: var(--text-light); margin-bottom: 20px;">Отведенное время истекло.</p>
-                                </div>
-                                @if (currentUserProgress.IsRetakeRequested)
-                                {
-                                    <button class="btn-outline-light w-100 py-2" disabled style="opacity: 0.5; cursor: not-allowed;">
-                                        <RadzenIcon Icon="pending_actions" /> ЗАПРОС НА ПОВТОР ОТПРАВЛЕН
-                                    </button>
-                                }
-                                else
-                                {
-                                    <button class="btn-main w-100 py-2" style="background: linear-gradient(90deg, var(--warning-color), #c29d59);" @onclick="RequestRetake">
-                                        <RadzenIcon Icon="restart_alt" /> ЗАПРОСИТЬ ПОВТОР
-                                    </button>
-                                }
+                                    <div class="p-4 text-center rounded" style="border: 1px solid var(--danger-color); background: rgba(224,108,117,0.1); box-shadow: inset 0 0 20px rgba(224,108,117,0.1); margin-bottom: 15px;">
+                                        <h4 style="color: var(--danger-color); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;">Миссия провалена</h4>
+                                        <p style="margin: 0; color: var(--text-light); margin-bottom: 20px;">Отведенное время истекло.</p>
+                                    </div>
+                                    @if (currentUserProgress.IsRetakeRequested)
+                                    {
+                                        <button class="btn-outline-light w-100 py-2" disabled style="opacity: 0.5; cursor: not-allowed;">
+                                            <RadzenIcon Icon="pending_actions" /> ЗАПРОС НА ПОВТОР ОТПРАВЛЕН
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn-main w-100 py-2" style="background: linear-gradient(90deg, var(--warning-color), #c29d59);" @onclick="RequestRetake">
+                                            <RadzenIcon Icon="restart_alt" /> ЗАПРОСИТЬ ПОВТОР
+                                        </button>
+                                    }
                                 }
                             </div>
                         </div>
@@ -743,111 +743,111 @@
                             {
                                 <div class="cyber-section" style="padding: 0; border: none; background: transparent;">
 
-                                    <div class="schema-box" style="height: 520px; display: flex; flex-direction: column;">
-                                        <div class="d-flex justify-content-between align-items-center mb-3">
-                                            <h5 style="color: var(--accent-light-blue); font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: 1px;">
-                                                <RadzenIcon Icon="account_tree" Style="margin-top: -3px; margin-right: 5px;" /> Карта инфраструктуры
-                                            </h5>
-                                            <div class="d-flex gap-2 flex-wrap justify-content-end">
-                                                @if (scenario.Devices != null)
-                                                {
+                                    @if (scenario.Devices != null && scenario.Devices.Any())
+                                    {
+                                        <div class="schema-box" style="height: 520px; display: flex; flex-direction: column;">
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <h5 style="color: var(--accent-light-blue); font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: 1px;">
+                                                    <RadzenIcon Icon="account_tree" Style="margin-top: -3px; margin-right: 5px;" /> Карта инфраструктуры
+                                                </h5>
+                                                <div class="d-flex gap-2 flex-wrap justify-content-end">
                                                     @foreach (var device in scenario.Devices)
                                                     {
                                                         <button type="button" class="btn-zoom" @onclick="() => FocusOnDevice(device.MapX, device.MapY)">
                                                             <RadzenIcon Icon="my_location" Style="font-size:1rem; margin-right:4px; margin-top:-2px;" /> @device.Name
                                                         </button>
                                                     }
-                                                }
+                                                </div>
                                             </div>
-                                        </div>
 
-                                        <div style="flex-grow: 1; border-radius: 8px; position: relative; border: 1px solid var(--border-color); overflow: hidden; background: var(--bg-main);">
-                                            <div id="schema-drag-container" style="width: 100%; height: 100%; margin: 0; padding: 0; user-select: none; position: relative; cursor: grab;">
+                                            <div style="flex-grow: 1; border-radius: 8px; position: relative; border: 1px solid var(--border-color); overflow: hidden; background: var(--bg-main);">
+                                                <div id="schema-drag-container" style="width: 100%; height: 100%; margin: 0; padding: 0; user-select: none; position: relative; cursor: grab;">
 
-                                                <div id="topology-move-layer" style="width: @(canvasWidth)px; height: @(canvasHeight)px;">
+                                                    <div id="topology-move-layer" style="width: @(canvasWidth)px; height: @(canvasHeight)px;">
 
-                                                    @if (scenario.Connections != null && scenario.Connections.Any())
-                                                    {
-                                                        <svg style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; overflow: visible;">
-                                                            <defs>
-                                                                <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-                                                                    <feGaussianBlur stdDeviation="3" result="blur" />
-                                                                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                                                                </filter>
-                                                            </defs>
-
-                                                            @foreach (var conn in scenario.Connections)
-                                                            {
-                                                                var fromNode = scenario.Devices?.FirstOrDefault(d => d.Id == conn.FromDeviceId);
-                                                                var toNode = scenario.Devices?.FirstOrDefault(d => d.Id == conn.ToDeviceId);
-
-                                                                if (fromNode != null && toNode != null)
-                                                                {
-                                                                    bool isDangerLink = fromNode.IsCompromised || toNode.IsCompromised;
-                                                                    string linkColor = isDangerLink ? "var(--danger-color)" : "rgba(78, 195, 209, 0.6)";
-                                                                    string dashArray = conn.LinkType == "VPN" ? "6,6" : "0";
-
-                                                                    <line x1="@fromNode.MapX" y1="@fromNode.MapY"
-                                                                          x2="@toNode.MapX" y2="@toNode.MapY"
-                                                                          stroke="@linkColor" stroke-width="2" stroke-dasharray="@dashArray"
-                                                                          style="@(isDangerLink ? "filter: url(#glow);" : "")" />
-                                                                }
-                                                            }
-                                                        </svg>
-                                                    }
-
-                                                    @if (scenario.Devices != null)
-                                                    {
-                                                        @foreach (var device in scenario.Devices)
+                                                        @if (scenario.Connections != null && scenario.Connections.Any())
                                                         {
-                                                            <div class="network-hotspot" @key="device.Id" style="position: absolute; left: @(device.MapX)px; top: @(device.MapY)px;">
-                                                                <div class="hotspot-trigger @(device.IsCompromised ? "compromised" : "secure")" @onclick="() => FocusOnDevice(device.MapX, device.MapY)">
-                                                                    <RadzenIcon Icon="@(string.IsNullOrEmpty(device.Type) ? "dns" : device.Type)" />
-                                                                </div>
-                                                                <div class="hotspot-tooltip">
-                                                                    <div class="tooltip-header">
-                                                                        <span class="node-name">@device.Name</span>
-                                                                        <span class="node-status-badge @(device.IsCompromised ? "compromised" : "secure")">
-                                                                            @(device.IsCompromised ? "COMPROMISED" : "ONLINE")
-                                                                        </span>
-                                                                    </div>
-                                                                    <div class="tooltip-body">
-                                                                        <div class="info-row"><span>IP-адрес:</span> <strong>@device.IpAddress</strong></div>
-                                                                        <div class="info-row"><span>Система:</span> <span class="val">@device.Os</span></div>
-                                                                        <div class="info-row"><span>Порты:</span> <span class="val-ports">@device.OpenPorts</span></div>
+                                                            <svg style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; overflow: visible;">
+                                                                <defs>
+                                                                    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                                                                        <feGaussianBlur stdDeviation="3" result="blur" />
+                                                                        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                                                                    </filter>
+                                                                </defs>
 
-                                                                        @if (device.Applications != null && device.Applications.Any())
-                                                                        {
-                                                                            <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border-color);">
-                                                                                <div style="font-size: 0.75rem; color: var(--accent-cyan); text-transform: uppercase; margin-bottom: 8px; font-weight: 800; letter-spacing: 0.5px;">
-                                                                                    Установленное ПО:
-                                                                                </div>
-                                                                                @foreach (var app in device.Applications)
-                                                                                {
-                                                                                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px; align-items: center;" @key="app.Id">
-                                                                                        <span style="color: var(--text-light); display: flex; align-items: center; gap: 6px;">
-                                                                                            <RadzenIcon Icon="layers" Style="font-size: 0.9rem; color: var(--text-muted);" />
-                                                                                            @app.Name
-                                                                                        </span>
-                                                                                        <span style="color: var(--warning-color); font-family: monospace; font-size: 0.8rem;">v.@app.Version</span>
-                                                                                    </div>
-                                                                                }
-                                                                            </div>
-                                                                        }
+                                                                @foreach (var conn in scenario.Connections)
+                                                                {
+                                                                    var fromNode = scenario.Devices?.FirstOrDefault(d => d.Id == conn.FromDeviceId);
+                                                                    var toNode = scenario.Devices?.FirstOrDefault(d => d.Id == conn.ToDeviceId);
 
-                                                                        @if (!string.IsNullOrEmpty(device.Description))
-                                                                        {
-                                                                            <div class="tooltip-note">@device.Description</div>
-                                                                        }
-                                                                    </div>
-                                                                </div>
-                                                            </div>
+                                                                    if (fromNode != null && toNode != null)
+                                                                    {
+                                                                        bool isDangerLink = fromNode.IsCompromised || toNode.IsCompromised;
+                                                                        string linkColor = isDangerLink ? "var(--danger-color)" : "rgba(78, 195, 209, 0.6)";
+                                                                        string dashArray = conn.LinkType == "VPN" ? "6,6" : "0";
+
+                                                                        <line x1="@fromNode.MapX" y1="@fromNode.MapY"
+                                                                              x2="@toNode.MapX" y2="@toNode.MapY"
+                                                                              stroke="@linkColor" stroke-width="2" stroke-dasharray="@dashArray"
+                                                                              style="@(isDangerLink ? "filter: url(#glow);" : "")" />
+                                                                    }
+                                                                }
+                                                            </svg>
                                                         }
-                                                    }
+
+                                                        @if (scenario.Devices != null)
+                                                        {
+                                                            @foreach (var device in scenario.Devices)
+                                                            {
+                                                                <div class="network-hotspot" @key="device.Id" style="position: absolute; left: @(device.MapX)px; top: @(device.MapY)px;">
+                                                                    <div class="hotspot-trigger @(device.IsCompromised ? "compromised" : "secure")" @onclick="() => FocusOnDevice(device.MapX, device.MapY)">
+                                                                        <RadzenIcon Icon="@(string.IsNullOrEmpty(device.Type) ? "dns" : device.Type)" />
+                                                                    </div>
+                                                                    <div class="hotspot-tooltip">
+                                                                        <div class="tooltip-header">
+                                                                            <span class="node-name">@device.Name</span>
+                                                                            <span class="node-status-badge @(device.IsCompromised ? "compromised" : "secure")">
+                                                                                @(device.IsCompromised ? "COMPROMISED" : "ONLINE")
+                                                                            </span>
+                                                                        </div>
+                                                                        <div class="tooltip-body">
+                                                                            <div class="info-row"><span>IP-адрес:</span> <strong>@device.IpAddress</strong></div>
+                                                                            <div class="info-row"><span>Система:</span> <span class="val">@device.Os</span></div>
+                                                                            <div class="info-row"><span>Порты:</span> <span class="val-ports">@device.OpenPorts</span></div>
+
+                                                                            @if (device.Applications != null && device.Applications.Any())
+                                                                            {
+                                                                                <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border-color);">
+                                                                                    <div style="font-size: 0.75rem; color: var(--accent-cyan); text-transform: uppercase; margin-bottom: 8px; font-weight: 800; letter-spacing: 0.5px;">
+                                                                                        Установленное ПО:
+                                                                                    </div>
+                                                                                    @foreach (var app in device.Applications)
+                                                                                    {
+                                                                                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 4px; align-items: center;" @key="app.Id">
+                                                                                            <span style="color: var(--text-light); display: flex; align-items: center; gap: 6px;">
+                                                                                                <RadzenIcon Icon="layers" Style="font-size: 0.9rem; color: var(--text-muted);" />
+                                                                                                @app.Name
+                                                                                            </span>
+                                                                                            <span style="color: var(--warning-color); font-family: monospace; font-size: 0.8rem;">v.@app.Version</span>
+                                                                                        </div>
+                                                                                    }
+                                                                                </div>
+                                                                            }
+
+                                                                            @if (!string.IsNullOrEmpty(device.Description))
+                                                                            {
+                                                                                <div class="tooltip-note">@device.Description</div>
+                                                                            }
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            }
+                                                        }
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
+                                    }
 
                                     <div class="d-flex justify-content-between align-items-center mb-4 mt-2">
                                         <h4 style="color: var(--accent-blue); font-weight: 800; margin: 0; text-transform: uppercase; letter-spacing: 1px;">Терминал проверки</h4>

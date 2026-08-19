@@ -1,101 +1,97 @@
 ﻿window.imageViewer = {
-    instances: {},
+    isDragging: false,
+    startX: 0,
+    startY: 0,
+    translateX: 0,
+    translateY: 0,
+    scale: 1, // Добавили переменную для масштаба
 
     init: function (containerId, layerId) {
-        const container = document.getElementById(containerId);
-        const layer = document.getElementById(layerId);
+        var container = document.getElementById(containerId);
+        var layer = document.getElementById(layerId);
+
         if (!container || !layer) return;
 
-        // ЗАЩИТА ОТ ДВОЙНОЙ ИНИЦИАЛИЗАЦИИ В BLAZOR
-        if (this.instances[containerId]) return;
+        window.onmousemove = null;
+        window.onmouseup = null;
+        this.isDragging = false;
 
-        container.style.overflow = 'hidden';
-        container.style.cursor = 'grab';
+        // Сбрасываем позицию И МАСШТАБ при каждом новом входе на страницу
+        this.translateX = 0;
+        this.translateY = 0;
+        this.scale = 1;
+        layer.style.transform = `translate(0px, 0px) scale(1)`;
 
-        layer.style.transformOrigin = '0 0';
-        layer.style.transition = 'transform 0.1s ease-out';
+        // 1. НАЖАТИЕ (ПЕРЕТАСКИВАНИЕ)
+        container.onmousedown = (e) => {
+            if (e.target.closest('.network-hotspot')) return;
 
-        const state = { scale: 1, posX: 0, posY: 0, isDragging: false, startX: 0, startY: 0 };
-        this.instances[containerId] = { container, layer, state };
-
-        const updateTransform = () => {
-            layer.style.transform = `translate(${state.posX}px, ${state.posY}px) scale(${state.scale})`;
+            this.isDragging = true;
+            this.startX = e.clientX - this.translateX;
+            this.startY = e.clientY - this.translateY;
+            container.style.cursor = "grabbing";
         };
 
-        // Центрируем холст при загрузке
-        setTimeout(() => {
-            const cRect = container.getBoundingClientRect();
-            const lRect = layer.getBoundingClientRect();
-            state.posX = (cRect.width - lRect.width) / 2;
-            state.posY = (cRect.height - lRect.height) / 2;
-            updateTransform();
-        }, 150);
-
-        container.addEventListener('mousedown', (e) => {
-            if (e.target.closest('.hotspot-tooltip') || e.target.closest('.hotspot-trigger')) return;
-            state.isDragging = true;
-            container.style.cursor = 'grabbing';
-            layer.style.transition = 'none';
-            state.startX = e.clientX - state.posX;
-            state.startY = e.clientY - state.posY;
-        });
-
-        window.addEventListener('mouseup', () => {
-            if (state.isDragging) {
-                state.isDragging = false;
-                container.style.cursor = 'grab';
-                layer.style.transition = 'transform 0.1s ease-out';
-            }
-        });
-
-        container.addEventListener('mouseleave', () => {
-            if (state.isDragging) {
-                state.isDragging = false;
-                container.style.cursor = 'grab';
-                layer.style.transition = 'transform 0.1s ease-out';
-            }
-        });
-
-        container.addEventListener('mousemove', (e) => {
-            if (!state.isDragging) return;
+        // 2. ДВИЖЕНИЕ
+        window.onmousemove = (e) => {
+            if (!this.isDragging) return;
             e.preventDefault();
-            state.posX = e.clientX - state.startX;
-            state.posY = e.clientY - state.startY;
-            updateTransform();
-        });
 
-        container.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            const rect = container.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
+            this.translateX = e.clientX - this.startX;
+            this.translateY = e.clientY - this.startY;
 
-            const layerX = (mouseX - state.posX) / state.scale;
-            const layerY = (mouseY - state.posY) / state.scale;
+            var activeLayer = document.getElementById(layerId);
+            if (activeLayer) {
+                // Применяем позицию с сохранением текущего зума
+                activeLayer.style.transform = `translate(${this.translateX}px, ${this.translateY}px) scale(${this.scale})`;
+            }
+        };
 
-            const zoomFactor = e.deltaY > 0 ? 0.85 : 1.15;
-            state.scale *= zoomFactor;
-            state.scale = Math.max(0.15, Math.min(state.scale, 8));
+        // 3. ОТПУСКАНИЕ КНОПКИ
+        window.onmouseup = () => {
+            this.isDragging = false;
+            var activeContainer = document.getElementById(containerId);
+            if (activeContainer) activeContainer.style.cursor = "grab";
+        };
 
-            state.posX = mouseX - (layerX * state.scale);
-            state.posY = mouseY - (layerY * state.scale);
+        // 4. КОЛЕСИКО МЫШИ (ЗУМ)
+        container.onwheel = (e) => {
+            e.preventDefault(); // Блокируем прокрутку самой страницы вниз-вверх
 
-            updateTransform();
-        }, { passive: false });
+            var zoomIntensity = 0.1;
+            // Определяем направление прокрутки
+            var wheel = e.deltaY < 0 ? 1 : -1;
+
+            this.scale += wheel * zoomIntensity;
+
+            // Устанавливаем лимиты (чтобы не отдалить в микропиксель и не приблизить слишком близко)
+            if (this.scale < 0.4) this.scale = 0.4;
+            if (this.scale > 2.5) this.scale = 2.5;
+
+            var activeLayer = document.getElementById(layerId);
+            if (activeLayer) {
+                activeLayer.style.transform = `translate(${this.translateX}px, ${this.translateY}px) scale(${this.scale})`;
+            }
+        };
     },
 
     focusOnCoordinates: function (containerId, x, y) {
-        const inst = this.instances[containerId];
-        if (!inst) return;
-        const { container, layer, state } = inst;
+        var container = document.getElementById(containerId);
+        if (!container) return;
+        var layer = container.firstElementChild;
+        if (!layer) return;
 
-        layer.style.transition = 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)';
-        state.scale = 2.0; // Приближаем в 2 раза при фокусе
+        var containerRect = container.getBoundingClientRect();
 
-        const cRect = container.getBoundingClientRect();
-        state.posX = (cRect.width / 2) - (x * state.scale);
-        state.posY = (cRect.height / 2) - (y * state.scale);
+        this.translateX = (containerRect.width / 2) - x;
+        this.translateY = (containerRect.height / 2) - y;
+        this.scale = 1; // Сбрасываем зум при фокусе на узел
 
-        layer.style.transform = `translate(${state.posX}px, ${state.posY}px) scale(${state.scale})`;
+        layer.style.transition = "transform 0.3s ease-out";
+        layer.style.transform = `translate(${this.translateX}px, ${this.translateY}px) scale(${this.scale})`;
+
+        setTimeout(() => {
+            if (layer) layer.style.transition = "none";
+        }, 300);
     }
 };

@@ -76,10 +76,22 @@ namespace CyberPolygon.Components.Pages
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
-            if (firstRender && !isMapInitialized && currentUserProgress?.Status == AttemptStatus.InProgress)
+            if (!isMapInitialized && currentUserProgress?.Status == AttemptStatus.InProgress)
             {
-                isMapInitialized = true;
-                try { await JSRuntime.InvokeVoidAsync("imageViewer.init", "schema-drag-container", "topology-move-layer"); } catch { }
+                if (scenario?.Devices != null && scenario.Devices.Any())
+                {
+                    isMapInitialized = true;
+                    try
+                    {
+                        // Blazor гарантирует, что DOM уже существует
+                        await JSRuntime.InvokeVoidAsync("imageViewer.init", "schema-drag-container", "topology-move-layer");
+                    }
+                    catch
+                    {
+                        // Если скрипт почему-то не подгрузился, сбрасываем флаг для следующей попытки
+                        isMapInitialized = false;
+                    }
+                }
             }
         }
 
@@ -242,8 +254,12 @@ namespace CyberPolygon.Components.Pages
 
                 if (!isMapInitialized)
                 {
-                    isMapInitialized = true;
-                    try { await JSRuntime.InvokeVoidAsync("imageViewer.init", "schema-drag-container", "topology-move-layer"); } catch { }
+                    // И здесь тоже проверяем, что карта существует перед вызовом JS
+                    if (scenario.Devices != null && scenario.Devices.Any())
+                    {
+                        isMapInitialized = true;
+                        try { await JSRuntime.InvokeVoidAsync("imageViewer.init", "schema-drag-container", "topology-move-layer"); } catch { }
+                    }
                 }
             }
             catch (Exception ex)
@@ -349,6 +365,7 @@ namespace CyberPolygon.Components.Pages
                 _timer?.Dispose();
                 _timer = new Timer(TimerTick, null, 0, 1000);
             }
+
         }
 
         private void StopTimer() => _timer?.Dispose();
