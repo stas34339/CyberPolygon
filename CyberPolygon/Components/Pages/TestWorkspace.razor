@@ -464,7 +464,7 @@
                         <div class="documents-label">Материалы</div>
                         @foreach (var doc in test.Documents)
                         {
-                            <a href="@doc.FilePath" target="_blank" class="document-link"><RadzenIcon Icon="description" /> @doc.Title</a>
+                            <a href="/files/test/@doc.Id" target="_blank" class="document-link"><RadzenIcon Icon="description" /> @doc.Title</a>
                         }
                     </div>
                 }

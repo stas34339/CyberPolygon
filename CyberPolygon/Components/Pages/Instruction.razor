@@ -1,7 +1,6 @@
 ﻿@page "/instruction"
-@using CyberPolygon.Data.Models
-@using CyberPolygon.Services
 @using System.Security.Claims
+@using CyberPolygon.Services
 @using Radzen
 @using Radzen.Blazor
 @rendermode InteractiveServer
@@ -778,13 +777,15 @@
 
                 @if (selectedInstruction.Attachments != null && selectedInstruction.Attachments.Any())
                 {
-                    <div class="attachments-section">
-                        <div class="attachments-label">СВЯЗАННЫЕ ФАЙЛЫ ДОКУМЕНТА:</div>
-                        <div>
+                    <div class="attachments-section mt-4 pt-3" style="border-top: 1px dashed var(--border-color);">
+                        <div class="attachments-label cyber-label mb-3" style="font-size: 0.8rem;">СВЯЗАННЫЕ ФАЙЛЫ ДОКУМЕНТА:</div>
+
+                        <div class="d-flex flex-wrap gap-3">
                             @foreach (var file in selectedInstruction.Attachments)
                             {
-                                <a href="@file.FilePath" download="@file.FileName" class="attachment-link" target="_blank">
-                                    <RadzenIcon Icon="file_download" style="font-size: 1rem;" /> @file.FileName
+                                <a href="/files/instruction/@file.Id" target="_blank" class="btn-outline-light" style="text-decoration: none; padding: 8px 15px; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 8px; border-color: rgba(78, 195, 209, 0.3);">
+                                    <RadzenIcon Icon="file_download" Style="font-size: 1.2rem; color: var(--accent-cyan);" />
+                                    <span style="color: var(--text-light); font-weight: 600;">@file.FileName</span>
                                 </a>
                             }
                         </div>

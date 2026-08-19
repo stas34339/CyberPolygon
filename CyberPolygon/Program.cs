@@ -1,6 +1,7 @@
 using CyberPolygon.Components;
 using CyberPolygon.Components.Account;
 using CyberPolygon.Data;
+using CyberPolygon.Data.Models;
 using CyberPolygon.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -36,8 +37,11 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddHubOptions(options =>
     {
-        // Увеличиваем лимит сообщений SignalR до 50 МБ
-        options.MaximumReceiveMessageSize = 50 * 1024 * 1024;
+        options.MaximumReceiveMessageSize = 50 * 1024 * 1024; // Лимит 50 МБ
+
+        // ВОТ ЭТИ ДВЕ СТРОКИ СПАСУТ СЕРВЕР ОТ ПАДЕНИЯ ПРИ ОТКРЫТОМ ОКНЕ ФАЙЛОВ
+        options.ClientTimeoutInterval = TimeSpan.FromMinutes(10);
+        options.KeepAliveInterval = TimeSpan.FromSeconds(15);
     })
     .AddInteractiveWebAssemblyComponents();
 
@@ -93,6 +97,31 @@ app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 app.MapAdditionalIdentityEndpoints();
+
+// Скачивание файлов документации напрямую из БД (файлы больше не хранятся в wwwroot)
+app.MapGet("/files/scenario/{id:int}", async (int id, IDbContextFactory<ApplicationDbContext> factory) =>
+{
+    await using var ctx = await factory.CreateDbContextAsync();
+    var doc = await ctx.Set<ScenarioDocument>().AsNoTracking().FirstOrDefaultAsync(d => d.Id == id);
+    if (doc?.Content == null || doc.Content.Length == 0) return Results.NotFound();
+    return Results.File(doc.Content, doc.ContentType, doc.FileName);
+}).RequireAuthorization();
+
+app.MapGet("/files/test/{id:int}", async (int id, IDbContextFactory<ApplicationDbContext> factory) =>
+{
+    await using var ctx = await factory.CreateDbContextAsync();
+    var doc = await ctx.Set<TestDocument>().AsNoTracking().FirstOrDefaultAsync(d => d.Id == id);
+    if (doc?.Content == null || doc.Content.Length == 0) return Results.NotFound();
+    return Results.File(doc.Content, doc.ContentType, doc.FileName);
+}).RequireAuthorization();
+
+app.MapGet("/files/instruction/{id:int}", async (int id, IDbContextFactory<ApplicationDbContext> factory) =>
+{
+    await using var ctx = await factory.CreateDbContextAsync();
+    var att = await ctx.Set<InstructionAttachment>().AsNoTracking().FirstOrDefaultAsync(a => a.Id == id);
+    if (att?.Content == null || att.Content.Length == 0) return Results.NotFound();
+    return Results.File(att.Content, att.ContentType, att.FileName);
+}).RequireAuthorization();
 
 
 // ИНИЦИАЛИЗАЦИЯ БАЗЫ ДАННЫХ И РОЛЕЙ

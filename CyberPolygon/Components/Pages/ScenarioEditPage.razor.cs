@@ -92,14 +92,40 @@ namespace CyberPolygon.Components.Pages
         {
             try
             {
-                // Загружаем файл на диск сервера, а не в память
-                var filePath = await ScenarioService.UploadDocumentAsync(e.File);
-                doc.FilePath = filePath;
+                var file = e.File;
+                if (file == null) return;
+
+                long maxFileSize = 50 * 1024 * 1024; // 50 МБ
+                if (file.Size > maxFileSize)
+                {
+                    NotificationService.Notify(NotificationSeverity.Warning, "Ошибка", "Файл больше 50 МБ.");
+                    return;
+                }
+
+                // Безопасное чтение без MemoryStream и CopyToAsync
+                var buffer = new byte[file.Size];
+                await using var stream = file.OpenReadStream(maxAllowedSize: maxFileSize);
+
+                int totalRead = 0;
+                while (totalRead < file.Size)
+                {
+                    int read = await stream.ReadAsync(buffer, totalRead, (int)file.Size - totalRead);
+                    if (read == 0) break;
+                    totalRead += read;
+                }
+
+                doc.Content = buffer;
+                doc.FileName = file.Name;
+                doc.ContentType = string.IsNullOrWhiteSpace(file.ContentType) ? "application/octet-stream" : file.ContentType;
 
                 if (string.IsNullOrWhiteSpace(doc.Title))
-                    doc.Title = e.File.Name;
+                    doc.Title = file.Name;
 
-                NotificationService.Notify(NotificationSeverity.Success, "Успех", "Документ загружен");
+                NotificationService.Notify(NotificationSeverity.Success, "Успех", "Документ прикреплен");
+            }
+            catch (TaskCanceledException)
+            {
+                NotificationService.Notify(NotificationSeverity.Warning, "Внимание", "Чтение прервано браузером. Попробуйте еще раз.");
             }
             catch (Exception ex)
             {

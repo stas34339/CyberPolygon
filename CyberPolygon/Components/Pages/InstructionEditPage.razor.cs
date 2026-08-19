@@ -5,10 +5,6 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Forms;
 using Radzen;
 using System.Security.Claims;
-using System.Threading.Tasks;
-using System.Linq;
-using System.Collections.Generic;
-using System;
 
 namespace CyberPolygon.Components.Pages
 {
@@ -19,9 +15,8 @@ namespace CyberPolygon.Components.Pages
         [Parameter] public int? Id { get; set; }
         private InstructionModel Item { get; set; } = new();
 
-        private List<IBrowserFile> uploadedFiles = new();
         private int maxAllowedFiles = 10;
-        private long maxFileSize = 1024 * 1024 * 50;
+        private long maxFileSize = 1024 * 1024 * 50; // 50 MB
 
         private readonly List<string> availableIcons = new()
         {
@@ -62,7 +57,7 @@ namespace CyberPolygon.Components.Pages
             }
             else
             {
-                Item = new InstructionModel { IconName = "assignment" };
+                Item = new InstructionModel { IconName = "assignment", Attachments = new() };
             }
         }
 
@@ -74,27 +69,47 @@ namespace CyberPolygon.Components.Pages
                 {
                     if (file.Size > maxFileSize)
                     {
-                        NotificationService.Notify(NotificationSeverity.Warning, "Превышен размер", $"Файл {file.Name} больше 50 МБ и не будет загружен.");
+                        NotificationService.Notify(NotificationSeverity.Warning, "Превышен размер", $"Файл {file.Name} больше 50 МБ.");
                         continue;
                     }
 
-                    if (!uploadedFiles.Any(f => f.Name == file.Name))
+                    // Безопасное чтение без MemoryStream и CopyToAsync
+                    var buffer = new byte[file.Size];
+                    await using var stream = file.OpenReadStream(maxAllowedSize: maxFileSize);
+
+                    int totalRead = 0;
+                    while (totalRead < file.Size)
                     {
-                        uploadedFiles.Add(file);
+                        int read = await stream.ReadAsync(buffer, totalRead, (int)file.Size - totalRead);
+                        if (read == 0) break;
+                        totalRead += read;
                     }
+
+                    var attachment = new InstructionAttachment
+                    {
+                        FileName = file.Name,
+                        ContentType = string.IsNullOrWhiteSpace(file.ContentType) ? "application/octet-stream" : file.ContentType,
+                        Content = buffer
+                    };
+
+                    Item.Attachments.Add(attachment);
                 }
+                NotificationService.Notify(NotificationSeverity.Success, "Успех", "Файлы добавлены в блок");
+            }
+            catch (TaskCanceledException)
+            {
+                NotificationService.Notify(NotificationSeverity.Warning, "Внимание", "Чтение прервано браузером. Попробуйте еще раз.");
             }
             catch (Exception ex)
             {
-                NotificationService.Notify(NotificationSeverity.Error, "Ошибка добавления", "Файл слишком большой или произошла ошибка чтения.");
+                NotificationService.Notify(NotificationSeverity.Error, "Ошибка загрузки", ex.Message);
             }
-
             StateHasChanged();
         }
 
-        private void RemoveFile(IBrowserFile file)
+        private void RemoveFile(InstructionAttachment file)
         {
-            uploadedFiles.Remove(file);
+            Item.Attachments.Remove(file);
             StateHasChanged();
         }
 
@@ -102,7 +117,7 @@ namespace CyberPolygon.Components.Pages
         {
             if (string.IsNullOrWhiteSpace(Item.Title) || string.IsNullOrWhiteSpace(Item.Description))
             {
-                NotificationService.Notify(NotificationSeverity.Warning, "Система", "Заполните название и содержание блока.");
+                NotificationService.Notify(NotificationSeverity.Warning, "Внимание", "Заполните название и содержание блока.");
                 return;
             }
 
@@ -110,20 +125,16 @@ namespace CyberPolygon.Components.Pages
             {
                 if (Item.Id == 0)
                 {
-                    // Сохраняем автора
                     var authState = await AuthStateProvider.GetAuthenticationStateAsync();
                     Item.AuthorId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-                    var all = await InstructionService.GetAllAsync();
-                    Item.Order = all.Any() ? all.Max(i => i.Order) + 1 : 1;
-
-                    await InstructionService.AddAsync(Item, uploadedFiles);
-                    NotificationService.Notify(NotificationSeverity.Success, "Успех", "Новая инструкция добавлена в реестр.");
+                    await InstructionService.AddAsync(Item);
+                    NotificationService.Notify(NotificationSeverity.Success, "Успех", "Инструкция добавлена.");
                 }
                 else
                 {
                     await InstructionService.UpdateAsync(Item);
-                    NotificationService.Notify(NotificationSeverity.Success, "Успех", "Запись обновлена.");
+                    NotificationService.Notify(NotificationSeverity.Success, "Успех", "Инструкция обновлена.");
                 }
 
                 NavigationManager.NavigateTo("instruction");

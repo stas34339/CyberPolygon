@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CyberPolygon.Migrations
 {
     /// <inheritdoc />
-    public partial class _1 : Migration
+    public partial class InitialCleanDb : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -40,7 +40,11 @@ namespace CyberPolygon.Migrations
                     ShortDescription = table.Column<string>(type: "text", nullable: false),
                     FullDescription = table.Column<string>(type: "text", nullable: false),
                     Difficulty = table.Column<int>(type: "integer", nullable: false),
-                    DurationInMinutes = table.Column<int>(type: "integer", nullable: false)
+                    DurationInMinutes = table.Column<int>(type: "integer", nullable: false),
+                    Tags = table.Column<string>(type: "text", nullable: true),
+                    AllowedUserIds = table.Column<string>(type: "text", nullable: true),
+                    AllowedTeamIds = table.Column<string>(type: "text", nullable: true),
+                    AuthorId = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -56,7 +60,9 @@ namespace CyberPolygon.Migrations
                     Title = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: false),
                     Description = table.Column<string>(type: "text", nullable: false),
                     IconName = table.Column<string>(type: "text", nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    Order = table.Column<int>(type: "integer", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    AuthorId = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -81,29 +87,16 @@ namespace CyberPolygon.Migrations
                     GameMode = table.Column<int>(type: "integer", nullable: false),
                     Scope = table.Column<int>(type: "integer", nullable: false),
                     TargetGroupId = table.Column<int>(type: "integer", nullable: true),
-                    TargetTeamId = table.Column<int>(type: "integer", nullable: true)
+                    TargetTeamId = table.Column<int>(type: "integer", nullable: true),
+                    Tags = table.Column<string>(type: "text", nullable: false),
+                    Difficulty = table.Column<string>(type: "text", nullable: false),
+                    AllowedUserIds = table.Column<string>(type: "text", nullable: true),
+                    AllowedTeamIds = table.Column<string>(type: "text", nullable: true),
+                    AuthorId = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Scenarios", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "UserAnswerProgresses",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    UserScenarioProgressId = table.Column<int>(type: "integer", nullable: false),
-                    QuestionId = table.Column<int>(type: "integer", nullable: false),
-                    IsCorrect = table.Column<bool>(type: "boolean", nullable: false),
-                    FailedAttempts = table.Column<int>(type: "integer", nullable: false),
-                    LastSubmittedAnswer = table.Column<string>(type: "text", nullable: false),
-                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_UserAnswerProgresses", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -127,7 +120,9 @@ namespace CyberPolygon.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     UserTestProgressId = table.Column<int>(type: "integer", nullable: false),
                     QuestionId = table.Column<int>(type: "integer", nullable: false),
-                    IsCorrect = table.Column<bool>(type: "boolean", nullable: false)
+                    IsCorrect = table.Column<bool>(type: "boolean", nullable: false),
+                    SelectedAnswer = table.Column<string>(type: "text", nullable: false),
+                    AnsweredAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -163,7 +158,9 @@ namespace CyberPolygon.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     CyberTestId = table.Column<int>(type: "integer", nullable: false),
                     Title = table.Column<string>(type: "text", nullable: false),
-                    FilePath = table.Column<string>(type: "text", nullable: false)
+                    FileName = table.Column<string>(type: "text", nullable: false),
+                    ContentType = table.Column<string>(type: "text", nullable: false),
+                    Content = table.Column<byte[]>(type: "bytea", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -185,7 +182,8 @@ namespace CyberPolygon.Migrations
                     CyberTestId = table.Column<int>(type: "integer", nullable: false),
                     Text = table.Column<string>(type: "text", nullable: false),
                     Type = table.Column<int>(type: "integer", nullable: false),
-                    CorrectTextAnswer = table.Column<string>(type: "text", nullable: true)
+                    CorrectTextAnswer = table.Column<string>(type: "text", nullable: true),
+                    ExampleAnswer = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -210,7 +208,9 @@ namespace CyberPolygon.Migrations
                     Status = table.Column<int>(type: "integer", nullable: false),
                     StartedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     TargetEndTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    CompletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
+                    CompletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsRetakeRequested = table.Column<bool>(type: "boolean", nullable: false),
+                    IsRetakeGranted = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -230,7 +230,8 @@ namespace CyberPolygon.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     FileName = table.Column<string>(type: "text", nullable: false),
-                    FilePath = table.Column<string>(type: "text", nullable: false),
+                    ContentType = table.Column<string>(type: "text", nullable: false),
+                    Content = table.Column<byte[]>(type: "bytea", nullable: true),
                     InstructionId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
@@ -245,13 +246,43 @@ namespace CyberPolygon.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ScenarioDevices",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    CyberScenarioId = table.Column<int>(type: "integer", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    IpAddress = table.Column<string>(type: "text", nullable: false),
+                    Os = table.Column<string>(type: "text", nullable: false),
+                    OpenPorts = table.Column<string>(type: "text", nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: false),
+                    IsCompromised = table.Column<bool>(type: "boolean", nullable: false),
+                    MapX = table.Column<int>(type: "integer", nullable: false),
+                    MapY = table.Column<int>(type: "integer", nullable: false),
+                    Type = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ScenarioDevices", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ScenarioDevices_Scenarios_CyberScenarioId",
+                        column: x => x.CyberScenarioId,
+                        principalTable: "Scenarios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ScenarioDocument",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Title = table.Column<string>(type: "text", nullable: false),
-                    FilePath = table.Column<string>(type: "text", nullable: false),
+                    FileName = table.Column<string>(type: "text", nullable: false),
+                    ContentType = table.Column<string>(type: "text", nullable: false),
+                    Content = table.Column<byte[]>(type: "bytea", nullable: true),
                     CyberScenarioId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
@@ -275,7 +306,8 @@ namespace CyberPolygon.Migrations
                     CorrectAnswer = table.Column<string>(type: "text", nullable: false),
                     AwardPoints = table.Column<int>(type: "integer", nullable: false),
                     PenaltyPoints = table.Column<int>(type: "integer", nullable: false),
-                    CyberScenarioId = table.Column<int>(type: "integer", nullable: false)
+                    CyberScenarioId = table.Column<int>(type: "integer", nullable: false),
+                    ExampleAnswer = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -289,39 +321,14 @@ namespace CyberPolygon.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "UserProgresses",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    UserId = table.Column<string>(type: "text", nullable: true),
-                    TeamId = table.Column<int>(type: "integer", nullable: true),
-                    IsTeamAttempt = table.Column<bool>(type: "boolean", nullable: false),
-                    CyberScenarioId = table.Column<int>(type: "integer", nullable: false),
-                    Score = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<int>(type: "integer", nullable: false),
-                    StartedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    TargetEndTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    TimeSpent = table.Column<TimeSpan>(type: "interval", nullable: true),
-                    CompletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_UserProgresses", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_UserProgresses_Scenarios_CyberScenarioId",
-                        column: x => x.CyberScenarioId,
-                        principalTable: "Scenarios",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "AspNetUsers",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "text", nullable: false),
                     GroupId = table.Column<int>(type: "integer", nullable: true),
+                    FirstName = table.Column<string>(type: "text", nullable: false),
+                    LastName = table.Column<string>(type: "text", nullable: false),
+                    MiddleName = table.Column<string>(type: "text", nullable: false),
                     UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
@@ -385,6 +392,63 @@ namespace CyberPolygon.Migrations
                         name: "FK_TestOptions_TestQuestions_TestQuestionId",
                         column: x => x.TestQuestionId,
                         principalTable: "TestQuestions",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DeviceApplications",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    ScenarioDeviceId = table.Column<int>(type: "integer", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Version = table.Column<string>(type: "text", nullable: false),
+                    Vulnerability = table.Column<string>(type: "text", nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DeviceApplications", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_DeviceApplications_ScenarioDevices_ScenarioDeviceId",
+                        column: x => x.ScenarioDeviceId,
+                        principalTable: "ScenarioDevices",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ScenarioConnection",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    CyberScenarioId = table.Column<int>(type: "integer", nullable: false),
+                    FromDeviceId = table.Column<int>(type: "integer", nullable: false),
+                    ToDeviceId = table.Column<int>(type: "integer", nullable: false),
+                    LinkType = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ScenarioConnection", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ScenarioConnection_ScenarioDevices_FromDeviceId",
+                        column: x => x.FromDeviceId,
+                        principalTable: "ScenarioDevices",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ScenarioConnection_ScenarioDevices_ToDeviceId",
+                        column: x => x.ToDeviceId,
+                        principalTable: "ScenarioDevices",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ScenarioConnection_Scenarios_CyberScenarioId",
+                        column: x => x.CyberScenarioId,
+                        principalTable: "Scenarios",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -475,6 +539,65 @@ namespace CyberPolygon.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "UserAnswerProgresses",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserScenarioProgressId = table.Column<int>(type: "integer", nullable: false),
+                    QuestionId = table.Column<int>(type: "integer", nullable: false),
+                    IsCorrect = table.Column<bool>(type: "boolean", nullable: false),
+                    FailedAttempts = table.Column<int>(type: "integer", nullable: false),
+                    LastSubmittedAnswer = table.Column<string>(type: "text", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    UserId = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserAnswerProgresses", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_UserAnswerProgresses_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UserProgresses",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    UserId = table.Column<string>(type: "text", nullable: true),
+                    TeamId = table.Column<int>(type: "integer", nullable: true),
+                    IsTeamAttempt = table.Column<bool>(type: "boolean", nullable: false),
+                    CyberScenarioId = table.Column<int>(type: "integer", nullable: false),
+                    Score = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
+                    StartedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    TargetEndTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    TimeSpent = table.Column<TimeSpan>(type: "interval", nullable: true),
+                    CompletedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    IsRetakeRequested = table.Column<bool>(type: "boolean", nullable: false),
+                    IsRetakeGranted = table.Column<bool>(type: "boolean", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserProgresses", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_UserProgresses_Scenarios_CyberScenarioId",
+                        column: x => x.CyberScenarioId,
+                        principalTable: "Scenarios",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UserProgresses_UserTeams_TeamId",
+                        column: x => x.TeamId,
+                        principalTable: "UserTeams",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "UserTeamMappings",
                 columns: table => new
                 {
@@ -541,9 +664,34 @@ namespace CyberPolygon.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_DeviceApplications_ScenarioDeviceId",
+                table: "DeviceApplications",
+                column: "ScenarioDeviceId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_InstructionAttachment_InstructionId",
                 table: "InstructionAttachment",
                 column: "InstructionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ScenarioConnection_CyberScenarioId",
+                table: "ScenarioConnection",
+                column: "CyberScenarioId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ScenarioConnection_FromDeviceId",
+                table: "ScenarioConnection",
+                column: "FromDeviceId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ScenarioConnection_ToDeviceId",
+                table: "ScenarioConnection",
+                column: "ToDeviceId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ScenarioDevices_CyberScenarioId",
+                table: "ScenarioDevices",
+                column: "CyberScenarioId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ScenarioDocument_CyberScenarioId",
@@ -571,9 +719,19 @@ namespace CyberPolygon.Migrations
                 column: "CyberTestId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_UserAnswerProgresses_UserId",
+                table: "UserAnswerProgresses",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UserProgresses_CyberScenarioId",
                 table: "UserProgresses",
                 column: "CyberScenarioId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserProgresses_TeamId",
+                table: "UserProgresses",
+                column: "TeamId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserTeamMappings_UsersId",
@@ -610,7 +768,13 @@ namespace CyberPolygon.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
+                name: "DeviceApplications");
+
+            migrationBuilder.DropTable(
                 name: "InstructionAttachment");
+
+            migrationBuilder.DropTable(
+                name: "ScenarioConnection");
 
             migrationBuilder.DropTable(
                 name: "ScenarioDocument");
@@ -646,16 +810,19 @@ namespace CyberPolygon.Migrations
                 name: "Instructions");
 
             migrationBuilder.DropTable(
-                name: "TestQuestions");
+                name: "ScenarioDevices");
 
             migrationBuilder.DropTable(
-                name: "Scenarios");
+                name: "TestQuestions");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
 
             migrationBuilder.DropTable(
                 name: "UserTeams");
+
+            migrationBuilder.DropTable(
+                name: "Scenarios");
 
             migrationBuilder.DropTable(
                 name: "CyberTests");

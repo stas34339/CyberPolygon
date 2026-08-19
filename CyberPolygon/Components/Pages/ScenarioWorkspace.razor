@@ -651,7 +651,7 @@
                                         @foreach (var doc in scenario.Documents)
                                         {
                                             <li class="mb-2">
-                                                <a href="@doc.FilePath" target="_blank" style="color: var(--accent-blue); text-decoration: none; display: flex; align-items: center; gap: 8px; font-weight: 600; padding: 6px 10px; background: rgba(91,163,227,0.05); border-radius: 6px; border: 1px solid rgba(91,163,227,0.2); transition: all 0.2s;">
+                                                <a href="/files/scenario/@doc.Id" target="_blank" style="color: var(--accent-blue); text-decoration: none; display: flex; align-items: center; gap: 8px; font-weight: 600; padding: 6px 10px; background: rgba(91,163,227,0.05); border-radius: 6px; border: 1px solid rgba(91,163,227,0.2); transition: all 0.2s;">
                                                     <RadzenIcon Icon="file_download" Style="font-size:1.1rem;" /> @doc.Title
                                                 </a>
                                             </li>

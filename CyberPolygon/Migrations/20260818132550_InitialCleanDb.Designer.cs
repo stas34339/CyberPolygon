@@ -12,15 +12,15 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CyberPolygon.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260625082809_AddUserIdToAnswers")]
-    partial class AddUserIdToAnswers
+    [Migration("20260818132550_InitialCleanDb")]
+    partial class InitialCleanDb
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.7")
+                .HasAnnotation("ProductVersion", "10.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -166,11 +166,14 @@ namespace CyberPolygon.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("FileName")
+                    b.Property<byte[]>("Content")
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("ContentType")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("FilePath")
+                    b.Property<string>("FileName")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -191,6 +194,9 @@ namespace CyberPolygon.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AuthorId")
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -299,6 +305,40 @@ namespace CyberPolygon.Migrations
                     b.ToTable("ScenarioDevices");
                 });
 
+            modelBuilder.Entity("CyberPolygon.Models.DeviceApplication", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("ScenarioDeviceId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Vulnerability")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ScenarioDeviceId");
+
+                    b.ToTable("DeviceApplications");
+                });
+
             modelBuilder.Entity("CyberScenario", b =>
                 {
                     b.Property<int>("Id")
@@ -311,6 +351,9 @@ namespace CyberPolygon.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("AllowedUserIds")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AuthorId")
                         .HasColumnType("text");
 
                     b.Property<string>("Description")
@@ -381,6 +424,9 @@ namespace CyberPolygon.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("AllowedUserIds")
+                        .HasColumnType("text");
+
+                    b.Property<string>("AuthorId")
                         .HasColumnType("text");
 
                     b.Property<int>("Difficulty")
@@ -561,10 +607,17 @@ namespace CyberPolygon.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<byte[]>("Content")
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<int>("CyberScenarioId")
                         .HasColumnType("integer");
 
-                    b.Property<string>("FilePath")
+                    b.Property<string>("FileName")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -623,10 +676,17 @@ namespace CyberPolygon.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<byte[]>("Content")
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<int>("CyberTestId")
                         .HasColumnType("integer");
 
-                    b.Property<string>("FilePath")
+                    b.Property<string>("FileName")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -680,6 +740,9 @@ namespace CyberPolygon.Migrations
                     b.Property<int>("CyberTestId")
                         .HasColumnType("integer");
 
+                    b.Property<string>("ExampleAnswer")
+                        .HasColumnType("text");
+
                     b.Property<string>("Text")
                         .IsRequired()
                         .HasColumnType("text");
@@ -725,6 +788,12 @@ namespace CyberPolygon.Migrations
                     b.Property<int>("CyberScenarioId")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("IsRetakeGranted")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsRetakeRequested")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsTeamAttempt")
                         .HasColumnType("boolean");
 
@@ -752,6 +821,8 @@ namespace CyberPolygon.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CyberScenarioId");
+
+                    b.HasIndex("TeamId");
 
                     b.ToTable("UserProgresses");
                 });
@@ -820,6 +891,12 @@ namespace CyberPolygon.Migrations
 
                     b.Property<int>("CyberTestId")
                         .HasColumnType("integer");
+
+                    b.Property<bool>("IsRetakeGranted")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsRetakeRequested")
+                        .HasColumnType("boolean");
 
                     b.Property<int>("Score")
                         .HasColumnType("integer");
@@ -925,6 +1002,15 @@ namespace CyberPolygon.Migrations
                         .IsRequired();
 
                     b.Navigation("CyberScenario");
+                });
+
+            modelBuilder.Entity("CyberPolygon.Models.DeviceApplication", b =>
+                {
+                    b.HasOne("CyberPolygon.Data.ScenarioDevice", null)
+                        .WithMany("Applications")
+                        .HasForeignKey("ScenarioDeviceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -1033,7 +1119,13 @@ namespace CyberPolygon.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("UserTeam", "Team")
+                        .WithMany()
+                        .HasForeignKey("TeamId");
+
                     b.Navigation("Scenario");
+
+                    b.Navigation("Team");
                 });
 
             modelBuilder.Entity("UserTeam", b =>
@@ -1061,6 +1153,11 @@ namespace CyberPolygon.Migrations
             modelBuilder.Entity("CyberPolygon.Data.Models.InstructionModel", b =>
                 {
                     b.Navigation("Attachments");
+                });
+
+            modelBuilder.Entity("CyberPolygon.Data.ScenarioDevice", b =>
+                {
+                    b.Navigation("Applications");
                 });
 
             modelBuilder.Entity("CyberScenario", b =>

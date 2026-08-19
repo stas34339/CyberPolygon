@@ -426,17 +426,17 @@
                                     <span class="upload-subtitle">Нажмите или перетащите сюда (PDF, DOCX, ZIP)</span>
                                 </div>
 
-                                <!-- Файлы, выбранные для добавления -->
-                                @if (uploadedFiles.Any())
+                                <!-- Файлы, выбранные для добавления и уже загруженные -->
+                                @if (Item.Attachments != null && Item.Attachments.Any())
                                 {
-                                    <div class="mt-4">
-                                        <label class="cyber-label" style="font-size: 0.75rem;">Ожидают загрузки:</label>
-                                        @foreach (var file in uploadedFiles)
+                                    <div class="mt-4 pt-3" style="border-top: 1px dashed var(--border-color);">
+                                        <label class="cyber-label" style="font-size: 0.75rem;">Загруженные файлы:</label>
+                                        @foreach (var file in Item.Attachments.ToList())
                                         {
                                             <div class="added-item-row">
-                                                <span style="color: var(--text-light); font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 10px;">
-                                                    <RadzenIcon Icon="attach_file" Style="vertical-align: middle; margin-right: 5px; color: var(--accent-blue);" />
-                                                    @file.Name
+                                                <span style="color: var(--text-light); font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                                    <RadzenIcon Icon="description" Style="vertical-align: middle; margin-right: 5px; color: var(--success-color);" />
+                                                    @file.FileName
                                                 </span>
                                                 <button type="button" class="btn-delete-icon" style="padding: 2px 5px; flex-shrink: 0;" @onclick="() => RemoveFile(file)">
                                                     <RadzenIcon Icon="close" Style="font-size: 0.9rem;" />

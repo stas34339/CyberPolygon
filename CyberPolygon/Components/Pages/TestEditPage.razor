@@ -683,9 +683,9 @@
                                                     <button type="button" class="btn-delete-icon" @onclick="@(() => Item.Documents.Remove(doc))"><RadzenIcon Icon="close" /></button>
                                                 </div>
 
-                                                <label class="upload-zone" style="border-color: @(string.IsNullOrEmpty(doc.FilePath) ? "var(--accent-cyan)" : "var(--success-color)")">
+                                                <div class="upload-zone" style="border-color: @((doc.Content == null || doc.Content.Length == 0) ? "var(--accent-cyan)" : "var(--success-color)")">
                                                     <InputFile OnChange="@(e => UploadDocumentToDb(e, doc))" class="upload-input" />
-                                                    @if (!string.IsNullOrEmpty(doc.FilePath))
+                                                    @if (doc.Content != null && doc.Content.Length > 0)
                                                     {
                                                         <RadzenIcon Icon="check_circle" Style="font-size: 2.5rem; color: var(--success-color);" />
                                                         <span style="color: var(--success-color); font-weight: bold; font-size: 1.1rem; text-transform: uppercase;">Файл загружен</span>
@@ -696,7 +696,7 @@
                                                         <span style="color: var(--accent-light-blue); font-weight: 700; font-size: 1.05rem; text-transform: uppercase;">Выбрать файл для слота</span>
                                                         <small style="color: var(--text-muted); font-size: 0.8rem;">Макс. размер файла: 25 МБ</small>
                                                     }
-                                                </label>
+                                                </div>
                                             </div>
                                         }
                                     </div>

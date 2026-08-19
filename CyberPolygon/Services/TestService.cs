@@ -66,27 +66,10 @@ public class TestService
         var test = await context.CyberTests.Include(t => t.Documents).FirstOrDefaultAsync(t => t.Id == id);
         if (test != null)
         {
-            foreach (var doc in test.Documents)
-            {
-                var filePath = Path.Combine(_env.WebRootPath, doc.FilePath.TrimStart('/'));
-                if (File.Exists(filePath)) File.Delete(filePath);
-            }
+            // Файлы хранятся в БД вместе с тестом и удалятся каскадно — отдельная чистка диска не нужна.
             context.CyberTests.Remove(test);
             await context.SaveChangesAsync();
         }
-    }
-
-    public async Task<string> UploadDocumentAsync(IBrowserFile file)
-    {
-        var folderPath = Path.Combine(_env.WebRootPath, "uploads", "tests");
-        if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
-
-        var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.Name)}";
-        var path = Path.Combine(folderPath, fileName);
-        using var stream = file.OpenReadStream(maxAllowedSize: 1024 * 1024 * 15);
-        using var fs = new FileStream(path, FileMode.Create);
-        await stream.CopyToAsync(fs);
-        return $"/uploads/tests/{fileName}";
     }
 
     // --- ЛОГИКА ПРОХОЖДЕНИЯ ---

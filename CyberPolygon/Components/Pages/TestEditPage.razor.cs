@@ -56,23 +56,51 @@ namespace CyberPolygon.Components.Pages
         private void AddQuestion() => Item.Questions.Add(new TestQuestion { Type = QuestionType.ManualText, Options = new() });
         private void AddOption(TestQuestion q) => q.Options.Add(new TestOption());
         private void AddDocumentSlot() => Item.Documents.Add(new TestDocument());
-
+        private bool isUploading = false;
         private async Task UploadDocumentToDb(InputFileChangeEventArgs e, TestDocument doc)
         {
+            if (isUploading) return;
+            isUploading = true;
             try
             {
-                // Сохраняем физический файл на сервер
-                var filePath = await TestService.UploadDocumentAsync(e.File);
-                doc.FilePath = filePath;
+                var file = e.File;
+                if (file == null) return;
+
+                long maxFileSize = 50 * 1024 * 1024;
+                if (file.Size > maxFileSize)
+                {
+                    NotificationService.Notify(NotificationSeverity.Warning, "Ошибка", "Файл больше 50 МБ.");
+                    return;
+                }
+
+                // Безопасное чтение без MemoryStream и CopyToAsync
+                var buffer = new byte[file.Size];
+                await using var stream = file.OpenReadStream(maxAllowedSize: maxFileSize);
+
+                int totalRead = 0;
+                while (totalRead < file.Size)
+                {
+                    int read = await stream.ReadAsync(buffer, totalRead, (int)file.Size - totalRead);
+                    if (read == 0) break;
+                    totalRead += read;
+                }
+
+                doc.Content = buffer;
+                doc.FileName = file.Name;
+                doc.ContentType = string.IsNullOrWhiteSpace(file.ContentType) ? "application/octet-stream" : file.ContentType;
 
                 if (string.IsNullOrWhiteSpace(doc.Title))
-                    doc.Title = e.File.Name;
+                    doc.Title = file.Name;
 
-                NotificationService.Notify(NotificationSeverity.Success, "Успех", "Документ загружен");
+                NotificationService.Notify(NotificationSeverity.Success, "Успех", "Документ прикреплен");
+            }
+            catch (TaskCanceledException)
+            {
+                NotificationService.Notify(NotificationSeverity.Warning, "Внимание", "Чтение прервано браузером. Попробуйте еще раз.");
             }
             catch (Exception ex)
             {
-                NotificationService.Notify(NotificationSeverity.Error, "Ошибка документа", ex.Message);
+                NotificationService.Notify(NotificationSeverity.Error, "Ошибка загрузки", ex.Message);
             }
         }
 

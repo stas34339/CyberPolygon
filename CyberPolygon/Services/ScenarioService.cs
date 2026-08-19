@@ -447,19 +447,4 @@ public class ScenarioService
         var progress = await context.UserProgresses.FindAsync(progressId);
         if (progress != null) { progress.IsRetakeRequested = false; progress.IsRetakeGranted = false; await context.SaveChangesAsync(); }
     }
-    public async Task<string> UploadDocumentAsync(Microsoft.AspNetCore.Components.Forms.IBrowserFile file)
-    {
-        var folderPath = Path.Combine(_env.WebRootPath, "uploads", "scenarios");
-        if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
-
-        var fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.Name)}";
-        var path = Path.Combine(folderPath, fileName);
-
-        // Лимит размера файла: 30 МБ
-        using var stream = file.OpenReadStream(maxAllowedSize: 1024 * 1024 * 30);
-        using var fs = new FileStream(path, FileMode.Create);
-        await stream.CopyToAsync(fs);
-
-        return $"/uploads/scenarios/{fileName}";
-    }
 }

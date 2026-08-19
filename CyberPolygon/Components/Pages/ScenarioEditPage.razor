@@ -821,10 +821,10 @@
                                                     <button type="button" class="btn-delete-icon" @onclick="@(() => Item.Documents.Remove(doc))"><RadzenIcon Icon="close" /></button>
                                                 </div>
 
-                                                <div class="upload-zone" style="border-color: @(string.IsNullOrEmpty(doc.FilePath) ? "var(--accent-cyan)" : "var(--success-color)")">
+                                                <div class="upload-zone" style="border-color: @((doc.Content == null || doc.Content.Length == 0) ? "var(--accent-cyan)" : "var(--success-color)")">
                                                     <InputFile class="upload-input" OnChange="@(e => UploadDocumentToDb(e, doc))" />
 
-                                                    @if (!string.IsNullOrEmpty(doc.FilePath))
+                                                    @if (doc.Content != null && doc.Content.Length > 0)
                                                     {
                                                         <RadzenIcon Icon="check_circle" Style="font-size: 2.5rem; color: var(--success-color);" />
                                                         <span style="color: var(--success-color); font-weight: bold; font-size: 1.1rem; text-transform: uppercase;">Файл загружен</span>

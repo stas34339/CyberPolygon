@@ -27,7 +27,12 @@ namespace CyberPolygon.Data.Models
     {
         public int Id { get; set; }
         public string FileName { get; set; } = string.Empty;
-        public string FilePath { get; set; } = string.Empty;
+
+        // MIME-тип файла
+        public string ContentType { get; set; } = "application/octet-stream";
+
+        // Содержимое файла хранится прямо в БД (Postgres: bytea)
+        public byte[]? Content { get; set; }
 
         public int InstructionId { get; set; }
         public InstructionModel? Instruction { get; set; }
