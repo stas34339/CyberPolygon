@@ -1,0 +1,61 @@
+﻿@page "/test-console"
+@rendermode InteractiveServer
+
+@using CyberPolygon.Services
+@inject VsphereApiClient Vsphere
+@inject IJSRuntime JS
+
+<div style="background-color: #0d0d12; color: #e0e0e0; min-height: 100vh; padding: 20px; font-family: 'Courier New', Courier, monospace;">
+
+    <div style="border-bottom: 2px solid #00f3ff; padding-bottom: 15px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+        <h2 style="color: #00f3ff; margin: 0;">TERMINAL UPLINK // ВЫДЕЛЕННЫЙ ДОСТУП</h2>
+        <span style="color: #555;">STATUS: @statusMessage</span>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+        <button @onclick="ConnectToVm" disabled="@isConnecting"
+                style="background-color: transparent; border: 1px solid #00f3ff; color: #00f3ff; padding: 10px 20px; cursor: pointer; text-transform: uppercase;">
+            @(isConnecting ? "Установка соединения..." : "Инициализировать Учебный АРМ-1")
+        </button>
+    </div>
+
+    <!-- Здесь отрисуется рабочий стол ВМ -->
+    <div id="vm-console-container" style="width: 1024px; height: 768px; background-color: #000; border: 1px solid #333; box-shadow: 0 0 15px rgba(0, 243, 255, 0.1);">
+    </div>
+
+</div>
+
+@code {
+    private bool isConnecting = false;
+    private string statusMessage = "ОЖИДАНИЕ";
+
+    // Заранее задаем имя для теста
+    private string targetVmName = "Учебный АРМ-1";
+
+    private async Task ConnectToVm()
+    {
+        isConnecting = true;
+        statusMessage = "АВТОРИЗАЦИЯ VCENTER...";
+        StateHasChanged();
+
+        try
+        {
+            // В блоке try:
+            string fullWssUri = await Vsphere.GetConsoleTicketAsync(targetVmName);
+
+            statusMessage = "ПОДКЛЮЧЕНИЕ ПЕРЕДАНО В БРАУЗЕР";
+            StateHasChanged();
+
+            // Передаем готовый URL
+            await JS.InvokeVoidAsync("startVmConsole", fullWssUri, "vm-console-container");
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"ОШИБКА: {ex.Message}";
+        }
+        finally
+        {
+            isConnecting = false;
+        }
+    }
+}

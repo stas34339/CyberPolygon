@@ -19,9 +19,11 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="NetVimClient" Version="6.7.0" />
     <PackageReference Include="Npgsql" Version="10.0.3" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
     <PackageReference Include="Radzen.Blazor" Version="11.2.0" />
+    <PackageReference Include="VimClient" Version="7.0.0" />
   </ItemGroup>
 
   <ItemGroup>

@@ -26,6 +26,7 @@ builder.Services.AddScoped<TestService>();
 builder.Services.AddScoped<UserManagementService>();
 builder.Services.AddSingleton<CatalogUpdateService>();
 builder.Services.AddSingleton<ScenarioSessionManager>();
+builder.Services.AddSingleton<VsphereApiClient>();
 
 builder.Services.AddRadzenCookieThemeService(options =>
 {
