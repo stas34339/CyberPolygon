@@ -82,6 +82,7 @@ public class CyberScenario
     public string? AllowedTeamIds { get; set; }
     public string? AuthorId { get; set; }
 
+
 }
 
 public class ScenarioQuestion

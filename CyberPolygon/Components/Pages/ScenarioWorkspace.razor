@@ -659,7 +659,6 @@
                                         }
                                     </ul>
                                 }
-
                                 @if (currentUserProgress.Status == AttemptStatus.NotStarted)
                                 {
                                     <button class="btn-main w-100 py-3" style="font-size: 1rem;" @onclick="StartScenario">
@@ -839,7 +838,21 @@
                                                                                 <div class="tooltip-note">@device.Description</div>
                                                                             }
                                                                         </div>
+                                                                        <!-- КНОПКА ПОДКЛЮЧЕНИЯ К VMWARE -->
+                                                                        @if (!string.IsNullOrEmpty(device.VmName))
+                                                                        {
+                                                                            <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border-color); text-align: center;">
+                                                                                <div class="d-flex justify-content-between mb-2" style="font-size: 0.8rem; text-align: left;">
+                                                                                    <span style="color: var(--text-muted);">Логин: <strong style="color: var(--text-light);">@(string.IsNullOrEmpty(device.DomainLogin) ? "-" : device.DomainLogin)</strong></span>
+                                                                                    <span style="color: var(--text-muted);">Пароль: <strong style="color: var(--warning-color);">@(string.IsNullOrEmpty(device.DomainPassword) ? "-" : device.DomainPassword)</strong></span>
+                                                                                </div>
+                                                                                <a href="/vm-console/@device.Id" target="_blank" class="btn-main w-100" style="padding: 6px; font-size: 0.8rem; text-decoration: none; border-radius: 4px;">
+                                                                                    <RadzenIcon Icon="desktop_windows" Style="font-size: 1rem; margin-top: -2px;" /> ПОДКЛЮЧИТЬСЯ К ВМ
+                                                                                </a>
+                                                                            </div>
+                                                                        }
                                                                     </div>
+                                                                    
                                                                 </div>
                                                             }
                                                         }

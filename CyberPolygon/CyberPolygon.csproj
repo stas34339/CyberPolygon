@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>aspnet-CyberPolygon-a58e0988-0e9a-4a60-9107-f17c2d93df08</UserSecretsId>
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+	  <NuGetAudit>false</NuGetAudit>
   </PropertyGroup>
 
   <ItemGroup>

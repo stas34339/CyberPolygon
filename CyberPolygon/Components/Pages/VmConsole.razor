@@ -1,0 +1,284 @@
+﻿@page "/vm-console/{DeviceId:int}"
+@rendermode InteractiveServer
+
+@using CyberPolygon.Services
+@using CyberPolygon.Data
+@inject VsphereApiClient Vsphere
+@inject ScenarioService ScenarioService
+@inject IJSRuntime JS
+
+<PageTitle>Терминал: @(device?.Name ?? "Загрузка...") | Киберполигон</PageTitle>
+
+<style>
+    /* Базовые цвета Киберполигона */
+    :root {
+        --bg-main: #0b0f17;
+        --bg-card: #131924;
+        --text-muted: #8fa0b5;
+        --text-light: #cbe0f5;
+        --accent-cyan: #4ec3d1;
+        --accent-blue: #5ba3e3;
+        --border-color: #2a3a4a;
+        --success-color: #98c379;
+        --warning-color: #e5c07b;
+        --danger-color: #e06c75;
+    }
+
+    body {
+        background-color: var(--bg-main) !important;
+        margin: 0;
+    }
+
+    /* Кнопки в стиле сайта */
+    .btn-main {
+        background: linear-gradient(90deg, var(--accent-cyan), var(--accent-blue));
+        color: var(--bg-main);
+        font-weight: 800;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+        .btn-main:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(78, 195, 209, 0.4);
+        }
+
+        .btn-main:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+    .btn-outline-light {
+        background: rgba(19, 25, 36, 0.6);
+        color: var(--text-light);
+        border: 1px solid var(--border-color);
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-size: 0.8rem;
+    }
+
+        .btn-outline-light:hover {
+            background: rgba(78, 195, 209, 0.1);
+            color: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+            box-shadow: inset 0 0 10px rgba(78, 195, 209, 0.1);
+        }
+
+    /* Акцентная кнопка предупреждения */
+    .btn-warning-outline {
+        background: rgba(229, 192, 123, 0.05);
+        color: var(--warning-color);
+        border: 1px solid rgba(229, 192, 123, 0.3);
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-size: 0.8rem;
+    }
+
+        .btn-warning-outline:hover {
+            background: rgba(229, 192, 123, 0.15);
+            border-color: var(--warning-color);
+            box-shadow: inset 0 0 10px rgba(229, 192, 123, 0.1);
+        }
+
+    /* Оформление панелей */
+    .terminal-header {
+        border-bottom: 2px solid var(--border-color);
+        padding-bottom: 15px;
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: relative;
+    }
+
+        .terminal-header::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100px;
+            height: 2px;
+            background: var(--accent-cyan);
+            box-shadow: 0 0 10px rgba(78, 195, 209, 0.5);
+        }
+
+    .control-panel {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 15px 20px;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
+    }
+
+    .creds-box {
+        background: rgba(0,0,0,0.4);
+        padding: 8px 15px;
+        border: 1px dashed var(--border-color);
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-family: monospace;
+    }
+</style>
+
+<div style="background-color: var(--bg-main); color: var(--text-light); min-height: 100vh; padding: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+
+    <div class="terminal-header">
+        <h2 style="color: var(--accent-cyan); margin: 0; font-weight: 800; letter-spacing: 2px; font-family: 'Courier New', Courier, monospace;">
+            TERMINAL UPLINK // @(device?.Name?.ToUpper() ?? "ИНИЦИАЛИЗАЦИЯ...")
+        </h2>
+        <span style="color: var(--text-muted); font-weight: bold; font-family: 'Courier New', Courier, monospace; letter-spacing: 1px;">
+            STATUS: <span style="color: @(isConnected ? "var(--success-color)" : "var(--warning-color)");">@statusMessage</span>
+        </span>
+    </div>
+
+    @if (device == null)
+    {
+        <div class="text-center p-5">
+            <RadzenProgressBar Mode="ProgressBarMode.Indeterminate" Style="height: 4px; background: var(--border-color);" />
+            <p style="color: var(--accent-cyan); margin-top: 15px; font-family: monospace; letter-spacing: 2px;">ЗАГРУЗКА ЗАЩИЩЕННОГО КАНАЛА...</p>
+        </div>
+    }
+    else if (string.IsNullOrEmpty(device.VmName))
+    {
+        <div class="text-center p-5 text-danger" style="border: 1px dashed var(--danger-color); background: rgba(224, 108, 117, 0.05); border-radius: 8px;">
+            <RadzenIcon Icon="error_outline" Style="font-size: 3rem; margin-bottom: 10px;" />
+            <br />
+            <strong>ОШИБКА: ДЛЯ ДАННОГО УЗЛА НЕ НАСТРОЕНА ИНТЕГРАЦИЯ С ГИПЕРВИЗОРОМ</strong>
+        </div>
+    }
+    else
+    {
+        <div class="control-panel">
+            <button class="btn-main" @onclick="ConnectToVm" disabled="@isConnecting">
+                <RadzenIcon Icon="@(isConnected ? "settings_input_component" : "power_settings_new")" Style="font-size: 1.1rem; margin-top: -2px;" />
+                @(isConnecting ? "УСТАНОВКА..." : (isConnected ? "ПЕРЕЗАПУСТИТЬ КАНАЛ" : $"ИНИЦИАЛИЗИРОВАТЬ {device.VmName}"))
+            </button>
+
+            @if (!string.IsNullOrEmpty(device.DomainLogin))
+            {
+                <div class="creds-box">
+                    <span style="color: var(--text-muted);">USER:</span> <strong style="color: var(--success-color);">@device.DomainLogin</strong> &nbsp;|&nbsp;
+                    <span style="color: var(--text-muted);">PASS:</span> <strong style="color: var(--warning-color);">@device.DomainPassword</strong>
+                </div>
+            }
+
+            <!-- ПАНЕЛЬ УПРАВЛЕНИЯ ВМ (появляется только после подключения) -->
+            @if (isConnected)
+            {
+                <div style="display: flex; gap: 10px; margin-left: auto;">
+                    <button class="btn-warning-outline" title="Принудительно отпустить залипшие клавиши" @onclick="ResetKeys">
+                        <RadzenIcon Icon="lock_open" Style="font-size: 1.1rem; margin-top: -2px;" /> СБРОС КЛАВИШ
+                    </button>
+                    <button class="btn-outline-light" @onclick="SendWindowsKey">
+                        <RadzenIcon Icon="grid_view" Style="font-size: 1.1rem; margin-top: -2px;" /> WIN
+                    </button>
+                    <button class="btn-outline-light" @onclick="SendCtrlAltDel">
+                        <RadzenIcon Icon="keyboard" Style="font-size: 1.1rem; margin-top: -2px;" /> CTRL+ALT+DEL
+                    </button>
+                </div>
+            }
+        </div>
+
+        <!-- Консоль ВМ -->
+        <div style="display: flex; justify-content: center; width: 100%;">
+            <div id="vm-console-container" style="position: relative; overflow: hidden; width: 1024px; height: 768px; background-color: #05070a; border: 1px solid var(--accent-cyan); box-shadow: 0 0 30px rgba(78, 195, 209, 0.15); border-radius: 8px;">
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int DeviceId { get; set; }
+
+    private ScenarioDevice? device;
+    private bool isConnecting = false;
+    private bool isConnected = false;
+    private string statusMessage = "ОЖИДАНИЕ";
+
+    protected override async Task OnInitializedAsync()
+    {
+        device = await ScenarioService.GetDeviceByIdAsync(DeviceId);
+        if (device == null || string.IsNullOrEmpty(device.VmName))
+        {
+            statusMessage = "ОШИБКА: УЗЕЛ НЕДОСТУПЕН";
+        }
+    }
+
+    private async Task ConnectToVm()
+    {
+        if (device == null || string.IsNullOrEmpty(device.VmName)) return;
+
+        isConnecting = true;
+        isConnected = false;
+        statusMessage = "АВТОРИЗАЦИЯ VCENTER...";
+        StateHasChanged();
+
+        try
+        {
+            string fullWssUri = await Vsphere.GetConsoleTicketAsync(device.VmName);
+
+            statusMessage = "УСТАНОВЛЕНО (WEBSOCKET)";
+            isConnected = true;
+            StateHasChanged();
+
+            await JS.InvokeVoidAsync("startVmConsole", fullWssUri, "vm-console-container");
+        }
+        catch (Exception ex)
+        {
+            statusMessage = $"ОШИБКА: {ex.Message}";
+        }
+        finally
+        {
+            isConnecting = false;
+        }
+    }
+
+    // === МЕТОДЫ ДЛЯ ОТПРАВКИ КЛАВИШ ===
+
+    private async Task ResetKeys()
+    {
+        await JS.InvokeVoidAsync("resetVmKeys", "vm-console-container");
+    }
+
+    private async Task SendCtrlAltDel()
+    {
+        await JS.InvokeVoidAsync("sendVmKeys", "vm-console-container", new int[] { 17, 18, 46 });
+    }
+
+    private async Task SendWindowsKey()
+    {
+        await JS.InvokeVoidAsync("sendVmKeys", "vm-console-container", new int[] { 91 });
+    }
+}

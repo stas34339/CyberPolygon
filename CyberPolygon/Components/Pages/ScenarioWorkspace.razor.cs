@@ -254,7 +254,6 @@ namespace CyberPolygon.Components.Pages
 
                 if (!isMapInitialized)
                 {
-                    // И здесь тоже проверяем, что карта существует перед вызовом JS
                     if (scenario.Devices != null && scenario.Devices.Any())
                     {
                         isMapInitialized = true;

@@ -24,6 +24,10 @@ namespace CyberPolygon.Data // Убедись, что namespace совпадае
         public int MapY { get; set; }
 
         public string Type { get; set; } = "dns"; // По умолчанию — сервер
+        // Интеграция с VMware
+        public string? VmName { get; set; }
+        public string? DomainLogin { get; set; }
+        public string? DomainPassword { get; set; }
 
         public List<DeviceApplication> Applications { get; set; } = new();
     }

@@ -447,4 +447,9 @@ public class ScenarioService
         var progress = await context.UserProgresses.FindAsync(progressId);
         if (progress != null) { progress.IsRetakeRequested = false; progress.IsRetakeGranted = false; await context.SaveChangesAsync(); }
     }
+    public async Task<ScenarioDevice?> GetDeviceByIdAsync(int deviceId)
+    {
+        using var context = await _contextFactory.CreateDbContextAsync();
+        return await context.Set<ScenarioDevice>().AsNoTracking().FirstOrDefaultAsync(d => d.Id == deviceId);
+    }
 }
