@@ -255,6 +255,20 @@
         transition: all 0.3s ease;
     }
 
+        .dark-input:focus, .rz-textbox:focus, .rz-textarea:focus, .rz-dropdown:focus, .rz-numeric:focus {
+            border-color: var(--accent-cyan) !important;
+            box-shadow: 0 0 10px rgba(78, 195, 209, 0.2) !important;
+            outline: none !important;
+        }
+
+        /* Делаем placeholder светлее и добавляем поддержку всех полей */
+        .dark-input::placeholder, .rz-textbox::placeholder, .rz-textarea::placeholder {
+            color: #8fa0b5 !important; /* Используем более светлый цвет var(--text-muted) */
+            opacity: 0.8 !important; /* Убираем прозрачность, которую иногда накидывает браузер */
+            font-style: italic;
+        }
+    По
+
         .rz-textbox:focus, .rz-textarea:focus, .rz-dropdown:focus, .rz-numeric:focus {
             border-color: var(--accent-cyan) !important;
             box-shadow: 0 0 10px rgba(78, 195, 209, 0.2) !important;
@@ -907,6 +921,24 @@
                                                             <div class="col-12">
                                                                 <span class="cyber-label" style="font-size: 0.7rem;">Описание (подсказка):</span>
                                                                 <input type="text" class="form-control form-control-sm dark-input" placeholder="Главный контроллер домена..." @bind="d.Description" />
+                                                            </div>
+                                                            <!-- БЛОК ИНТЕГРАЦИИ VMWARE -->
+                                                            <div class="col-12 mt-3" style="background: rgba(78, 195, 209, 0.05); padding: 10px 15px; border-radius: 6px; border: 1px solid rgba(78, 195, 209, 0.2);">
+                                                                <div class="d-flex align-items-center mb-2">
+                                                                    <RadzenIcon Icon="terminal" Style="color: var(--accent-cyan); font-size: 1.1rem; margin-right: 8px;" />
+                                                                    <span class="cyber-label" style="margin: 0; font-size: 0.75rem;">Интеграция с гипервизором (Опционально)</span>
+                                                                </div>
+                                                                <div class="row g-2">
+                                                                    <div class="col-4">
+                                                                        <input type="text" class="form-control form-control-sm dark-input" placeholder="Имя ВМ в vCenter" @bind="d.VmName" />
+                                                                    </div>
+                                                                    <div class="col-4">
+                                                                        <input type="text" class="form-control form-control-sm dark-input" placeholder="Логин (ОС/Домен)" @bind="d.DomainLogin" />
+                                                                    </div>
+                                                                    <div class="col-4">
+                                                                        <input type="text" class="form-control form-control-sm dark-input" placeholder="Пароль" @bind="d.DomainPassword" />
+                                                                    </div>
+                                                                </div>
                                                             </div>
 
                                                             <div class="col-12 mt-3" style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
