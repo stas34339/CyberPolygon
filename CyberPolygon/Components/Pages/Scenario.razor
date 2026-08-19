@@ -749,18 +749,18 @@
                                                 @(string.IsNullOrWhiteSpace(item.Description) ? "Описание отсутствует." : item.Description)
                                             </p>
 
-                                            <button class="btn-action @(pState.IsRetakeGranted ? "granted" : (currentStatus == AttemptStatus.Completed && !pState.IsRetakeRequested ? "success" : ""))" @onclick="@(() => NavigationManager.NavigateTo($"/scenario/{item.Id}/workspace"))">
-                                                @if (pState.IsRetakeGranted)
+                                            <button class="btn-action @(pState.IsRetakeGranted && currentStatus != AttemptStatus.InProgress ? "granted" : (currentStatus == AttemptStatus.Completed && !pState.IsRetakeRequested ? "success" : ""))" @onclick="@(() => NavigationManager.NavigateTo($"/scenario/{item.Id}/workspace"))">
+                                                @if (currentStatus == AttemptStatus.InProgress)
+                                                {
+                                                    <RadzenIcon Icon="play_arrow" /> <span>Продолжить симуляцию</span>
+                                                }
+                                                else if (pState.IsRetakeGranted)
                                                 {
                                                     <RadzenIcon Icon="play_arrow" /> <span>Начать новую попытку</span>
                                                 }
                                                 else if (pState.IsRetakeRequested)
                                                 {
                                                     <RadzenIcon Icon="pending_actions" /> <span>Запрос на повтор отправлен</span>
-                                                }
-                                                else if (currentStatus == AttemptStatus.InProgress)
-                                                {
-                                                    <RadzenIcon Icon="play_arrow" /> <span>Продолжить симуляцию</span>
                                                 }
                                                 else if (currentStatus == AttemptStatus.Completed || currentStatus == AttemptStatus.Failed)
                                                 {

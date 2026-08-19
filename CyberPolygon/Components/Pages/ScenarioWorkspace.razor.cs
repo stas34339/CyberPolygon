@@ -216,7 +216,9 @@ namespace CyberPolygon.Components.Pages
         {
             if (scenario == null || string.IsNullOrEmpty(currentUserId)) return;
 
-            var (success, msg) = await SessionManager.CheckConcurrencyAsync(currentUserId, currentTeamId);
+            int? teamIdForCheck = scenario.Scope == VisibilityScope.TeamOnly ? currentTeamId : null;
+
+            var (success, msg) = await SessionManager.CheckConcurrencyAsync(currentUserId, teamIdForCheck);
             if (!success)
             {
                 NotificationService.Notify(NotificationSeverity.Warning, "Предупреждение", msg);

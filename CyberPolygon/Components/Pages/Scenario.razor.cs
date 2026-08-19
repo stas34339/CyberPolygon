@@ -74,6 +74,7 @@ namespace CyberPolygon.Components.Pages
 
                     var progresses = await context.Set<UserScenarioProgress>()
                         .Where(p => p.UserId == currentUserId || (currentTeamId.HasValue && p.TeamId == currentTeamId.Value))
+                        .OrderByDescending(p => p.Id) // <-- МАГИЯ ЗДЕСЬ: берем самую свежую запись
                         .AsNoTracking()
                         .ToListAsync();
 
