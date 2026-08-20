@@ -127,5 +127,74 @@ namespace CyberPolygon.Components.Pages
         {
             CatalogUpdateService.OnCatalogChanged -= HandleCatalogChanged;
         }
+        public class TestStatRecord
+        {
+            public string Name { get; set; } = string.Empty;
+            public int AttemptNumber { get; set; }
+            public string StatusText { get; set; } = string.Empty;
+            public double Percentage { get; set; }
+        }
+
+        private bool isStatsDialogVisible = false;
+        private List<TestStatRecord> testStats = new();
+
+        private async Task OpenTestStats(int testId)
+        {
+            testStats.Clear();
+            using var context = await ContextFactory.CreateDbContextAsync();
+
+            // Вытягиваем тест вместе с вопросами, чтобы узнать их общее количество
+            var test = await context.CyberTests.Include(t => t.Questions).FirstOrDefaultAsync(t => t.Id == testId);
+            int totalQuestions = test?.Questions?.Count ?? 0;
+
+            var progresses = await context.Set<UserTestProgress>()
+                .Where(p => p.CyberTestId == testId)
+                .OrderBy(p => p.StartedAt) // Хронологический порядок
+                .ToListAsync();
+
+            var userIds = progresses.Where(p => p.UserId != null).Select(p => p.UserId).Distinct().ToList();
+            var users = await context.Users.Where(u => userIds.Contains(u.Id)).ToDictionaryAsync(u => u.Id, u => u.UserName ?? "Неизвестно");
+
+            var userAttemptCounts = new Dictionary<string, int>();
+
+            foreach (var p in progresses)
+            {
+                string name = "Удаленный пользователь";
+                int attempt = 1;
+
+                if (p.UserId != null)
+                {
+                    name = users.ContainsKey(p.UserId) ? users[p.UserId] : "Удаленный пользователь";
+                    if (!userAttemptCounts.ContainsKey(p.UserId)) userAttemptCounts[p.UserId] = 0;
+                    userAttemptCounts[p.UserId]++;
+                    attempt = userAttemptCounts[p.UserId];
+                }
+
+                string statusText = p.Status switch
+                {
+                    AttemptStatus.Completed => "Выполнено",
+                    AttemptStatus.Failed => "Провалено",
+                    AttemptStatus.InProgress => "В процессе",
+                    _ => "Не начато"
+                };
+
+                // Вычисляем процент прямо здесь для вывода администратору
+                double pct = totalQuestions > 0 ? Math.Round((double)p.Score / totalQuestions * 100, 1) : 0;
+
+                testStats.Add(new TestStatRecord
+                {
+                    Name = name,
+                    AttemptNumber = attempt,
+                    StatusText = statusText,
+                    Percentage = pct
+                });
+            }
+
+            testStats.Reverse();
+            isStatsDialogVisible = true;
+        }
+
+        private void CloseStatsDialog() => isStatsDialogVisible = false;
     }
+
 }

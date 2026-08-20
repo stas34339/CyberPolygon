@@ -25,6 +25,7 @@ namespace CyberPolygon.Components.Pages
 
         private int canvasWidth = 800;
         private int canvasHeight = 550;
+        private bool isGloballyOccupied = false;
 
         public class UserQuestionState
         {
@@ -170,7 +171,27 @@ namespace CyberPolygon.Components.Pages
                     scenario.Devices = freshDevices;
                     CalculateCanvasBounds();
                 }
-
+                if (scenario.IsExclusiveAccess) // <-- Обернули в условие
+                {
+                    if (scenario.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue)
+                    {
+                        isGloballyOccupied = await context.UserProgresses.AnyAsync(p =>
+                            p.CyberScenarioId == Id &&
+                            p.Status == AttemptStatus.InProgress &&
+                            p.TeamId != currentTeamId);
+                    }
+                    else
+                    {
+                        isGloballyOccupied = await context.UserProgresses.AnyAsync(p =>
+                            p.CyberScenarioId == Id &&
+                            p.Status == AttemptStatus.InProgress &&
+                            p.UserId != currentUserId);
+                    }
+                }
+                else
+                {
+                    isGloballyOccupied = false;
+                }
                 if (currentUserProgress.Status == AttemptStatus.InProgress)
                 {
                     StartTimer();
@@ -228,7 +249,22 @@ namespace CyberPolygon.Components.Pages
             try
             {
                 using var context = await ContextFactory.CreateDbContextAsync();
+                if (scenario.IsExclusiveAccess) // <-- Обернули в условие
+                {
+                    bool isOccupied = await context.UserProgresses.AnyAsync(p =>
+                        p.CyberScenarioId == scenario.Id &&
+                        p.Status == AttemptStatus.InProgress &&
+                        (scenario.Scope == VisibilityScope.TeamOnly ? p.TeamId != currentTeamId : p.UserId != currentUserId));
 
+                    if (isOccupied)
+                    {
+                        NotificationService.Notify(NotificationSeverity.Warning, "Полигон занят", "Этот сценарий прямо сейчас проходит другой участник. Дождитесь своей очереди.");
+                        isGloballyOccupied = true;
+                        await InvokeAsync(StateHasChanged);
+                        return; // Блокируем запуск
+                    }
+                }
+                // -------------------------------------------------
                 var newProgress = new UserScenarioProgress
                 {
                     UserId = scenario.Scope == VisibilityScope.TeamOnly ? null : currentUserId,

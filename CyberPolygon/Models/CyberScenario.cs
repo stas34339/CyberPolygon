@@ -81,7 +81,8 @@ public class CyberScenario
     public string? AllowedUserIds { get; set; }
     public string? AllowedTeamIds { get; set; }
     public string? AuthorId { get; set; }
-
+    // Определяет, может ли сценарий проходить только один человек/команда единовременно
+    public bool IsExclusiveAccess { get; set; }
 
 }
 

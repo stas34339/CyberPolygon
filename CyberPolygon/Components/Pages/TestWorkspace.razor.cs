@@ -29,6 +29,12 @@ namespace CyberPolygon.Components.Pages
             public int SelectedOptionId { get; set; }
             public Dictionary<int, bool> SelectedMultipleOptions { get; set; } = new();
         }
+        // Функция для вычисления процента успешности
+        private double CalculatePercentage()
+        {
+            if (test == null || test.Questions.Count == 0) return 0;
+            return Math.Round((double)correctCount / test.Questions.Count * 100, 1);
+        }
 
         protected override async Task OnInitializedAsync()
         {

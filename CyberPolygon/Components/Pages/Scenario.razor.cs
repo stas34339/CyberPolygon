@@ -151,5 +151,78 @@ namespace CyberPolygon.Components.Pages
             CatalogUpdateService.OnCatalogChanged -= HandleExternalUpdate;
             SessionManager.TeamProgressChanged -= OnTeamProgressChanged;
         }
+        public class StatRecord
+        {
+            public string Name { get; set; } = string.Empty;
+            public int AttemptNumber { get; set; }
+            public string StatusText { get; set; } = string.Empty;
+            public int Score { get; set; }
+        }
+
+        private bool isStatsDialogVisible = false;
+        private List<StatRecord> scenarioStats = new();
+
+        private async Task OpenScenarioStats(int scenarioId)
+        {
+            scenarioStats.Clear();
+            using var context = await ContextFactory.CreateDbContextAsync();
+
+            // Достаем все попытки, отсортированные по времени старта (от старых к новым)
+            var progresses = await context.Set<UserScenarioProgress>()
+                .Include(p => p.Team)
+                .Where(p => p.CyberScenarioId == scenarioId)
+                .OrderBy(p => p.StartedAt)
+                .ToListAsync();
+
+            var userIds = progresses.Where(p => p.UserId != null).Select(p => p.UserId).Distinct().ToList();
+            var users = await context.Users.Where(u => userIds.Contains(u.Id)).ToDictionaryAsync(u => u.Id, u => u.UserName ?? "Неизвестно");
+
+            var userAttemptCounts = new Dictionary<string, int>();
+            var teamAttemptCounts = new Dictionary<int, int>();
+
+            foreach (var p in progresses)
+            {
+                string name = "Неизвестно";
+                int attempt = 1;
+
+                if (p.IsTeamAttempt && p.TeamId.HasValue)
+                {
+                    name = p.Team?.Name ?? "Удаленная команда";
+                    if (!teamAttemptCounts.ContainsKey(p.TeamId.Value)) teamAttemptCounts[p.TeamId.Value] = 0;
+                    teamAttemptCounts[p.TeamId.Value]++;
+                    attempt = teamAttemptCounts[p.TeamId.Value];
+                    name = "[Команда] " + name;
+                }
+                else if (p.UserId != null)
+                {
+                    name = users.ContainsKey(p.UserId) ? users[p.UserId] : "Удаленный пользователь";
+                    if (!userAttemptCounts.ContainsKey(p.UserId)) userAttemptCounts[p.UserId] = 0;
+                    userAttemptCounts[p.UserId]++;
+                    attempt = userAttemptCounts[p.UserId];
+                }
+
+                string statusText = p.Status switch
+                {
+                    AttemptStatus.Completed => "Выполнено",
+                    AttemptStatus.Failed => "Провалено",
+                    AttemptStatus.InProgress => "В процессе",
+                    _ => "Не начато"
+                };
+
+                scenarioStats.Add(new StatRecord
+                {
+                    Name = name,
+                    AttemptNumber = attempt,
+                    StatusText = statusText,
+                    Score = p.Score
+                });
+            }
+
+            // Переворачиваем список, чтобы самые свежие попытки были сверху
+            scenarioStats.Reverse();
+            isStatsDialogVisible = true;
+        }
+
+        private void CloseStatsDialog() => isStatsDialogVisible = false;
     }
 }

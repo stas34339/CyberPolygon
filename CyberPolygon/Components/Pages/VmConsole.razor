@@ -3,11 +3,16 @@
 
 @using CyberPolygon.Services
 @using CyberPolygon.Data
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@attribute [Authorize]
+
 @inject VsphereApiClient Vsphere
 @inject ScenarioService ScenarioService
 @inject IJSRuntime JS
+@inject AuthenticationStateProvider AuthStateProvider
 
-<PageTitle>Терминал: @(device?.Name ?? "Загрузка...") | Киберполигон</PageTitle>
+<PageTitle>Терминал: @(device?.Name ?? "Безопасность") | Киберполигон</PageTitle>
 
 <style>
     /* Базовые цвета Киберполигона */
@@ -156,10 +161,10 @@
 
     <div class="terminal-header">
         <h2 style="color: var(--accent-cyan); margin: 0; font-weight: 800; letter-spacing: 2px; font-family: 'Courier New', Courier, monospace;">
-            TERMINAL UPLINK // @(device?.Name?.ToUpper() ?? "ИНИЦИАЛИЗАЦИЯ...")
+            TERMINAL UPLINK // @(device?.Name?.ToUpper() ?? "SECURE_CONNECTION")
         </h2>
         <span style="color: var(--text-muted); font-weight: bold; font-family: 'Courier New', Courier, monospace; letter-spacing: 1px;">
-            STATUS: <span style="color: @(isConnected ? "var(--success-color)" : "var(--warning-color)");">@statusMessage</span>
+            STATUS: <span style="color: @(hasAccess ? (isConnected ? "var(--success-color)" : "var(--warning-color)") : "var(--danger-color)");">@statusMessage</span>
         </span>
     </div>
 
@@ -167,7 +172,16 @@
     {
         <div class="text-center p-5">
             <RadzenProgressBar Mode="ProgressBarMode.Indeterminate" Style="height: 4px; background: var(--border-color);" />
-            <p style="color: var(--accent-cyan); margin-top: 15px; font-family: monospace; letter-spacing: 2px;">ЗАГРУЗКА ЗАЩИЩЕННОГО КАНАЛА...</p>
+            <p style="color: var(--accent-cyan); margin-top: 15px; font-family: monospace; letter-spacing: 2px;">ПРОВЕРКА СЕРТИФИКАТОВ ДОСТУПА...</p>
+        </div>
+    }
+    else if (!hasAccess)
+    {
+        <div class="text-center p-5 text-danger" style="border: 1px dashed var(--danger-color); background: rgba(224, 108, 117, 0.05); border-radius: 8px; margin-top: 40px;">
+            <RadzenIcon Icon="security" Style="font-size: 4rem; margin-bottom: 15px; filter: drop-shadow(0 0 10px rgba(224,108,117,0.5));" />
+            <br />
+            <strong style="font-size: 1.5rem; letter-spacing: 2px;">ОШИБКА БЕЗОПАСНОСТИ: В ДОСТУПЕ ОТКАЗАНО</strong>
+            <p style="margin-top: 15px; color: var(--text-muted); font-size: 1rem;">У вас нет активной сессии для сценария, к которому привязан этот узел.<br />Вернитесь в каталог и запустите симуляцию инфраструктуры.</p>
         </div>
     }
     else if (string.IsNullOrEmpty(device.VmName))
@@ -225,20 +239,50 @@
     private ScenarioDevice? device;
     private bool isConnecting = false;
     private bool isConnected = false;
-    private string statusMessage = "ОЖИДАНИЕ";
+    private bool hasAccess = false; // Флаг прав доступа к консоли
+    private string statusMessage = "ПРОВЕРКА СЕРТИФИКАТОВ...";
 
     protected override async Task OnInitializedAsync()
     {
+        // 1. Получаем само устройство
         device = await ScenarioService.GetDeviceByIdAsync(DeviceId);
-        if (device == null || string.IsNullOrEmpty(device.VmName))
+        if (device == null)
         {
             statusMessage = "ОШИБКА: УЗЕЛ НЕДОСТУПЕН";
+            return;
+        }
+
+        // 2. Идентифицируем пользователя
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            string currentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+
+            // 3. Запрашиваем прогресс пользователя для того сценария, к которому привязан этот ПК
+            var progress = await ScenarioService.GetUserProgressAsync(currentUserId, device.CyberScenarioId);
+
+            // 4. Доступ разрешен ТОЛЬКО если есть запись и она в статусе InProgress
+            if (progress != null && progress.Status == AttemptStatus.InProgress)
+            {
+                hasAccess = true;
+                statusMessage = "ОЖИДАНИЕ";
+            }
+            else
+            {
+                statusMessage = "ДОСТУП ЗАПРЕЩЕН";
+            }
+        }
+        else
+        {
+            statusMessage = "ОШИБКА АВТОРИЗАЦИИ";
         }
     }
 
     private async Task ConnectToVm()
     {
-        if (device == null || string.IsNullOrEmpty(device.VmName)) return;
+        if (device == null || string.IsNullOrEmpty(device.VmName) || !hasAccess) return;
 
         isConnecting = true;
         isConnected = false;
@@ -266,19 +310,7 @@
     }
 
     // === МЕТОДЫ ДЛЯ ОТПРАВКИ КЛАВИШ ===
-
-    private async Task ResetKeys()
-    {
-        await JS.InvokeVoidAsync("resetVmKeys", "vm-console-container");
-    }
-
-    private async Task SendCtrlAltDel()
-    {
-        await JS.InvokeVoidAsync("sendVmKeys", "vm-console-container", new int[] { 17, 18, 46 });
-    }
-
-    private async Task SendWindowsKey()
-    {
-        await JS.InvokeVoidAsync("sendVmKeys", "vm-console-container", new int[] { 91 });
-    }
+    private async Task ResetKeys() => await JS.InvokeVoidAsync("resetVmKeys", "vm-console-container");
+    private async Task SendCtrlAltDel() => await JS.InvokeVoidAsync("sendVmKeys", "vm-console-container", new int[] { 17, 18, 46 });
+    private async Task SendWindowsKey() => await JS.InvokeVoidAsync("sendVmKeys", "vm-console-container", new int[] { 91 });
 }

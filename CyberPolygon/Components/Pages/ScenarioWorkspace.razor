@@ -661,9 +661,23 @@
                                 }
                                 @if (currentUserProgress.Status == AttemptStatus.NotStarted)
                                 {
-                                    <button class="btn-main w-100 py-3" style="font-size: 1rem;" @onclick="StartScenario">
-                                        <RadzenIcon Icon="play_arrow" Style="font-size: 1.4rem;" /> НАЧАТЬ СИМУЛЯЦИЮ
-                                    </button>
+                                    @if (isGloballyOccupied)
+                                    {
+                                        <div class="p-3 mb-3 rounded text-center" style="background: rgba(229,192,123,0.05); border: 1px solid var(--warning-color); box-shadow: inset 0 0 15px rgba(229,192,123,0.1);">
+                                            <RadzenIcon Icon="lock_clock" Style="font-size: 2rem; color: var(--warning-color); margin-bottom: 5px;" /><br />
+                                            <strong style="color: var(--warning-color); letter-spacing: 1px;">ПОЛИГОН ЗАНЯТ</strong>
+                                            <p style="font-size: 0.85rem; margin: 5px 0 0 0; color: var(--text-light); line-height: 1.4;">Инфраструктуру прямо сейчас использует другой участник.<br />Дождитесь своей очереди.</p>
+                                        </div>
+                                        <button class="btn-outline-light w-100 py-3" disabled style="opacity: 0.5; cursor: not-allowed; border-color: var(--warning-color); color: var(--warning-color);">
+                                            <RadzenIcon Icon="block" Style="font-size: 1.2rem;" /> ОЖИДАНИЕ...
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn-main w-100 py-3" style="font-size: 1rem;" @onclick="StartScenario">
+                                            <RadzenIcon Icon="play_arrow" Style="font-size: 1.4rem;" /> НАЧАТЬ СИМУЛЯЦИЮ
+                                        </button>
+                                    }
                                 }
                                 else if (currentUserProgress.Status == AttemptStatus.InProgress)
                                 {

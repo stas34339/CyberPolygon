@@ -635,6 +635,32 @@
         padding: 30px;
         text-align: center;
     }
+
+    .btn-icon.stats {
+        color: var(--success-color);
+        border-color: rgba(152, 195, 121, 0.3);
+    }
+
+        .btn-icon.stats:hover {
+            background: rgba(152, 195, 121, 0.1);
+            border-color: var(--success-color);
+        }
+
+    /* Стилизация таблицы под киберпанк */
+    .cyber-grid {
+        --rz-grid-header-background-color: var(--bg-card);
+        --rz-grid-header-color: var(--accent-cyan);
+        --rz-grid-cell-color: var(--text-light);
+        --rz-grid-background-color: transparent;
+        --rz-grid-hover-background-color: rgba(78, 195, 209, 0.1);
+        --rz-grid-stripe-background-color: rgba(0,0,0,0.2);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+    }
+
+    .cyber-modal-content.large {
+        max-width: 900px;
+    }
 </style>
 
 <div class="full-page-wrapper">
@@ -776,6 +802,9 @@
                                             {
                                                 <div class="admin-card-footer">
                                                     <div class="action-buttons">
+                                                        <button class="btn-icon stats" @onclick="@(() => OpenTestStats(item.Id))" title="Статистика тестирования">
+                                                            <RadzenIcon Icon="query_stats" />
+                                                        </button>
                                                         <button class="btn-icon edit" @onclick="@(() => NavigationManager.NavigateTo($"/admin/test/edit/{item.Id}"))" title="Редактировать">
                                                             <RadzenIcon Icon="edit" />
                                                         </button>
@@ -819,6 +848,30 @@
                         Отмена
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+}
+@if (isStatsDialogVisible)
+{
+    <div class="cyber-modal-overlay" @onclick="CloseStatsDialog">
+        <div class="cyber-modal-content large" @onclick:stopPropagation>
+            <div class="modal-header" style="border-bottom-color: var(--accent-cyan); background: rgba(78, 195, 209, 0.1);">
+                <RadzenIcon Icon="analytics" Style="font-size: 2.8rem; color: var(--accent-cyan);" />
+                <div class="modal-title-group">
+                    <h3 class="modal-title" style="color: var(--accent-cyan);">СТАТИСТИКА ТЕСТИРОВАНИЯ</h3>
+                </div>
+                <button class="btn-icon delete" style="border: none;" @onclick="CloseStatsDialog"><RadzenIcon Icon="close" /></button>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <RadzenDataGrid Data="@testStats" TItem="TestStatRecord" AllowFiltering="true" FilterMode="FilterMode.Simple" AllowPaging="true" PageSize="10" AllowSorting="true" class="cyber-grid">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="TestStatRecord" Property="Name" Title="Участник" />
+                        <RadzenDataGridColumn TItem="TestStatRecord" Property="AttemptNumber" Title="Попытка" Width="120px" TextAlign="TextAlign.Center" />
+                        <RadzenDataGridColumn TItem="TestStatRecord" Property="StatusText" Title="Статус" Width="150px" />
+                        <RadzenDataGridColumn TItem="TestStatRecord" Property="Percentage" Title="Точность (%)" Width="150px" TextAlign="TextAlign.Center" />
+                    </Columns>
+                </RadzenDataGrid>
             </div>
         </div>
     </div>

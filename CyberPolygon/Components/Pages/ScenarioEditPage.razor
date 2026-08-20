@@ -732,6 +732,19 @@
                                     <span style="color: var(--text-light);"><RadzenIcon Icon="vpn_key" Style="vertical-align: middle; margin-right: 6px;" /> 3. Доступ</span>
                                 </Template>
                                 <ChildContent>
+                                    <div class="cyber-section mb-4" style="border-color: @(Item.IsExclusiveAccess ? "var(--warning-color)" : "var(--border-color)");">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <label class="cyber-label" style="font-size: 1rem; color: @(Item.IsExclusiveAccess ? "var(--warning-color)" : "var(--accent-cyan)") !important;">
+                                                    <RadzenIcon Icon="pan_tool" Style="margin-top: -2px; margin-right: 5px;" /> Монопольный режим (По очереди)
+                                                </label>
+                                                <div style="color: var(--text-muted); font-size: 0.85rem; margin-top: 5px;">
+                                                    Если включено, инфраструктура блокируется: следующий игрок не сможет запустить симуляцию, пока предыдущий её не завершит.
+                                                </div>
+                                            </div>
+                                            <RadzenSwitch @bind-Value="@Item.IsExclusiveAccess" />
+                                        </div>
+                                    </div>
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="cyber-section interactive" style="cursor: pointer; border-color: @(!isIndividual ? "var(--success-color)" : "var(--border-color)")" @onclick="SetTeamMode">
