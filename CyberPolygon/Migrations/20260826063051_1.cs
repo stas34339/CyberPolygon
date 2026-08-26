@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CyberPolygon.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCleanDb : Migration
+    public partial class _1 : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -92,7 +92,8 @@ namespace CyberPolygon.Migrations
                     Difficulty = table.Column<string>(type: "text", nullable: false),
                     AllowedUserIds = table.Column<string>(type: "text", nullable: true),
                     AllowedTeamIds = table.Column<string>(type: "text", nullable: true),
-                    AuthorId = table.Column<string>(type: "text", nullable: true)
+                    AuthorId = table.Column<string>(type: "text", nullable: true),
+                    IsExclusiveAccess = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -260,7 +261,10 @@ namespace CyberPolygon.Migrations
                     IsCompromised = table.Column<bool>(type: "boolean", nullable: false),
                     MapX = table.Column<int>(type: "integer", nullable: false),
                     MapY = table.Column<int>(type: "integer", nullable: false),
-                    Type = table.Column<string>(type: "text", nullable: false)
+                    Type = table.Column<string>(type: "text", nullable: false),
+                    VmName = table.Column<string>(type: "text", nullable: true),
+                    DomainLogin = table.Column<string>(type: "text", nullable: true),
+                    DomainPassword = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {

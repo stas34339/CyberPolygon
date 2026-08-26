@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace CyberPolygon.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260819120605_AddExclusiveAccess")]
-    partial class AddExclusiveAccess
+    [Migration("20260826063051_1")]
+    partial class _1
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

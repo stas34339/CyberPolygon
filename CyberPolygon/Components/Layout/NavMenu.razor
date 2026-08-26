@@ -511,7 +511,9 @@
             </Template>
         </RadzenMenuItem>
 
-        <RadzenMenuItem Text="Панель администратора" Path="admin" Icon="lock" />
+        <AuthorizeView Roles="Admin, SuperAdmin">
+            <RadzenMenuItem Text="Панель администратора" Path="admin" Icon="lock" />
+        </AuthorizeView>
         <RadzenMenuItem Text="Выход" Icon="door_open" Click="HandleLogoutClick" />
     </RadzenMenu>
 </div>

@@ -44,7 +44,7 @@ namespace CyberPolygon.Components.Pages
         public class UserCreationModel
         {
             [Required(ErrorMessage = "Поле Логин обязательно")]
-            [EmailAddress(ErrorMessage = "Введите корректный Email адрес")]
+            //[EmailAddress(ErrorMessage = "Введите корректный Email адрес")]
             public string Login { get; set; } = string.Empty;
 
             [Required(ErrorMessage = "Придумайте пароль")]
@@ -68,7 +68,7 @@ namespace CyberPolygon.Components.Pages
             public string Id { get; set; } = string.Empty;
 
             [Required(ErrorMessage = "Логин не может быть пустым")]
-            [EmailAddress(ErrorMessage = "Неверный формат Email")]
+            //[EmailAddress(ErrorMessage = "Неверный формат Email")]
             public string Login { get; set; } = string.Empty;
 
             [Required(ErrorMessage = "Укажите имя агента")]
@@ -377,7 +377,7 @@ namespace CyberPolygon.Components.Pages
                 var u = await c.Set<ApplicationUser>().FindAsync(editUserModel.Id);
                 if (u != null)
                 {
-                    u.UserName = editUserModel.Login; u.Email = editUserModel.Login; u.FirstName = editUserModel.FirstName; u.LastName = editUserModel.LastName; u.MiddleName = editUserModel.MiddleName;
+                    u.UserName = editUserModel.Login; u.FirstName = editUserModel.FirstName; u.LastName = editUserModel.LastName; u.MiddleName = editUserModel.MiddleName;
                     c.Update(u); await c.SaveChangesAsync();
 
                     bool currentlyAdmin = adminUserIds.Contains(u.Id) || superAdminUserIds.Contains(u.Id);

@@ -741,14 +741,31 @@
                         </div>
 
                         <!-- ПРАВАЯ ПАНЕЛЬ: КАРТА И ЗАДАНИЯ -->
+                        <!-- ПРАВАЯ ПАНЕЛЬ: КАРТА И ЗАДАНИЯ -->
                         <div class="col-lg-8">
-                            @if (currentUserProgress.Status == AttemptStatus.NotStarted)
+                            @if (currentUserProgress.Status != AttemptStatus.InProgress)
                             {
                                 <div class="blur-zone-wrapper">
                                     <div class="lock-center-panel">
-                                        <RadzenIcon Icon="lock" Style="font-size: 5rem; color: var(--accent-cyan); margin-bottom: 20px; filter: drop-shadow(0 0 15px rgba(78,195,209,0.5));" />
-                                        <h5>СИСТЕМА ЗАБЛОКИРОВАНА</h5>
-                                        <p>Запустите симуляцию в панели слева, чтобы получить доступ к терминалу и инфраструктуре.</p>
+                                        @if (currentUserProgress.Status == AttemptStatus.NotStarted)
+                                        {
+                                            <RadzenIcon Icon="lock" Style="font-size: 5rem; color: var(--accent-cyan); margin-bottom: 20px; filter: drop-shadow(0 0 15px rgba(78,195,209,0.5));" />
+                                            <h5>СИСТЕМА ЗАБЛОКИРОВАНА</h5>
+                                            <p>Запустите симуляцию в панели слева, чтобы получить доступ к терминалу и инфраструктуре.</p>
+                                        }
+                                        else if (currentUserProgress.IsRetakeRequested)
+                                        {
+                                            <RadzenIcon Icon="pending_actions" Style="font-size: 5rem; color: var(--warning-color); margin-bottom: 20px; filter: drop-shadow(0 0 15px rgba(229,192,123,0.5));" />
+                                            <h5 style="color: var(--warning-color);">ОЖИДАНИЕ РЕШЕНИЯ</h5>
+                                            <p>Ваш запрос на повторное прохождение отправлен.<br />Доступ к инфраструктуре и заданиям временно закрыт до решения администратора.</p>
+                                        }
+                                        else
+                                        {
+                                            <!-- Для статусов Completed и Failed -->
+                                            <RadzenIcon Icon="verified_user" Style="font-size: 5rem; color: var(--accent-cyan); margin-bottom: 20px; filter: drop-shadow(0 0 15px rgba(78,195,209,0.5));" />
+                                            <h5>СИМУЛЯЦИЯ ЗАВЕРШЕНА</h5>
+                                            <p>Вы завершили прохождение данного сценария.<br />Доступ к терминалу и карте сети закрыт.</p>
+                                        }
                                     </div>
                                 </div>
                             }

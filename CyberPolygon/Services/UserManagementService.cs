@@ -23,12 +23,10 @@ namespace CyberPolygon.Services
             string emailLogin = login.Contains("@") ? login : $"{login}@polygon.do";
             var user = new ApplicationUser
             {
-                UserName = emailLogin,
-                Email = emailLogin,
+                UserName = login,
                 FirstName = firstName,
                 LastName = lastName,
                 MiddleName = middleName,
-                EmailConfirmed = true
             };
 
             // ПРОВЕРКА ПРАВ: Только SuperAdmin может назначать других Админов

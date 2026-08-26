@@ -656,7 +656,7 @@
         <div class="page-header">
             <div class="header-text">
                 <h1>Панель управления</h1>
-                <p>Информационно-аналитический департамент // Терминал администратора</p>
+                <p>Информационно-аналитический отдел департамента охраны // Терминал администратора</p>
             </div>
         </div>
 
@@ -1040,11 +1040,10 @@
                     <DataAnnotationsValidator />
 
                     <div class="mb-4">
-                        <label class="cyber-label">Логин (Email)</label>
-                        <InputText @bind-Value="newUserModel.Login" class="form-control dark-input" placeholder="user@polygon.do" />
+                        <label class="cyber-label">Логин</label>
+                        <InputText @bind-Value="newUserModel.Login" class="form-control dark-input" placeholder="Введите логин..." />
                         <ValidationMessage For="@(() => newUserModel.Login)" class="validation-message" />
                     </div>
-
                     <div class="mb-4">
                         <label class="cyber-label">Пароль</label>
                         <InputText @bind-Value="newUserModel.Password" type="password" class="form-control dark-input" placeholder="Минимум 6 символов" />
@@ -1104,7 +1103,7 @@
                     <DataAnnotationsValidator />
 
                     <div class="mb-4">
-                        <label class="cyber-label">Логин (Email)</label>
+                        <label class="cyber-label">Логин</label>
                         <InputText @bind-Value="editUserModel.Login" class="form-control dark-input" />
                         <ValidationMessage For="@(() => editUserModel.Login)" class="validation-message" />
                     </div>

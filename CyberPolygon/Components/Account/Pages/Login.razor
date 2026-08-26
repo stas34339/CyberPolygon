@@ -455,7 +455,7 @@
                     Платформа для тестирования и<br />
                     обучения сотрудников информационной безопасности
                 </p>
-                <div class="dev-badge">Разработано сотрудниками Информационно-аналитическим отделом Департамента охраны</div>
+                <div class="dev-badge">Разработано сотрудниками Информационно-аналитического отдела Департамента охраны</div>
             </div>
         </div>
 
@@ -488,7 +488,7 @@
 
                         <div class="mb-4">
                             <label class="cyber-label" for="Input.UserName">Логин (Идентификатор)</label>
-                            <InputText @bind-Value="Input.UserName" id="Input.UserName" class="dark-input" autocomplete="username webauthn" aria-required="true" placeholder="name@example.com" />
+                            <InputText @bind-Value="Input.UserName" id="Input.UserName" class="dark-input" autocomplete="username webauthn" aria-required="true" placeholder="agent_007" />
                             <ValidationMessage For="() => Input.UserName" class="validation-message" />
                         </div>
 
@@ -564,13 +564,9 @@
                 return;
             }
 
-            // Добавляем домен @polygon.do автоматически
-            var fullEmail = Input.UserName.Contains("@")
-                ? Input.UserName
-                : $"{Input.UserName}@polygon.do";
-
+            // Передаем логин напрямую, без добавления доменов
             result = await SignInManager.PasswordSignInAsync(
-                fullEmail,
+                Input.UserName,
                 Input.Password,
                 Input.RememberMe,
                 lockoutOnFailure: false);

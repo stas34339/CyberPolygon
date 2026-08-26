@@ -5,10 +5,12 @@
 @using CyberPolygon.Data
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
+@using Microsoft.EntityFrameworkCore
 @attribute [Authorize]
 
 @inject VsphereApiClient Vsphere
 @inject ScenarioService ScenarioService
+@inject IDbContextFactory<ApplicationDbContext> ContextFactory
 @inject IJSRuntime JS
 @inject AuthenticationStateProvider AuthStateProvider
 
@@ -260,11 +262,29 @@
         {
             string currentUserId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
 
-            // 3. Запрашиваем прогресс пользователя для того сценария, к которому привязан этот ПК
-            var progress = await ScenarioService.GetUserProgressAsync(currentUserId, device.CyberScenarioId);
+            using var context = await ContextFactory.CreateDbContextAsync();
 
-            // 4. Доступ разрешен ТОЛЬКО если есть запись и она в статусе InProgress
-            if (progress != null && progress.Status == AttemptStatus.InProgress)
+            // 3. Узнаем, в каких командах состоит текущий пользователь
+            var dbUser = await context.Set<ApplicationUser>()
+                .Include(u => u.Teams)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(u => u.Id == currentUserId);
+
+            var userTeamIds = dbUser?.Teams?.Select(t => t.Id).ToList() ?? new List<int>();
+
+            // 4. Ищем активную сессию (InProgress) для этого сценария:
+            // - Либо личную (IsTeamAttempt == false и UserId совпадает)
+            // - Либо командную (IsTeamAttempt == true и TeamId совпадает с одной из команд пользователя)
+            bool isActiveSessionExists = await context.UserProgresses.AnyAsync(p =>
+                p.CyberScenarioId == device.CyberScenarioId &&
+                p.Status == AttemptStatus.InProgress &&
+                (
+                    (!p.IsTeamAttempt && p.UserId == currentUserId) ||
+                    (p.IsTeamAttempt && p.TeamId != null && userTeamIds.Contains(p.TeamId.Value))
+                ));
+
+            // 5. Выдаем права
+            if (isActiveSessionExists)
             {
                 hasAccess = true;
                 statusMessage = "ОЖИДАНИЕ";

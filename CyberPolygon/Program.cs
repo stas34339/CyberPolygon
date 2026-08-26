@@ -71,9 +71,20 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddIdentityCore<ApplicationUser>(options => {
     options.SignIn.RequireConfirmedAccount = false;
+
+    // === УПРОЩЕННЫЕ НАСТРОЙКИ ПАРОЛЯ ===
+    options.Password.RequireDigit = false;           // Не требовать цифры
+    options.Password.RequiredLength = 6;             // Минимальная длина (можно поставить хоть 3)
+    options.Password.RequireNonAlphanumeric = false; // Не требовать спецсимволы (@, !, #)
+    options.Password.RequireUppercase = false;       // Не требовать заглавные буквы
+    options.Password.RequireLowercase = false;       // Не требовать строчные буквы
+
+    // === НАСТРОЙКИ ЛОГИНА ===
+    options.User.RequireUniqueEmail = false;         // Разрешить аккаунты без уникального Email
+    options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+"; // Разрешенные символы для логина
 })
     .AddErrorDescriber<RussianIdentityErrorDescriber>()
-    .AddRoles<IdentityRole>() // ВКЛЮЧАЕМ РОЛИ
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager()
     .AddDefaultTokenProviders();
