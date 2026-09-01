@@ -5,6 +5,7 @@
 @using Radzen.Blazor
 @inject IDbContextFactory<ApplicationDbContext> ContextFactory
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JS
 @rendermode InteractiveServer
 
 <PageTitle>Детали попытки теста | Киберполигон</PageTitle>
@@ -327,6 +328,10 @@
                 <p>Информационно-аналитический департамент // Отчет системы</p>
             </div>
             <div class="d-flex align-items-center gap-3">
+                <!-- Кнопка скачивания теперь в стиле btn-outline-light -->
+                <button class="btn-outline-light" @onclick="DownloadWordReport">
+                    <RadzenIcon Icon="file_download" Style="margin-right: 5px;" /> СКАЧАТЬ ОТЧЕТ В WORD
+                </button>
                 <button class="btn-outline-light" @onclick="GoBack">
                     <RadzenIcon Icon="arrow_back" Style="margin-right: 5px;" /> НАЗАД К УПРАВЛЕНИЮ
                 </button>
@@ -362,11 +367,11 @@
                     <div class="cyber-section">
                         <div class="info-grid">
                             <div class="info-item"><label>Пользователь</label><span>@userName</span></div>
-                            <div class="info-item"><label>Сложность</label><span>@(test?.Difficulty.ToString() ?? "—")</span></div>
-                            <div class="info-item"><label>Статус</label><span>@progress.Status</span></div>
-                            <div class="info-item"><label>Начало</label><span>@(progress.StartedAt?.ToString("dd.MM.yyyy HH:mm:ss") ?? "—")</span></div>
-                            <div class="info-item"><label>Завершение</label><span>@(progress.CompletedAt?.ToString("dd.MM.yyyy HH:mm:ss") ?? "—")</span></div>
-                            <div class="info-item"><label>Результат</label><span style="color: var(--accent-cyan); font-size: 1.3rem;">@progress.Score / @(test?.Questions?.Count ?? 0) (@percentage%)</span></div>
+                            <div class="info-item"><label>Сложность</label><span>@(test != null ? GetDifficultyText(test.Difficulty) : "—")</span></div>
+                            <div class="info-item"><label>Статус</label><span>@(progress != null ? GetStatusText(progress.Status) : "—")</span></div>
+                            <div class="info-item"><label>Начало</label><span>@(progress?.StartedAt?.ToString("dd.MM.yyyy HH:mm:ss") ?? "—")</span></div>
+                            <div class="info-item"><label>Завершение</label><span>@(progress?.CompletedAt?.ToString("dd.MM.yyyy HH:mm:ss") ?? "—")</span></div>
+                            <div class="info-item"><label>Результат</label><span style="color: var(--accent-cyan); font-size: 1.3rem;">@(progress?.Score ?? 0) / @(test?.Questions?.Count ?? 0) (@percentage%)</span></div>
                         </div>
                     </div>
 
@@ -395,30 +400,50 @@
                             </div>
 
                             <div style="margin-top: 15px;">
-                                @foreach (var opt in q.Options)
+                                @if (q.Type == QuestionType.ManualText)
                                 {
-                                    string cssClass = "option-item";
-                                    string indicator = "";
-
-                                    if (correctOptionIds.Contains(opt.Id))
-                                    {
-                                        cssClass += " correct-option";
-                                        indicator = " ✓ (правильный ответ)";
-                                    }
-                                    if (selectedIds.Contains(opt.Id) && !correctOptionIds.Contains(opt.Id))
-                                    {
-                                        cssClass += " selected-wrong";
-                                        indicator = " ✗ (выбран ошибочно)";
-                                    }
-                                    else if (selectedIds.Contains(opt.Id) && correctOptionIds.Contains(opt.Id))
-                                    {
-                                        indicator = " ✓ (выбран верно)";
-                                    }
-
-                                    <div class="@cssClass">
-                                        <span style="flex-grow: 1;">@opt.Text</span>
-                                        <span style="font-weight: bold; font-size: 0.85rem;">@indicator</span>
+                                    <div style="display: flex; flex-direction: column; gap: 15px;">
+                                        <div>
+                                            <span style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">Ответ пользователя:</span>
+                                            <div style="margin-top: 5px; padding: 12px 15px; border-radius: 6px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: @(isCorrect ? "var(--success-color)" : "var(--danger-color)"); font-family: monospace; font-size: 1.05rem;">
+                                                @(string.IsNullOrWhiteSpace(userAnswer?.SelectedAnswer) ? "— [Пустой ответ] —" : userAnswer.SelectedAnswer)
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; font-weight: bold;">Правильный ответ:</span>
+                                            <div style="margin-top: 5px; padding: 12px 15px; border-radius: 6px; background: rgba(152,195,121,0.05); border: 1px solid var(--success-color); color: var(--success-color); font-family: monospace; font-size: 1.05rem;">
+                                                @(string.IsNullOrWhiteSpace(q.CorrectTextAnswer) ? "— [Не задан] —" : q.CorrectTextAnswer)
+                                            </div>
+                                        </div>
                                     </div>
+                                }
+                                else
+                                {
+                                    @foreach (var opt in q.Options)
+                                    {
+                                        string cssClass = "option-item";
+                                        string indicator = "";
+
+                                        if (correctOptionIds.Contains(opt.Id))
+                                        {
+                                            cssClass += " correct-option";
+                                            indicator = " ✓ (правильный ответ)";
+                                        }
+                                        if (selectedIds.Contains(opt.Id) && !correctOptionIds.Contains(opt.Id))
+                                        {
+                                            cssClass += " selected-wrong";
+                                            indicator = " ✗ (выбран ошибочно)";
+                                        }
+                                        else if (selectedIds.Contains(opt.Id) && correctOptionIds.Contains(opt.Id))
+                                        {
+                                            indicator = " ✓ (выбран верно)";
+                                        }
+
+                                        <div class="@cssClass">
+                                            <span style="flex-grow: 1;">@opt.Text</span>
+                                            <span style="font-weight: bold; font-size: 0.85rem;">@indicator</span>
+                                        </div>
+                                    }
                                 }
                             </div>
 
@@ -467,59 +492,132 @@
             if (!string.IsNullOrEmpty(progress.UserId))
             {
                 var user = await context.Users.FindAsync(progress.UserId);
-                userName = user?.UserName ?? progress.UserId;
+                if (user != null)
+                {
+                    // Собираем полное ФИО
+                    string fullName = $"{user.LastName} {user.FirstName} {user.MiddleName}".Trim();
+                    // Если ФИО не заполнено, откатываемся к логину
+                    userName = string.IsNullOrWhiteSpace(fullName) ? user.UserName ?? "Неизвестно" : fullName;
+                }
             }
         }
     }
 
-    // Метод для безопасного получения ID выбранных ответов
+    // Метод для чистого парсинга вариантов выбора из БД
     private List<int> GetSelectedOptionIds(UserTestAnswer? answer)
     {
-        if (answer == null) return new List<int>();
+        if (answer == null || string.IsNullOrWhiteSpace(answer.SelectedAnswer))
+            return new List<int>();
 
-        // Пробуем разные возможные названия свойств
-        var type = answer.GetType();
+        // SelectedAnswer хранит ID вариантов через запятую, парсим их:
+        return answer.SelectedAnswer
+            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(id => int.TryParse(id.Trim(), out int parsed) ? parsed : -1)
+            .Where(id => id > 0)
+            .ToList();
+    }
+    private async Task DownloadWordReport()
+    {
+        // 1. Генерируем HTML-разметку под стандарты Word
+        var htmlContent = BuildWordReportHtml();
 
-        var selectedIdsProp = type.GetProperty("SelectedOptionIds");
-        if (selectedIdsProp != null)
-        {
-            var value = selectedIdsProp.GetValue(answer)?.ToString();
-            if (!string.IsNullOrEmpty(value))
-            {
-                return value.Split(',', StringSplitOptions.RemoveEmptyEntries)
-                    .Select(id => int.TryParse(id.Trim(), out int parsed) ? parsed : -1)
-                    .Where(id => id > 0)
-                    .ToList();
-            }
-        }
+        // 2. Формируем имя файла (убираем пробелы из ФИО)
+        var safeUserName = userName.Replace(" ", "_");
+        var fileName = $"Отчет_{safeUserName}_{DateTime.Now:ddMMyyyy}.doc";
 
-        // Если есть свойство SelectedOptionId (единственный выбор)
-        var singleIdProp = type.GetProperty("SelectedOptionId");
-        if (singleIdProp != null)
-        {
-            var value = singleIdProp.GetValue(answer);
-            if (value != null && value is int intValue && intValue > 0)
-            {
-                return new List<int> { intValue };
-            }
-        }
-
-        // Если есть свойство OptionId
-        var optionIdProp = type.GetProperty("OptionId");
-        if (optionIdProp != null)
-        {
-            var value = optionIdProp.GetValue(answer);
-            if (value != null && value is int intValue && intValue > 0)
-            {
-                return new List<int> { intValue };
-            }
-        }
-
-        return new List<int>();
+        // 3. Отправляем в наш JS-скрипт на скачивание
+        await JS.InvokeVoidAsync("downloadFileFromBlob", fileName, htmlContent);
     }
 
+    private string BuildWordReportHtml()
+    {
+        var sb = new System.Text.StringBuilder();
+
+        // Специфичные теги, которые говорят Ворду "открой меня красиво"
+        sb.AppendLine("<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>");
+        sb.AppendLine("<head><meta charset='utf-8'><title>Отчет по тестированию</title></head>");
+        sb.AppendLine("<body style='font-family: \"Times New Roman\", Times, serif; font-size: 14pt;'>");
+
+        // Шапка отчета
+        sb.AppendLine($"<h2 style='text-align:center;'>Отчет о результатах тестирования</h2>");
+        sb.AppendLine($"<h3 style='text-align:center;'>{test?.Title}</h3>");
+        sb.AppendLine("<hr/>");
+
+        // Основная статистика
+        sb.AppendLine($"<p><b>ФИО (Пользователь):</b> {userName}</p>");
+        sb.AppendLine($"<p><b>Время начала:</b> {(progress?.StartedAt?.ToString("dd.MM.yyyy HH:mm:ss") ?? "—")}</p>");
+        sb.AppendLine($"<p><b>Время завершения:</b> {(progress?.CompletedAt?.ToString("dd.MM.yyyy HH:mm:ss") ?? "—")}</p>");
+        sb.AppendLine($"<p><b>Количество верных ответов:</b> {userAnswers.Count(a => a.IsCorrect)} из {questions.Count}</p>");
+        sb.AppendLine($"<p><b>Точность выполнения:</b> {percentage}%</p>");
+        sb.AppendLine("<hr/><br/>");
+
+        // Вывод всех вопросов
+        for (int i = 0; i < questions.Count; i++)
+        {
+            var q = questions[i];
+            var userAnswer = userAnswers.FirstOrDefault(a => a.QuestionId == q.Id);
+            var selectedIds = GetSelectedOptionIds(userAnswer);
+            var correctOptionIds = q.Options.Where(o => o.IsCorrect).Select(o => o.Id).ToList();
+            bool isCorrect = userAnswer?.IsCorrect ?? false;
+
+            string statusColor = isCorrect ? "green" : "red";
+            string statusText = isCorrect ? "ВЕРНО" : "НЕВЕРНО";
+
+            sb.AppendLine($"<p style='margin-bottom: 5px;'><b>Вопрос {i + 1}:</b> {q.Text}</p>");
+            sb.AppendLine($"<p style='margin-top: 0;'><b>Статус:</b> <span style='color:{statusColor}; font-weight:bold;'>{statusText}</span></p>");
+
+            if (q.Type == QuestionType.ManualText)
+            {
+                string userText = string.IsNullOrWhiteSpace(userAnswer?.SelectedAnswer) ? "— [Ответ не предоставлен] —" : userAnswer.SelectedAnswer;
+                string correctText = string.IsNullOrWhiteSpace(q.CorrectTextAnswer) ? "— [Эталон не задан] —" : q.CorrectTextAnswer;
+
+                sb.AppendLine($"<p>Ответ пользователя: <span style='color:blue;'>{userText}</span></p>");
+                sb.AppendLine($"<p>Правильный ответ: <span style='color:green;'>{correctText}</span></p>");
+            }
+            else
+            {
+                sb.AppendLine("<ul style='list-style-type: none; padding-left: 0;'>");
+                foreach (var opt in q.Options)
+                {
+                    string mark = "";
+                    if (correctOptionIds.Contains(opt.Id))
+                        mark += " &nbsp;&nbsp;<b><span style='color:green;'>[ПРАВИЛЬНЫЙ ОТВЕТ]</span></b>";
+                    if (selectedIds.Contains(opt.Id))
+                        mark += " &nbsp;&nbsp;<b><span style='color:blue;'>[ВЫБРАНО ПОЛЬЗОВАТЕЛЕМ]</span></b>";
+
+                    // Добавляем чекбоксы для красоты
+                    string checkbox = selectedIds.Contains(opt.Id) ? "☑" : "☐";
+
+                    sb.AppendLine($"<li style='margin-bottom: 5px;'>{checkbox} {opt.Text} {mark}</li>");
+                }
+                sb.AppendLine("</ul>");
+            }
+            sb.AppendLine("<br/>"); // Отступ между вопросами
+        }
+
+        sb.AppendLine("</body></html>");
+        return sb.ToString();
+    }
+    // Перевод уровней сложности на русский
+    private string GetDifficultyText(TestDifficulty diff) => diff switch
+    {
+        TestDifficulty.Easy => "Легкий",
+        TestDifficulty.Medium => "Средний",
+        TestDifficulty.Hard => "Сложный",
+        _ => "Неизвестно"
+    };
+
+    // Перевод статуса попытки на русский
+    private string GetStatusText(AttemptStatus status) => status switch
+    {
+        AttemptStatus.NotStarted => "Не начато",
+        AttemptStatus.InProgress => "В процессе",
+        AttemptStatus.Completed => "Выполнено",
+        AttemptStatus.Failed => "Провалено",
+        _ => "Неизвестно"
+    };
     private void GoBack()
     {
-        NavigationManager.NavigateTo("/profile");
+        NavigationManager.NavigateTo("/admin");
     }
 }

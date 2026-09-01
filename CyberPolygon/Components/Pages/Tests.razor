@@ -870,6 +870,13 @@
                         <RadzenDataGridColumn TItem="TestStatRecord" Property="AttemptNumber" Title="Попытка" Width="120px" TextAlign="TextAlign.Center" />
                         <RadzenDataGridColumn TItem="TestStatRecord" Property="StatusText" Title="Статус" Width="150px" />
                         <RadzenDataGridColumn TItem="TestStatRecord" Property="Percentage" Title="Точность (%)" Width="150px" TextAlign="TextAlign.Center" />
+                        <RadzenDataGridColumn TItem="TestStatRecord" Title="Действия" Width="120px" Sortable="false" Filterable="false" TextAlign="TextAlign.Center">
+                            <Template Context="data">
+                                <button class="btn-icon edit" @onclick="@(() => NavigationManager.NavigateTo($"/admin/test-attempt/{data.ProgressId}"))" title="Посмотреть подробности">
+                                    <RadzenIcon Icon="visibility" />
+                                </button>
+                            </Template>
+                        </RadzenDataGridColumn>
                     </Columns>
                 </RadzenDataGrid>
             </div>

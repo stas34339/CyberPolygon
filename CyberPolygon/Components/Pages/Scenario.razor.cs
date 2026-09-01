@@ -153,6 +153,7 @@ namespace CyberPolygon.Components.Pages
         }
         public class StatRecord
         {
+            public int ProgressId { get; set; }
             public string Name { get; set; } = string.Empty;
             public int AttemptNumber { get; set; }
             public string StatusText { get; set; } = string.Empty;
@@ -175,7 +176,19 @@ namespace CyberPolygon.Components.Pages
                 .ToListAsync();
 
             var userIds = progresses.Where(p => p.UserId != null).Select(p => p.UserId).Distinct().ToList();
-            var users = await context.Users.Where(u => userIds.Contains(u.Id)).ToDictionaryAsync(u => u.Id, u => u.UserName ?? "Неизвестно");
+            // Вытягиваем данные профиля для сборки ФИО
+            var usersData = await context.Users
+                .Where(u => userIds.Contains(u.Id))
+                .Select(u => new { u.Id, u.UserName, u.FirstName, u.LastName, u.MiddleName })
+                .ToListAsync();
+
+            var users = usersData.ToDictionary(
+                u => u.Id,
+                u =>
+                {
+                    string fullName = $"{u.LastName} {u.FirstName} {u.MiddleName}".Trim();
+                    return string.IsNullOrWhiteSpace(fullName) ? (u.UserName ?? "Неизвестно") : fullName;
+                });
 
             var userAttemptCounts = new Dictionary<string, int>();
             var teamAttemptCounts = new Dictionary<int, int>();
@@ -211,6 +224,7 @@ namespace CyberPolygon.Components.Pages
 
                 scenarioStats.Add(new StatRecord
                 {
+                    ProgressId = p.Id,
                     Name = name,
                     AttemptNumber = attempt,
                     StatusText = statusText,

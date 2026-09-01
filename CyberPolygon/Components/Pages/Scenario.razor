@@ -877,6 +877,13 @@
                         <RadzenDataGridColumn TItem="StatRecord" Property="AttemptNumber" Title="Попытка" Width="120px" TextAlign="TextAlign.Center" />
                         <RadzenDataGridColumn TItem="StatRecord" Property="StatusText" Title="Статус" Width="150px" />
                         <RadzenDataGridColumn TItem="StatRecord" Property="Score" Title="Счет (XP)" Width="120px" TextAlign="TextAlign.Center" />
+                        <RadzenDataGridColumn TItem="StatRecord" Title="Действия" Width="120px" Sortable="false" Filterable="false" TextAlign="TextAlign.Center">
+                            <Template Context="data">
+                                <button class="btn-icon edit" @onclick="@(() => NavigationManager.NavigateTo($"/admin/scenario-attempt/{data.ProgressId}"))" title="Посмотреть подробности">
+                                    <RadzenIcon Icon="visibility" />
+                                </button>
+                            </Template>
+                        </RadzenDataGridColumn>
                     </Columns>
                 </RadzenDataGrid>
             </div>

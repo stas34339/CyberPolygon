@@ -29,6 +29,7 @@ namespace CyberPolygon.Components.Pages
             public int SelectedOptionId { get; set; }
             public Dictionary<int, bool> SelectedMultipleOptions { get; set; } = new();
         }
+
         // Функция для вычисления процента успешности
         private double CalculatePercentage()
         {
@@ -50,14 +51,25 @@ namespace CyberPolygon.Components.Pages
         private async Task LoadProgress()
         {
             progress = await TestService.GetUserProgressAsync(currentUserId, Id);
+
+            // Используем ID попытки (или ID теста) как "зерно" для генератора случайных чисел.
+            // Благодаря этому, если курсант случайно обновит страницу (F5), порядок 
+            // вопросов не перемешается заново и он не потеряет свое место.
+            var rnd = new Random(progress?.Id ?? Id);
+
             activeStates = test!.Questions.Select(q =>
             {
+                // Перемешиваем варианты ответов внутри каждого вопроса
+                q.Options = q.Options.OrderBy(x => rnd.Next()).ToList();
+
                 var state = new QuestionUIState { Question = q };
                 if (q.Type == QuestionType.MultipleChoice)
                     foreach (var opt in q.Options)
                         state.SelectedMultipleOptions[opt.Id] = false;
                 return state;
-            }).ToList();
+            })
+            .OrderBy(x => rnd.Next()) // Перемешиваем сами вопросы
+            .ToList();
 
             isTestStarted = false;
             isTestFinished = false;
@@ -78,7 +90,7 @@ namespace CyberPolygon.Components.Pages
                     if (wrongIds.Contains(state.Question.Id)) { state.IsAnswered = true; state.IsCorrect = false; }
                 }
 
-                if (progress.Status == AttemptStatus.Completed)
+                if (progress.Status == AttemptStatus.Completed || progress.Status == AttemptStatus.Failed)
                     isTestFinished = true;
                 else if (progress.TargetEndTime.HasValue)
                     StartTimer();
@@ -93,18 +105,15 @@ namespace CyberPolygon.Components.Pages
                 StartTimer();
         }
 
-        // ВОССТАНОВЛЕННЫЙ МЕТОД ДЛЯ ПОВТОРНОГО ЗАПУСКА
         private async Task RestartTest()
         {
             await TestService.RestartTestAsync(currentUserId, Id);
-            // Сразу начинаем новую попытку
             await TestService.StartTestAsync(currentUserId, Id, test!.DurationInMinutes);
             await LoadProgress();
             if (progress?.TargetEndTime.HasValue == true)
                 StartTimer();
         }
 
-        // МЕТОД ЗАПРОСА НА ПЕРЕСДАЧУ
         private async Task RequestRetake()
         {
             if (progress != null)
@@ -115,6 +124,52 @@ namespace CyberPolygon.Components.Pages
             }
         }
 
+        // --- ВЫНЕСЕННАЯ ЛОГИКА ПРОВЕРКИ ОТВЕТА ---
+        private async Task EvaluateAndSaveAnswer(QuestionUIState state)
+        {
+            bool isRight = false;
+            string? selectedAnswer = null;
+
+            if (state.Question.Type == QuestionType.ManualText)
+            {
+                var correctAnswer = state.Question.CorrectTextAnswer?.Trim() ?? "";
+                isRight = string.Equals(state.UserTextAnswer.Trim(), correctAnswer, StringComparison.OrdinalIgnoreCase);
+                selectedAnswer = state.UserTextAnswer;
+            }
+            else if (state.Question.Type == QuestionType.SingleChoice)
+            {
+                var correctOpt = state.Question.Options.FirstOrDefault(o => o.IsCorrect == true);
+                isRight = correctOpt != null && correctOpt.Id == state.SelectedOptionId;
+                selectedAnswer = state.SelectedOptionId.ToString();
+            }
+            else if (state.Question.Type == QuestionType.MultipleChoice)
+            {
+                var correctIds = state.Question.Options.Where(o => o.IsCorrect == true).Select(o => o.Id).OrderBy(x => x).ToList();
+                var userSelectedIds = state.SelectedMultipleOptions.Where(kvp => kvp.Value).Select(kvp => kvp.Key).OrderBy(x => x).ToList();
+                isRight = correctIds.SequenceEqual(userSelectedIds);
+                selectedAnswer = string.Join(",", userSelectedIds);
+            }
+
+            await TestService.ProcessAnswerAsync(progress!.Id, state.Question.Id, isRight, selectedAnswer ?? "");
+            state.IsAnswered = true;
+            state.IsCorrect = isRight;
+            if (isRight) correctCount++;
+        }
+
+        // --- НОВЫЙ МЕТОД АВТОМАТИЧЕСКОЙ СДАЧИ ОТВЕТОВ ---
+        // --- ОБНОВЛЕННЫЙ МЕТОД АВТОМАТИЧЕСКОЙ СДАЧИ ОТВЕТОВ ---
+        private async Task ProcessUnsubmittedAnswersAsync()
+        {
+            // Пробегаемся вообще по всем вопросам, на которые еще не был дан ответ,
+            // и отправляем их на проверку (пустые ответы автоматически засчитаются как неверные)
+            foreach (var state in activeStates!.Where(s => !s.IsAnswered))
+            {
+                await EvaluateAndSaveAnswer(state);
+            }
+        }
+
+        // Старый метод ConfirmAnswer(QuestionUIState state) полностью удален, так как поштучная сдача больше не нужна.
+
         private async Task ConfirmAnswer(QuestionUIState state)
         {
             var result = await DialogService.Confirm(
@@ -124,37 +179,11 @@ namespace CyberPolygon.Components.Pages
 
             if (result == true)
             {
-                bool isRight = false;
-                string? selectedAnswer = null;
-
-                if (state.Question.Type == QuestionType.ManualText)
-                {
-                    var correctAnswer = state.Question.CorrectTextAnswer?.Trim() ?? "";
-                    isRight = string.Equals(state.UserTextAnswer.Trim(), correctAnswer, StringComparison.OrdinalIgnoreCase);
-                    selectedAnswer = state.UserTextAnswer;
-                }
-                else if (state.Question.Type == QuestionType.SingleChoice)
-                {
-                    var correctOpt = state.Question.Options.FirstOrDefault(o => o.IsCorrect == true);
-                    isRight = correctOpt != null && correctOpt.Id == state.SelectedOptionId;
-                    selectedAnswer = state.SelectedOptionId.ToString();
-                }
-                else if (state.Question.Type == QuestionType.MultipleChoice)
-                {
-                    var correctIds = state.Question.Options.Where(o => o.IsCorrect == true).Select(o => o.Id).OrderBy(x => x).ToList();
-                    var userSelectedIds = state.SelectedMultipleOptions.Where(kvp => kvp.Value).Select(kvp => kvp.Key).OrderBy(x => x).ToList();
-                    isRight = correctIds.SequenceEqual(userSelectedIds);
-                    selectedAnswer = string.Join(",", userSelectedIds);
-                }
-
-                await TestService.ProcessAnswerAsync(progress!.Id, state.Question.Id, isRight, selectedAnswer ?? "");
-                state.IsAnswered = true;
-                state.IsCorrect = isRight;
-                if (isRight) correctCount++;
+                await EvaluateAndSaveAnswer(state);
 
                 if (activeStates!.All(s => s.IsAnswered))
                 {
-                    await TestService.CompleteTestAsync(progress.Id);
+                    await TestService.CompleteTestAsync(progress!.Id);
                     isTestFinished = true;
                     _timer?.Dispose();
                     NotificationService.Notify(NotificationSeverity.Success, "Тест завершен", "Все вопросы отвечены!");
@@ -172,6 +201,10 @@ namespace CyberPolygon.Components.Pages
             if (result == true)
             {
                 _timer?.Dispose();
+
+                // Перед сохранением статуса "Завершен" - собираем и оцениваем невысланные ответы
+                await ProcessUnsubmittedAnswersAsync();
+
                 await TestService.CompleteTestAsync(progress!.Id);
                 isTestFinished = true;
             }
@@ -192,9 +225,13 @@ namespace CyberPolygon.Components.Pages
                 if (timeLeft.TotalSeconds <= 0)
                 {
                     _timer?.Dispose();
+
+                    // Собираем и оцениваем невысланные ответы при тайм-ауте
+                    await ProcessUnsubmittedAnswersAsync();
+
                     await TestService.CompleteTestAsync(progress.Id);
                     isTestFinished = true;
-                    NotificationService.Notify(NotificationSeverity.Error, "Время вышло", "Тестирование было автоматически завершено системой.");
+                    NotificationService.Notify(NotificationSeverity.Error, "Время вышло", "Тестирование было автоматически завершено системой. Отмеченные ответы сохранены.");
                 }
 
                 await InvokeAsync(StateHasChanged);

@@ -69,6 +69,20 @@
         iframe.src = "https://viewer.diagrams.net/?embed=1&ui=dark&spin=1&proto=json&nav=1";
         };
     </script>
+    <script>
+            window.downloadFileFromBlob = function(fileName, htmlContent) {
+                // \ufeff - это BOM (Byte Order Mark), он жизненно необходим, чтобы Word правильно прочитал кириллицу (русские буквы)
+                var blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword;charset=utf-8' });
+                var url = URL.createObjectURL(blob);
+                var anchorElement = document.createElement('a');
+                anchorElement.href = url;
+                anchorElement.download = fileName;
+                document.body.appendChild(anchorElement);
+                anchorElement.click();
+                document.body.removeChild(anchorElement);
+                URL.revokeObjectURL(url);
+            };
+    </script>
 </body>
 
 </html>
