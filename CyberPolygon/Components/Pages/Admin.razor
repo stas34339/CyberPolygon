@@ -842,9 +842,18 @@
                             }
                             else
                             {
-                                <RadzenDataGrid Data="@allScenarioProgressList" TItem="UserScenarioProgress" AllowPaging="true" PageSize="15">
+                                <RadzenDataGrid Data="@allScenarioProgressList" TItem="UserScenarioProgress" AllowPaging="true" PageSize="15"
+                                                AllowSorting="true" AllowFiltering="true" FilterMode="FilterMode.Simple"
+                                                EmptyText="Записи не найдены"
+                                                FilterText="Фильтр" ApplyFilterText="Применить" ClearFilterText="Очистить"
+                                                EqualsText="Равно" NotEqualsText="Не равно" StartsWithText="Начинается с"
+                                                EndsWithText="Заканчивается на" ContainsText="Содержит" DoesNotContainText="Не содержит"
+                                                LessThanText="Меньше" LessThanOrEqualsText="Меньше или равно"
+                                                GreaterThanText="Больше" GreaterThanOrEqualsText="Больше или равно"
+                                                AndOperatorText="И" OrOperatorText="ИЛИ" IsNullText="Пусто" IsNotNullText="Не пусто"
+                                                IsEmptyText="Пустая строка" IsNotEmptyText="Не пустая строка">
                                     <Columns>
-                                        <RadzenDataGridColumn TItem="UserScenarioProgress" Title="ОПЕРАТИВНИК / КОМАНДА" Width="220px">
+                                        <RadzenDataGridColumn TItem="UserScenarioProgress" Title="ОПЕРАТИВНИК / КОМАНДА" Width="220px" Sortable="false" Filterable="false">
                                             <Template Context="data">
                                                 @if (data.IsTeamAttempt)
                                                 {
@@ -857,10 +866,20 @@
                                                 }
                                             </Template>
                                         </RadzenDataGridColumn>
-                                        <RadzenDataGridColumn TItem="UserScenarioProgress" Title="БОЕВОЙ СЦЕНАРИЙ">
+                                        <RadzenDataGridColumn TItem="UserScenarioProgress" Property="Scenario.Title" Title="БОЕВОЙ СЦЕНАРИЙ">
                                             <Template Context="data"><span style="color: var(--text-light); font-weight: 700;">@(data.Scenario?.Title ?? "—")</span></Template>
                                         </RadzenDataGridColumn>
-                                        <RadzenDataGridColumn TItem="UserScenarioProgress" Title="СТАТУС" Width="170px" TextAlign="TextAlign.Center">
+                                        <RadzenDataGridColumn TItem="UserScenarioProgress" Property="Status" Title="СТАТУС" Width="170px" TextAlign="TextAlign.Center">
+                                            <FilterTemplate>
+                                                <RadzenDropDown @bind-Value="@context.FilterValue" AllowClear="true" Placeholder="Все" class="w-100 dark-input"
+                                                                Data="@(new[] {
+                                                                    new { Text = "Не начато", Value = AttemptStatus.NotStarted },
+                                                                    new { Text = "В процессе", Value = AttemptStatus.InProgress },
+                                                                    new { Text = "Завершен", Value = AttemptStatus.Completed },
+                                                                    new { Text = "Неудача", Value = AttemptStatus.Failed }
+                                                                })"
+                                                                TextProperty="Text" ValueProperty="Value" />
+                                            </FilterTemplate>
                                             <Template Context="data">
                                                 <div class="d-flex flex-column align-items-center justify-content-center" style="gap: 6px;">
                                                     @switch (data.Status)
@@ -869,15 +888,12 @@
                                                             <span class="status-badge-mini status-in-progress">В процессе</span>
                                                             break;
                                                         case AttemptStatus.Completed:
-
                                                             <span class="status-badge-mini status-completed">Завершен</span>
                                                             break;
                                                         case AttemptStatus.Failed:
-
                                                             <span class="status-badge-mini status-failed">Неудача</span>
                                                             break;
                                                         default:
-
                                                             <span class="status-badge-mini" style="background: rgba(143,160,181,0.15); color: var(--text-muted); border: 1px solid var(--border-color);">@data.Status</span>
                                                             break;
                                                     }
@@ -888,13 +904,13 @@
                                                 </div>
                                             </Template>
                                         </RadzenDataGridColumn>
-                                        <RadzenDataGridColumn TItem="UserScenarioProgress" Title="XP" Width="90px" TextAlign="TextAlign.Center">
+                                        <RadzenDataGridColumn TItem="UserScenarioProgress" Property="Score" Title="XP" Width="90px" TextAlign="TextAlign.Center">
                                             <Template Context="data"><span style="color: var(--accent-cyan); font-weight: bold; font-family: monospace; font-size: 1.2rem;">@data.Score</span></Template>
                                         </RadzenDataGridColumn>
-                                        <RadzenDataGridColumn TItem="UserScenarioProgress" Title="ДАТА ЗАПУСКА" Width="130px" TextAlign="TextAlign.Center">
+                                        <RadzenDataGridColumn TItem="UserScenarioProgress" Property="StartedAt" Title="ДАТА ЗАПУСКА" Width="130px" TextAlign="TextAlign.Center">
                                             <Template Context="data"><span style="font-size: 0.85rem; color: var(--text-muted); font-family: monospace;">@(data.StartedAt?.ToString("dd.MM.yy HH:mm") ?? "—")</span></Template>
                                         </RadzenDataGridColumn>
-                                        <RadzenDataGridColumn TItem="UserScenarioProgress" Title="УПРАВЛЕНИЕ" Width="220px" TextAlign="TextAlign.Center">
+                                        <RadzenDataGridColumn TItem="UserScenarioProgress" Title="УПРАВЛЕНИЕ" Width="220px" TextAlign="TextAlign.Center" Sortable="false" Filterable="false">
                                             <Template Context="data">
                                                 <div class="d-flex justify-content-center align-items-center gap-2">
                                                     @if (data.IsRetakeRequested)
@@ -939,15 +955,33 @@
                             }
                             else
                             {
-                                <RadzenDataGrid Data="@allTestProgressList" TItem="UserTestProgress" AllowPaging="true" PageSize="15">
+                                <RadzenDataGrid Data="@allTestProgressList" TItem="UserTestProgress" AllowPaging="true" PageSize="15"
+                                                AllowSorting="true" AllowFiltering="true" FilterMode="FilterMode.Simple"
+                                                EmptyText="Записи не найдены"
+                                                FilterText="Фильтр" ApplyFilterText="Применить" ClearFilterText="Очистить"
+                                                EqualsText="Равно" NotEqualsText="Не равно" StartsWithText="Начинается с"
+                                                EndsWithText="Заканчивается на" ContainsText="Содержит" DoesNotContainText="Не содержит"
+                                                LessThanText="Меньше" LessThanOrEqualsText="Меньше или равно"
+                                                GreaterThanText="Больше" GreaterThanOrEqualsText="Больше или равно"
+                                                AndOperatorText="И" OrOperatorText="ИЛИ" IsNullText="Пусто" IsNotNullText="Не пусто"
+                                                IsEmptyText="Пустая строка" IsNotEmptyText="Не пустая строка">
                                     <Columns>
-                                        <RadzenDataGridColumn TItem="UserTestProgress" Title="КУРСАНТ" Width="200px">
+                                        <RadzenDataGridColumn TItem="UserTestProgress" Title="КУРСАНТ" Width="200px" Sortable="false" Filterable="false">
                                             <Template Context="data"><span style="color: var(--accent-light-blue); font-weight: 600;"><RadzenIcon Icon="person" Style="font-size:1rem; margin-top:-2px;" /> @GetUserDisplayName(usersList.FirstOrDefault(u => u.Id == data.UserId))</span></Template>
                                         </RadzenDataGridColumn>
-                                        <RadzenDataGridColumn TItem="UserTestProgress" Title="НАЗВАНИЕ ТЕСТА">
+                                        <RadzenDataGridColumn TItem="UserTestProgress" Property="Test.Title" Title="НАЗВАНИЕ ТЕСТА">
                                             <Template Context="data"><span style="color: var(--text-light); font-weight: 700;">@(data.Test?.Title ?? "—")</span></Template>
                                         </RadzenDataGridColumn>
-                                        <RadzenDataGridColumn TItem="UserTestProgress" Title="СЛОЖНОСТЬ" Width="120px" TextAlign="TextAlign.Center">
+                                        <RadzenDataGridColumn TItem="UserTestProgress" Property="Test.Difficulty" Title="СЛОЖНОСТЬ" Width="120px" TextAlign="TextAlign.Center">
+                                            <FilterTemplate>
+                                                <RadzenDropDown @bind-Value="@context.FilterValue" AllowClear="true" Placeholder="Все" class="w-100 dark-input"
+                                                                Data="@(new[] {
+                                                                    new { Text = "Лёгкий", Value = TestDifficulty.Easy },
+                                                                    new { Text = "Средний", Value = TestDifficulty.Medium },
+                                                                    new { Text = "Сложный", Value = TestDifficulty.Hard }
+                                                                })"
+                                                                TextProperty="Text" ValueProperty="Value" />
+                                            </FilterTemplate>
                                             <Template Context="data">
                                                 @{
                                                     var d = data.Test?.Difficulty;
@@ -957,7 +991,17 @@
                                                 <span style="color: @dc; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; font-size: 0.75rem;">@dt</span>
                                             </Template>
                                         </RadzenDataGridColumn>
-                                        <RadzenDataGridColumn TItem="UserTestProgress" Title="СТАТУС" Width="170px" TextAlign="TextAlign.Center">
+                                        <RadzenDataGridColumn TItem="UserTestProgress" Property="Status" Title="СТАТУС" Width="170px" TextAlign="TextAlign.Center">
+                                            <FilterTemplate>
+                                                <RadzenDropDown @bind-Value="@context.FilterValue" AllowClear="true" Placeholder="Все" class="w-100 dark-input"
+                                                                Data="@(new[] {
+                                                                    new { Text = "Не начато", Value = AttemptStatus.NotStarted },
+                                                                    new { Text = "В процессе", Value = AttemptStatus.InProgress },
+                                                                    new { Text = "Завершен", Value = AttemptStatus.Completed },
+                                                                    new { Text = "Неудача", Value = AttemptStatus.Failed }
+                                                                })"
+                                                                TextProperty="Text" ValueProperty="Value" />
+                                            </FilterTemplate>
                                             <Template Context="data">
                                                 <div class="d-flex flex-column align-items-center justify-content-center" style="gap: 6px;">
                                                     @switch (data.Status)
@@ -966,15 +1010,12 @@
                                                             <span class="status-badge-mini status-in-progress">В процессе</span>
                                                             break;
                                                         case AttemptStatus.Completed:
-
                                                             <span class="status-badge-mini status-completed">Завершен</span>
                                                             break;
                                                         case AttemptStatus.Failed:
-
                                                             <span class="status-badge-mini status-failed">Неудача</span>
                                                             break;
                                                         default:
-
                                                             <span class="status-badge-mini" style="background: rgba(143,160,181,0.15); color: var(--text-muted); border: 1px solid var(--border-color);">@data.Status</span>
                                                             break;
                                                     }
@@ -985,7 +1026,7 @@
                                                 </div>
                                             </Template>
                                         </RadzenDataGridColumn>
-                                        <RadzenDataGridColumn TItem="UserTestProgress" Title="РЕЗУЛЬТАТ" Width="110px" TextAlign="TextAlign.Center">
+                                        <RadzenDataGridColumn TItem="UserTestProgress" Property="Score" Title="РЕЗУЛЬТАТ" Width="110px" TextAlign="TextAlign.Center">
                                             <Template Context="data">
                                                 @{
                                                     var tq = data.Test?.Questions?.Count ?? 0;
@@ -993,7 +1034,7 @@
                                                 <span style="color: var(--accent-cyan); font-weight: bold; font-family: monospace; font-size: 1.2rem;">@data.Score <span style="color: var(--text-muted); font-size: 0.9rem;">/ @tq</span></span>
                                             </Template>
                                         </RadzenDataGridColumn>
-                                        <RadzenDataGridColumn TItem="UserTestProgress" Title="УПРАВЛЕНИЕ" Width="220px" TextAlign="TextAlign.Center">
+                                        <RadzenDataGridColumn TItem="UserTestProgress" Title="УПРАВЛЕНИЕ" Width="220px" TextAlign="TextAlign.Center" Sortable="false" Filterable="false">
                                             <Template Context="data">
                                                 <div class="d-flex justify-content-center align-items-center gap-2">
                                                     @if (data.IsRetakeRequested)

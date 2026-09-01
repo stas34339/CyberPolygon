@@ -139,6 +139,19 @@ namespace CyberPolygon.Components.Pages
                         CyberScenarioId = Id
                     };
                 }
+                if (currentUserProgress.Id != 0 && currentUserProgress.Status == AttemptStatus.InProgress && currentUserProgress.TargetEndTime.HasValue && DateTime.UtcNow >= currentUserProgress.TargetEndTime.Value)
+                {
+                    currentUserProgress.Status = AttemptStatus.Failed;
+                    currentUserProgress.CompletedAt = DateTime.UtcNow;
+                    if (currentUserProgress.StartedAt.HasValue)
+                        currentUserProgress.TimeSpent = currentUserProgress.CompletedAt.Value - currentUserProgress.StartedAt.Value;
+
+                    context.UserProgresses.Update(currentUserProgress);
+                    await context.SaveChangesAsync();
+
+                    if (scenario!.Scope == VisibilityScope.TeamOnly && currentTeamId.HasValue)
+                        SessionManager.NotifyTeamUpdate(currentTeamId.Value);
+                }
 
                 totalScore = currentUserProgress.Score;
 

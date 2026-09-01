@@ -27,8 +27,21 @@ namespace CyberPolygon.Components.Pages
         {
             CatalogUpdateService.OnCatalogChanged += HandleExternalUpdate;
             SessionManager.TeamProgressChanged += OnTeamProgressChanged;
+            SessionManager.UserProgressChanged += OnUserProgressChanged; // <-- НОВАЯ СТРОКА
 
             await Refresh();
+        }
+        private async void OnUserProgressChanged(string userId)
+        {
+            // Обновляем UI только если сигнал пришел конкретно для этого курсанта
+            if (currentUserId == userId)
+            {
+                await InvokeAsync(async () =>
+                {
+                    await Refresh();
+                    StateHasChanged();
+                });
+            }
         }
 
         private async void HandleExternalUpdate()
@@ -72,11 +85,27 @@ namespace CyberPolygon.Components.Pages
                     var dbUser = await context.Set<ApplicationUser>().Include(u => u.Teams).AsNoTracking().FirstOrDefaultAsync(u => u.Id == currentUserId);
                     currentTeamId = dbUser?.Teams?.FirstOrDefault()?.Id;
 
+                    // Убираем AsNoTracking, чтобы Entity Framework мог отслеживать и сохранять изменения
                     var progresses = await context.Set<UserScenarioProgress>()
                         .Where(p => p.UserId == currentUserId || (currentTeamId.HasValue && p.TeamId == currentTeamId.Value))
-                        .OrderByDescending(p => p.Id) // <-- МАГИЯ ЗДЕСЬ: берем самую свежую запись
-                        .AsNoTracking()
+                        .OrderByDescending(p => p.Id)
                         .ToListAsync();
+
+                    // === НОВЫЙ БЛОК: ЗАКРЫВАЕМ ПРОСРОЧЕННЫЕ СЕССИИ ===
+                    bool changesMade = false;
+                    foreach (var p in progresses)
+                    {
+                        if (p.Status == AttemptStatus.InProgress && p.TargetEndTime.HasValue && DateTime.UtcNow >= p.TargetEndTime.Value)
+                        {
+                            p.Status = AttemptStatus.Failed;
+                            p.CompletedAt = DateTime.UtcNow;
+                            if (p.StartedAt.HasValue) p.TimeSpent = p.CompletedAt.Value - p.StartedAt.Value;
+
+                            context.Set<UserScenarioProgress>().Update(p);
+                            changesMade = true;
+                        }
+                    }
+                    if (changesMade) await context.SaveChangesAsync();
 
                     foreach (var item in allScenarios)
                     {
@@ -150,6 +179,7 @@ namespace CyberPolygon.Components.Pages
         {
             CatalogUpdateService.OnCatalogChanged -= HandleExternalUpdate;
             SessionManager.TeamProgressChanged -= OnTeamProgressChanged;
+            SessionManager.UserProgressChanged -= OnUserProgressChanged; // <-- НОВАЯ СТРОКА
         }
         public class StatRecord
         {

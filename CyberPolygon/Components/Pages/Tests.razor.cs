@@ -10,6 +10,7 @@ namespace CyberPolygon.Components.Pages
         private string currentUserId = string.Empty;
         private bool isAdmin = false;
         private readonly SemaphoreSlim _lock = new(1, 1);
+        private System.Threading.Timer? _pageTimer;
 
         // ОБНОВЛЕНО: Используем класс для хранения статуса и флагов ретейка
         public class ProgressState
@@ -24,7 +25,25 @@ namespace CyberPolygon.Components.Pages
         protected override async Task OnInitializedAsync()
         {
             CatalogUpdateService.OnCatalogChanged += HandleCatalogChanged;
+            _pageTimer = new System.Threading.Timer(async _ => await InvokeAsync(AutoRefreshTick), null, 10000, 10000);
             await Refresh();
+        }
+        private async Task AutoRefreshTick()
+        {
+            await Refresh();
+            StateHasChanged();
+        }
+        // НОВЫЙ МЕТОД: Обновляет UI, когда фоновый таймер убивает сессию
+        private async void OnUserProgressChanged(string userId)
+        {
+            if (currentUserId == userId)
+            {
+                await InvokeAsync(async () =>
+                {
+                    await Refresh();
+                    StateHasChanged();
+                });
+            }
         }
 
         private async void HandleCatalogChanged()
@@ -53,18 +72,24 @@ namespace CyberPolygon.Components.Pages
                 if (!string.IsNullOrEmpty(currentUserId))
                 {
                     using var context = await ContextFactory.CreateDbContextAsync();
+
+                    // Убираем AsNoTracking(), чтобы Entity Framework сам следил за изменениями
                     var progresses = await context.Set<UserTestProgress>()
                         .Where(p => p.UserId == currentUserId)
-                        .AsNoTracking()
                         .ToListAsync();
 
+                    bool changesMade = false;
                     foreach (var p in progresses)
                     {
+                        // === ПРОВЕРКА ПРОСРОЧЕННОГО ВРЕМЕНИ ===
                         if (p.Status == AttemptStatus.InProgress && p.TargetEndTime.HasValue && DateTime.UtcNow >= p.TargetEndTime.Value)
                         {
-                            p.Status = AttemptStatus.Failed; p.CompletedAt = DateTime.UtcNow;
-                            context.Set<UserTestProgress>().Update(p); await context.SaveChangesAsync();
+                            p.Status = AttemptStatus.Failed;
+                            p.CompletedAt = DateTime.UtcNow;
+                            context.Set<UserTestProgress>().Update(p);
+                            changesMade = true;
                         }
+
                         if (!userProgresses.ContainsKey(p.CyberTestId) || p.Status == AttemptStatus.InProgress)
                         {
                             userProgresses[p.CyberTestId] = new ProgressState
@@ -75,6 +100,9 @@ namespace CyberPolygon.Components.Pages
                             };
                         }
                     }
+
+                    // Сохраняем все проваленные тесты разом
+                    if (changesMade) await context.SaveChangesAsync();
                 }
 
                 if (isAdmin)
@@ -126,6 +154,7 @@ namespace CyberPolygon.Components.Pages
         public void Dispose()
         {
             CatalogUpdateService.OnCatalogChanged -= HandleCatalogChanged;
+            _pageTimer?.Dispose();
         }
         public class TestStatRecord
         {

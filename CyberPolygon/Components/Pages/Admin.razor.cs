@@ -112,6 +112,7 @@ namespace CyberPolygon.Components.Pages
                 .ToListAsync();
 
             allTestProgressList = await c.Set<UserTestProgress>().Include(tp => tp.Test)
+                .ThenInclude(t => t.Questions)
                 .OrderByDescending(tp => tp.IsRetakeRequested)
                 .ThenByDescending(tp => tp.StartedAt)
                 .ToListAsync();
