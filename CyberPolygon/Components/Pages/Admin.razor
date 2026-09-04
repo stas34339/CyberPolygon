@@ -832,7 +832,17 @@
                     </div>
                     <div class="cyber-shell-body">
                         <div class="cyber-section" style="margin-bottom: 0;">
-                            <h4 class="section-title"><RadzenIcon Icon="history" /> Журнал активности симуляций (Глобальный)</h4>
+                            <div class="d-flex justify-content-between align-items-center mb-4 pb-3" style="border-bottom: 1px dashed rgba(78, 195, 209, 0.3);">
+                                <h4 class="section-title" style="margin-bottom: 0; border: none; padding: 0;">
+                                    <RadzenIcon Icon="history" /> Журнал практической части
+                                </h4>
+                                @if (allScenarioProgressList.Any())
+                                {
+                                    <button class="btn-icon-danger" style="width: auto; padding: 8px 15px; font-size: 0.85rem; font-weight: bold; text-transform: uppercase;" @onclick="DeleteAllScenarioProgress">
+                                        <RadzenIcon Icon="delete_sweep" style="font-size: 1.1rem; margin-right: 5px;" /> ОЧИСТИТЬ ЖУРНАЛ
+                                    </button>
+                                }
+                            </div>
                             @if (!allScenarioProgressList.Any())
                             {
                                 <div class="text-center py-5" style="border: 1px dashed var(--accent-cyan); border-radius: 8px; background: rgba(78, 195, 209, 0.05);">
@@ -922,6 +932,9 @@
                                                             <RadzenIcon Icon="close" style="font-size: 1.1rem;" />
                                                         </button>
                                                     }
+                                                    <button class="btn-icon-danger" @onclick="@(() => DeleteScenarioProgress(data.Id))" title="Удалить запись">
+                                                        <RadzenIcon Icon="delete_forever" style="font-size: 1.1rem;" />
+                                                    </button>
                                                     <button class="btn-detail" @onclick="@(() => NavigationManager.NavigateTo($"/admin/scenario-attempt/{data.Id}"))">
                                                         <RadzenIcon Icon="visibility" style="font-size: 1rem;" /> Детали
                                                     </button>
@@ -945,7 +958,17 @@
                     </div>
                     <div class="cyber-shell-body">
                         <div class="cyber-section" style="margin-bottom: 0;">
-                            <h4 class="section-title"><RadzenIcon Icon="quiz" /> Журнал проверки академических тестов (Глобальный)</h4>
+                            <div class="d-flex justify-content-between align-items-center mb-4 pb-3" style="border-bottom: 1px dashed rgba(78, 195, 209, 0.3);">
+                                <h4 class="section-title" style="margin-bottom: 0; border: none; padding: 0;">
+                                    <RadzenIcon Icon="quiz" /> Журнал тестовых заданий
+                                </h4>
+                                @if (allTestProgressList.Any())
+                                {
+                                    <button class="btn-icon-danger" style="width: auto; padding: 8px 15px; font-size: 0.85rem; font-weight: bold; text-transform: uppercase;" @onclick="DeleteAllTestProgress">
+                                        <RadzenIcon Icon="delete_sweep" style="font-size: 1.1rem; margin-right: 5px;" /> ОЧИСТИТЬ ЖУРНАЛ
+                                    </button>
+                                }
+                            </div>
                             @if (!allTestProgressList.Any())
                             {
                                 <div class="text-center py-5" style="border: 1px dashed var(--accent-cyan); border-radius: 8px; background: rgba(78, 195, 209, 0.05);">
@@ -1046,6 +1069,9 @@
                                                             <RadzenIcon Icon="close" style="font-size: 1.1rem;" />
                                                         </button>
                                                     }
+                                                    <button class="btn-icon-danger" @onclick="@(() => DeleteTestProgress(data.Id))" title="Удалить запись">
+                                                        <RadzenIcon Icon="delete_forever" style="font-size: 1.1rem;" />
+                                                    </button>
                                                     <button class="btn-detail" @onclick="@(() => NavigationManager.NavigateTo($"/admin/test-attempt/{data.Id}"))">
                                                         <RadzenIcon Icon="visibility" style="font-size: 1rem;" /> Детали
                                                     </button>

@@ -429,5 +429,74 @@ namespace CyberPolygon.Components.Pages
             await LoadAdminData();
             NotificationService.Notify(NotificationSeverity.Success, "Успех", "Права доступа изменены");
         }
+        // --- УДАЛЕНИЕ ПРОГРЕССА СЦЕНАРИЕВ ---
+        private async Task DeleteScenarioProgress(int progressId)
+        {
+            var ok = await DialogService.Confirm("Удалить эту попытку? Данные о прохождении будут безвозвратно утеряны.", "Удаление записи", new ConfirmOptions { OkButtonText = "Удалить", CancelButtonText = "Отмена" });
+            if (ok == true)
+            {
+                using var c = await ContextFactory.CreateDbContextAsync();
+                var p = await c.UserProgresses.FindAsync(progressId);
+                if (p != null)
+                {
+                    c.UserProgresses.Remove(p);
+                    await c.SaveChangesAsync();
+                    await LoadAdminData();
+                    NotificationService.Notify(NotificationSeverity.Success, "Успех", "Запись удалена");
+                }
+            }
+        }
+
+        private async Task DeleteAllScenarioProgress()
+        {
+            var ok = await DialogService.Confirm("ВНИМАНИЕ! Вы собираетесь удалить ВСЕ записи о прохождении сценариев для ВСЕХ пользователей. Это действие необратимо. Продолжить?", "Очистка журнала", new ConfirmOptions { OkButtonText = "Очистить всё", CancelButtonText = "Отмена" });
+            if (ok == true)
+            {
+                using var c = await ContextFactory.CreateDbContextAsync();
+                var all = await c.UserProgresses.ToListAsync();
+                if (all.Any())
+                {
+                    c.UserProgresses.RemoveRange(all);
+                    await c.SaveChangesAsync();
+                    await LoadAdminData();
+                    NotificationService.Notify(NotificationSeverity.Success, "Успех", "Журнал сценариев полностью очищен");
+                }
+            }
+        }
+
+        // --- УДАЛЕНИЕ ПРОГРЕССА ТЕСТОВ ---
+        private async Task DeleteTestProgress(int progressId)
+        {
+            var ok = await DialogService.Confirm("Удалить эту попытку? Данные о прохождении будут безвозвратно утеряны.", "Удаление записи", new ConfirmOptions { OkButtonText = "Удалить", CancelButtonText = "Отмена" });
+            if (ok == true)
+            {
+                using var c = await ContextFactory.CreateDbContextAsync();
+                var p = await c.Set<UserTestProgress>().FindAsync(progressId);
+                if (p != null)
+                {
+                    c.Set<UserTestProgress>().Remove(p);
+                    await c.SaveChangesAsync();
+                    await LoadAdminData();
+                    NotificationService.Notify(NotificationSeverity.Success, "Успех", "Запись удалена");
+                }
+            }
+        }
+
+        private async Task DeleteAllTestProgress()
+        {
+            var ok = await DialogService.Confirm("ВНИМАНИЕ! Вы собираетесь удалить ВСЕ записи о прохождении тестов для ВСЕХ пользователей. Это действие необратимо. Продолжить?", "Очистка журнала", new ConfirmOptions { OkButtonText = "Очистить всё", CancelButtonText = "Отмена" });
+            if (ok == true)
+            {
+                using var c = await ContextFactory.CreateDbContextAsync();
+                var all = await c.Set<UserTestProgress>().ToListAsync();
+                if (all.Any())
+                {
+                    c.Set<UserTestProgress>().RemoveRange(all);
+                    await c.SaveChangesAsync();
+                    await LoadAdminData();
+                    NotificationService.Notify(NotificationSeverity.Success, "Успех", "Журнал тестов полностью очищен");
+                }
+            }
+        }
     }
 }
