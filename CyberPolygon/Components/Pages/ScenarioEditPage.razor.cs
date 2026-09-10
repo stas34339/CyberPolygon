@@ -173,5 +173,17 @@ namespace CyberPolygon.Components.Pages
         }
 
         private void Cancel() => NavigationManager.NavigateTo("scenario");
+        private void AddStandaloneVm()
+        {
+            // Создаем ВМ со специальным типом и убираем координаты за пределы карты
+            Item.Devices.Add(new ScenarioDevice
+            {
+                Name = "Новая ВМ",
+                Type = "standalone_vm",
+                MapX = -1000,
+                MapY = -1000
+            });
+        }
+
     }
 }

@@ -79,7 +79,7 @@ namespace CyberPolygon.Components.Pages
         {
             if (!isMapInitialized && currentUserProgress?.Status == AttemptStatus.InProgress)
             {
-                if (scenario?.Devices != null && scenario.Devices.Any())
+                if (scenario?.Devices != null && scenario.Devices.Any(d => d.Type != "standalone_vm"))
                 {
                     isMapInitialized = true;
                     try
@@ -222,10 +222,12 @@ namespace CyberPolygon.Components.Pages
 
         private void CalculateCanvasBounds()
         {
-            if (scenario?.Devices != null && scenario.Devices.Any())
+            // Исключаем автономные ВМ из расчета карты
+            var mapDevices = scenario?.Devices?.Where(d => d.Type != "standalone_vm").ToList();
+            if (mapDevices != null && mapDevices.Any())
             {
-                int maxX = scenario.Devices.Max(d => d.MapX);
-                int maxY = scenario.Devices.Max(d => d.MapY);
+                int maxX = mapDevices.Max(d => d.MapX);
+                int maxY = mapDevices.Max(d => d.MapY);
 
                 canvasWidth = Math.Max(800, maxX + 150);
                 canvasHeight = Math.Max(550, maxY + 150);
@@ -305,7 +307,7 @@ namespace CyberPolygon.Components.Pages
 
                 if (!isMapInitialized)
                 {
-                    if (scenario.Devices != null && scenario.Devices.Any())
+                    if (scenario.Devices != null && scenario.Devices.Any(d => d.Type != "standalone_vm"))
                     {
                         isMapInitialized = true;
                         try { await JSRuntime.InvokeVoidAsync("imageViewer.init", "schema-drag-container", "topology-move-layer"); } catch { }
@@ -468,5 +470,6 @@ namespace CyberPolygon.Components.Pages
             StopTimer();
             SessionManager.TeamProgressChanged -= OnTeamProgressChanged;
         }
+
     }
 }

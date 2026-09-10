@@ -887,9 +887,13 @@
                                             </div>
 
                                             <div style="max-height: 400px; overflow-y: auto; padding-right: 10px; border-bottom: 1px dashed var(--border-color); padding-bottom: 15px; margin-bottom: 15px;">
+                                                @{
+                                                    int displayIndex = 1;
+                                                }
                                                 @for (int j = 0; j < Item.Devices.Count; j++)
                                                 {
                                                     var d = Item.Devices[j];
+                                                    if (d.Type == "standalone_vm") continue; // Пропускаем автономные ВМ
                                                     <div class="cyber-section mb-3" style="padding: 15px; background: @(selectedDevice == d ? "rgba(152,195,121,0.05)" : "rgba(0,0,0,0.2)"); border-color: @(selectedDevice == d ? "var(--success-color)" : "var(--border-color)"); cursor: pointer;" @onclick="() => selectedDevice = d" @key="d">
                                                         <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2" style="border-color: rgba(255,255,255,0.05) !important;">
                                                             <strong style="color: @(selectedDevice == d ? "var(--success-color)" : "var(--accent-cyan)"); font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;">#@(j + 1): @(string.IsNullOrWhiteSpace(d.Name) ? "Новый узел" : d.Name)</strong>
@@ -935,25 +939,6 @@
                                                                 <span class="cyber-label" style="font-size: 0.7rem;">Описание (подсказка):</span>
                                                                 <input type="text" class="form-control form-control-sm dark-input" placeholder="Главный контроллер домена..." @bind="d.Description" />
                                                             </div>
-                                                            <!-- БЛОК ИНТЕГРАЦИИ VMWARE -->
-                                                            <div class="col-12 mt-3" style="background: rgba(78, 195, 209, 0.05); padding: 10px 15px; border-radius: 6px; border: 1px solid rgba(78, 195, 209, 0.2);">
-                                                                <div class="d-flex align-items-center mb-2">
-                                                                    <RadzenIcon Icon="terminal" Style="color: var(--accent-cyan); font-size: 1.1rem; margin-right: 8px;" />
-                                                                    <span class="cyber-label" style="margin: 0; font-size: 0.75rem;">Интеграция с гипервизором (Опционально)</span>
-                                                                </div>
-                                                                <div class="row g-2">
-                                                                    <div class="col-4">
-                                                                        <input type="text" class="form-control form-control-sm dark-input" placeholder="Имя ВМ в vCenter" @bind="d.VmName" />
-                                                                    </div>
-                                                                    <div class="col-4">
-                                                                        <input type="text" class="form-control form-control-sm dark-input" placeholder="Логин (ОС/Домен)" @bind="d.DomainLogin" />
-                                                                    </div>
-                                                                    <div class="col-4">
-                                                                        <input type="text" class="form-control form-control-sm dark-input" placeholder="Пароль" @bind="d.DomainPassword" />
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-
                                                             <div class="col-12 mt-3" style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
                                                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                                                     <span class="cyber-label" style="font-size: 0.75rem; margin:0;">Установленное ПО</span>
@@ -1053,7 +1038,56 @@
                                     </div>
                                 </ChildContent>
                             </RadzenTabsItem>
+                            <!-- ТАБ 6: ВИРТУАЛЬНЫЕ МАШИНЫ -->
+                            <RadzenTabsItem>
+                                <Template Context="tabContext6">
+                                    <span style="color: var(--text-light);">
+                                        <RadzenIcon Icon="desktop_windows" Style="vertical-align: middle; margin-right: 6px;" /> 6. ВМ (Консоль)
+                                    </span>
+                                </Template>
+                                <ChildContent>
+                                    <div class="sticky-questions-header" style="top: 0; margin-bottom: 15px; padding: 15px;">
+                                        <span style="font-weight: 800; font-size: 1rem; color: var(--accent-light-blue); text-transform: uppercase;">Автономных ВМ: @Item.Devices.Count(d => d.Type == "standalone_vm")</span>
+                                        <button type="button" class="btn-main" style="padding: 8px 16px; font-size: 0.8rem;" @onclick="AddStandaloneVm">
+                                            <RadzenIcon Icon="add" Style="font-size: 1rem;" /> Добавить ВМ
+                                        </button>
+                                    </div>
 
+                                    <div class="row">
+                                        @foreach (var vm in Item.Devices.Where(d => d.Type == "standalone_vm"))
+                                        {
+                                            <div class="col-md-6 mb-4" @key="vm">
+                                                <div class="cyber-section p-4" style="border-color: rgba(78, 195, 209, 0.4); height: auto;">
+                                                    <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2" style="border-color: rgba(255,255,255,0.05) !important;">
+                                                        <strong style="color: var(--accent-cyan); font-size: 1rem; text-transform: uppercase;">
+                                                            <RadzenIcon Icon="desktop_windows" /> @(string.IsNullOrWhiteSpace(vm.Name) ? "Новая ВМ" : vm.Name)
+                                                        </strong>
+                                                        <button type="button" class="btn-delete-icon" style="padding: 2px 6px;" @onclick="@(() => Item.Devices.Remove(vm))"><RadzenIcon Icon="close" /></button>
+                                                    </div>
+                                                    <div class="row g-3">
+                                                        <div class="col-12">
+                                                            <span class="cyber-label" style="font-size: 0.7rem;">Отображаемое имя (в терминале):</span>
+                                                            <input type="text" class="form-control form-control-sm dark-input" placeholder="Напр: Сервер Бухгалтерии" @bind="vm.Name" />
+                                                        </div>
+                                                        <div class="col-12">
+                                                            <span class="cyber-label" style="font-size: 0.7rem;">Имя ВМ в гипервизоре (vCenter):</span>
+                                                            <input type="text" class="form-control form-control-sm dark-input" placeholder="Win10_Accountant_01" @bind="vm.VmName" />
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <span class="cyber-label" style="font-size: 0.7rem;">Логин:</span>
+                                                            <input type="text" class="form-control form-control-sm dark-input" placeholder="Administrator" @bind="vm.DomainLogin" />
+                                                        </div>
+                                                        <div class="col-6">
+                                                            <span class="cyber-label" style="font-size: 0.7rem;">Пароль:</span>
+                                                            <input type="text" class="form-control form-control-sm dark-input" placeholder="P@ssw0rd" @bind="vm.DomainPassword" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </ChildContent>
+                            </RadzenTabsItem>
                             <!-- ТАБ 6: ГОТОВО -->
                             <RadzenTabsItem>
                                 <Template Context="tabContext6"><span style="color: var(--text-light);"><RadzenIcon Icon="verified" Style="vertical-align: middle; margin-right: 6px;" /> 6. Готово</span></Template>

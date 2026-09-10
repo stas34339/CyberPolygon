@@ -659,6 +659,31 @@
                                         }
                                     </ul>
                                 }
+                                @if (currentUserProgress.Status == AttemptStatus.InProgress && scenario.Devices != null && scenario.Devices.Any(d => !string.IsNullOrWhiteSpace(d.VmName) || d.Type == "standalone_vm"))
+                                {
+                                    <div style="font-size: 0.85rem; text-transform: uppercase; color: var(--accent-cyan); font-weight: 800; margin-bottom: 12px; letter-spacing: 1px; border-top: 1px dashed var(--border-color); padding-top: 20px;">
+                                        <RadzenIcon Icon="desktop_windows" Style="margin-right: 5px;" /> Доступные ВМ:
+                                    </div>
+                                    <div class="d-flex flex-column gap-3 mb-4">
+                                        @foreach (var vm in scenario.Devices.Where(d => !string.IsNullOrWhiteSpace(d.VmName) || d.Type == "standalone_vm"))
+                                        {
+                                            <div class="p-3 rounded" style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color);">
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <span style="color: var(--text-light); font-weight: 700; font-size: 0.95rem; text-transform: uppercase;">
+                                                        <RadzenIcon Icon="@(vm.Type == "standalone_vm" ? "desktop_windows" : (string.IsNullOrEmpty(vm.Type) ? "dns" : vm.Type))" Style="font-size: 1rem; color: var(--accent-blue);" /> @vm.Name
+                                                    </span>
+                                                </div>
+                                                <div class="d-flex justify-content-between mb-3" style="font-size: 0.85rem;">
+                                                    <span style="color: var(--text-muted);">Логин: <strong style="color: var(--text-light);">@(string.IsNullOrEmpty(vm.DomainLogin) ? "—" : vm.DomainLogin)</strong></span>
+                                                    <span style="color: var(--text-muted);">Пароль: <strong style="color: var(--warning-color);">@(string.IsNullOrEmpty(vm.DomainPassword) ? "—" : vm.DomainPassword)</strong></span>
+                                                </div>
+                                                <a href="/vm-console/@vm.Id" target="_blank" class="btn-outline-light w-100 py-2" style="font-size: 0.85rem; text-decoration: none; border-color: var(--accent-cyan); color: var(--accent-cyan);">
+                                                    ПОДКЛЮЧИТЬСЯ К ВМ
+                                                </a>
+                                            </div>
+                                        }
+                                    </div>
+                                }
                                 @if (currentUserProgress.Status == AttemptStatus.NotStarted)
                                 {
                                     @if (isGloballyOccupied)
@@ -773,7 +798,7 @@
                             {
                                 <div class="cyber-section" style="padding: 0; border: none; background: transparent;">
 
-                                    @if (scenario.Devices != null && scenario.Devices.Any())
+                                    @if (scenario.Devices != null && scenario.Devices.Any(d => d.Type != "standalone_vm"))
                                     {
                                         <div class="schema-box" style="height: 520px; display: flex; flex-direction: column;">
                                             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -781,7 +806,7 @@
                                                     <RadzenIcon Icon="account_tree" Style="margin-top: -3px; margin-right: 5px;" /> Карта инфраструктуры
                                                 </h5>
                                                 <div class="d-flex gap-2 flex-wrap justify-content-end">
-                                                    @foreach (var device in scenario.Devices)
+                                                    @foreach (var device in scenario.Devices.Where(d => d.Type != "standalone_vm"))
                                                     {
                                                         <button type="button" class="btn-zoom" @onclick="() => FocusOnDevice(device.MapX, device.MapY)">
                                                             <RadzenIcon Icon="my_location" Style="font-size:1rem; margin-right:4px; margin-top:-2px;" /> @device.Name
@@ -869,19 +894,7 @@
                                                                                 <div class="tooltip-note">@device.Description</div>
                                                                             }
                                                                         </div>
-                                                                        <!-- КНОПКА ПОДКЛЮЧЕНИЯ К VMWARE -->
-                                                                        @if (!string.IsNullOrEmpty(device.VmName))
-                                                                        {
-                                                                            <div style="margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border-color); text-align: center;">
-                                                                                <div class="d-flex justify-content-between mb-2" style="font-size: 0.8rem; text-align: left;">
-                                                                                    <span style="color: var(--text-muted);">Логин: <strong style="color: var(--text-light);">@(string.IsNullOrEmpty(device.DomainLogin) ? "-" : device.DomainLogin)</strong></span>
-                                                                                    <span style="color: var(--text-muted);">Пароль: <strong style="color: var(--warning-color);">@(string.IsNullOrEmpty(device.DomainPassword) ? "-" : device.DomainPassword)</strong></span>
-                                                                                </div>
-                                                                                <a href="/vm-console/@device.Id" target="_blank" class="btn-main w-100" style="padding: 6px; font-size: 0.8rem; text-decoration: none; border-radius: 4px;">
-                                                                                    <RadzenIcon Icon="desktop_windows" Style="font-size: 1rem; margin-top: -2px;" /> ПОДКЛЮЧИТЬСЯ К ВМ
-                                                                                </a>
-                                                                            </div>
-                                                                        }
+   
                                                                     </div>
                                                                     
                                                                 </div>
